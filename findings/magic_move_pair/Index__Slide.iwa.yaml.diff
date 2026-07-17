@@ -1,0 +1,20 @@
+--- A/Index/Slide.iwa.yaml
++++ B/Index/Slide.iwa.yaml
+@@ -102,7 +102,7 @@
+           bezierPathSource:
+             naturalSize:
+               height: 63.656006
+-              width: 131.688
++              width: 165.528
+             path:
+               elements:
+               - points:
+@@ -226,7 +226,7 @@
+           object:
+             identifier: <vol>
+       text:
+-      - Alpha
++      - Omega
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>

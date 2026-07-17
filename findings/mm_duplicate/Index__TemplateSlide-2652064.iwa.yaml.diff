@@ -1,0 +1,42 @@
+--- A/Index/TemplateSlide-2652064.iwa.yaml
++++ B/Index/TemplateSlide-2652064.iwa.yaml
+@@ -17,8 +17,8 @@
+         objectReferences:
+         - <id:4>
+         - <id:2>
++        - <id:1>
+         - <id:3>
+-        - <id:1>
+         - <id:5>
+         - <id:6>
+         - <id:7>
+@@ -50,25 +50,25 @@
+         identifier: <vol>
+       drawablesZOrder:
+       - identifier: <id:2>
+-      - identifier: <id:3>
++      - identifier: <id:1>
+       inDocument: true
+       instructionalTextMap:
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
+-          instructionalText: Slide Title
++          instructionalText: "\u201CNotable Quote\u201D"
+         - info:
+             identifier: <vol>
+           instructionalText: Attribution
+         - info:
+             identifier: <vol>
+-          instructionalText: "\u201CNotable Quote\u201D"
++          instructionalText: Slide Title
+       name: Quote
+       objectPlaceholder:
+         identifier: <vol>
+       ownedDrawables:
+       - identifier: <id:2>
+-      - identifier: <id:3>
++      - identifier: <id:1>
+       sageTagToInfoMap:
+       - info:
+           identifier: <vol>

@@ -1,0 +1,47 @@
+--- A/Index/CalculationEngine.iwa.yaml
++++ B/Index/CalculationEngine.iwa.yaml
+@@ -71,10 +71,10 @@
+         - cellDependencies: {}
+           cellErrors: {}
+           formulaOwnerId:
+-            uuidW0: 3760733653
+-            uuidW1: 809909703
+-            uuidW2: 2053575085
+-            uuidW3: 2526865098
++            uuidW0: 2397806920
++            uuidW1: 1749118578
++            uuidW2: 3205966249
++            uuidW3: 2845188999
+           rangeDependencies: {}
+           spanningColumnDependencies:
+             bodyRangeForDeletedTable:
+@@ -111,10 +111,10 @@
+               uuidW3: 0
+           - internalOwnerId: 2
+             ownerId:
+-              uuidW0: 3760733653
+-              uuidW1: 809909703
+-              uuidW2: 2053575085
+-              uuidW3: 2526865098
++              uuidW0: 2397806920
++              uuidW1: 1749118578
++              uuidW2: 3205966249
++              uuidW3: 2845188999
+       documentRandomSeed: <id:6>
+       documentTimestamp: <ts>
+       documentTimezone: America/Detroit
+@@ -299,10 +299,10 @@
+     objects:
+     - _pbtype: TSCE.TrackedReferenceStoreArchive
+       uuid:
+-        uuidW0: 2806323246
+-        uuidW1: 3494439209
+-        uuidW2: 3764479386
+-        uuidW3: 3917715159
++        uuidW0: 2390485636
++        uuidW1: 4637488
++        uuidW2: 1767419537
++        uuidW3: 2960654618
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>

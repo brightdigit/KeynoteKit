@@ -1,0 +1,45 @@
+--- A/Index/TemplateSlide-2652086.iwa.yaml
++++ B/Index/TemplateSlide-2652086.iwa.yaml
+@@ -18,8 +18,8 @@
+         - <id:4>
+         - <id:5>
+         - <id:6>
++        - <id:2>
+         - <id:1>
+-        - <id:2>
+         - <id:7>
+         - <id:8>
+         - <id:9>
+@@ -58,10 +58,10 @@
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
+-          instructionalText: Slide Title
++          instructionalText: Slide bullet text
+         - info:
+             identifier: <vol>
+-          instructionalText: Slide bullet text
++          instructionalText: Slide Title
+       name: Photo - 3 Up
+       objectPlaceholder:
+         identifier: <vol>
+@@ -298,8 +298,8 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '5644'
+         - '5643'
+-        - '5644'
+         fieldInfos:
+         - path:
+             path:
+@@ -492,8 +492,8 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '8048'
+         - '8049'
+-        - '8048'
+         fieldInfos:
+         - path:
+             path:

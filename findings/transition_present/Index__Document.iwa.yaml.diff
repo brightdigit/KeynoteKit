@@ -1,0 +1,43 @@
+--- A/Index/Document.iwa.yaml
++++ B/Index/Document.iwa.yaml
+@@ -424,7 +424,7 @@
+       hasExplicitBuilds: false
+       hasExplicitBuildsCacheVersion: 2
+       hasNote: false
+-      hasTransition: false
++      hasTransition: true
+       isSkipped: false
+       isSlideNumberVisible: false
+       slide:
+@@ -438,12 +438,12 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
+-        - '16'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
++        - '16'
+         fieldInfos:
+         - path:
+             path:
+@@ -3527,7 +3527,7 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
+-        - '9059'
++        - '9075'
+         fieldInfos:
+         - path:
+             path:
+@@ -3564,7 +3564,7 @@
+       - height: 200.0
+         width: 356.0
+       thumbnails:
+-      - identifier: '9059'
++      - identifier: '9075'
+       thumbnailsAreDirty: false
+   - header:
+       _pbtype: TSP.ArchiveInfo

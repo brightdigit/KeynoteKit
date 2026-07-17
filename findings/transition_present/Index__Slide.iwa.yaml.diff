@@ -1,0 +1,19 @@
+--- A/Index/Slide.iwa.yaml
++++ B/Index/Slide.iwa.yaml
+@@ -49,11 +49,14 @@
+           animationAttributes:
+             animationType: Transition
+             delay: 0.5
+-            duration: 1.0
+-            effect: none
++            duration: 1.5
++            effect: apple:magic-move-implied-motion-path
+             isAutomatic: false
+             randomNumberSeed: <vol>
+             writingDirectionIsRtl: false
++          customMagicMoveFadeUnmatchedObjects: true
++          customTextDeliveryType: TransitionCustomAttributesTextDeliveryTypeByObject
++          customTimingCurve: TransitionCustomAttributesTimingCurveTypeEaseInEaseOut
+       userDefinedGuideStorage:
+         identifier: <vol>
+   - header:

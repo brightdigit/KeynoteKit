@@ -1,0 +1,17 @@
+[tools]
+python = "3.12"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.selftest]
+description = "Validate normalize+diff on synthetic data (no Keynote needed)"
+run = "python3 tools/selftest.py"
+
+[tasks.transitions]
+description = "Experiment 1: transition present vs absent"
+run = "python3 tools/run_experiment.py transitions --generate generators/transition_matrix.applescript"
+
+[tasks.experiment]
+description = "Run an arbitrary experiment: mise run experiment -- <name> [args...]"
+run = "python3 tools/run_experiment.py"

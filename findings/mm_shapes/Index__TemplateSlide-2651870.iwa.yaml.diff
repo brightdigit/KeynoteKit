@@ -1,0 +1,55 @@
+--- A/Index/TemplateSlide-2651870.iwa.yaml
++++ B/Index/TemplateSlide-2651870.iwa.yaml
+@@ -16,8 +16,8 @@
+           unknownFieldRule: IgnoreAndPreserve
+         objectReferences:
+         - <id:4>
++        - <id:1>
+         - <id:3>
+-        - <id:1>
+         - <id:5>
+         - <id:2>
+         - <id:6>
+@@ -50,8 +50,8 @@
+       classicStylesheetRecord:
+         identifier: <vol>
+       drawablesZOrder:
++      - identifier: <id:1>
+       - identifier: <id:3>
+-      - identifier: <id:1>
+       - identifier: <id:5>
+       - identifier: <id:2>
+       inDocument: true
+@@ -59,19 +59,19 @@
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
+-          instructionalText: Slide bullet text
++          instructionalText: Slide Subtitle
+         - info:
+             identifier: <vol>
+           instructionalText: Slide Title
+         - info:
+             identifier: <vol>
+-          instructionalText: Slide Subtitle
++          instructionalText: Slide bullet text
+       name: Title, Bullets & Photo
+       objectPlaceholder:
+         identifier: <vol>
+       ownedDrawables:
++      - identifier: <id:1>
+       - identifier: <id:3>
+-      - identifier: <id:1>
+       - identifier: <id:5>
+       - identifier: <id:2>
+       sageTagToInfoMap:
+@@ -475,8 +475,8 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '5876'
+         - '5875'
+-        - '5876'
+         fieldInfos:
+         - path:
+             path:

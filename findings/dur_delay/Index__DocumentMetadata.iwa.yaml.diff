@@ -1,0 +1,14 @@
+--- A/Index/DocumentMetadata.iwa.yaml
++++ B/Index/DocumentMetadata.iwa.yaml
+@@ -157,4 +157,11 @@
+           - 0
+           digest: +bgjG6oun5t/sHsc+YT1r8OrtDI=
+           expectsMatchedDigest: true
++        - creationTimeIntervalSince1970: <ts>
++          creationVersion:
++          - 26
++          - 3
++          - 1
++          digest: yCPKWoXjmalZRQ+G7KUC7dQvv/I=
++          expectsMatchedDigest: true
+       isInCollaborationMode: false
