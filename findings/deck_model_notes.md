@@ -45,11 +45,16 @@ Transition {
   auto_advance: bool = false  # -> isAutomatic
   # effect-specific knobs -> `custom*` siblings of animationAttributes.
   # SPARSE: most effects emit none. Model as an extensible per-effect bag,
-  # not a fixed struct. Observed so far (effect matrix sweep, see effect_type.md):
-  #   magic move  -> customMagicMoveFadeUnmatchedObjects (bool),
-  #                  customTextDeliveryType (enum), customTimingCurve (enum)
-  #   object flip -> customBounce (bool)
-  #   dissolve/wipe/move in/iris/object cube/switch -> (none)
+  # not a fixed struct. Full catalog sweep (all 43 effects, see effect_type.md):
+  #   magic move -> customMagicMoveFadeUnmatchedObjects/customTextDeliveryType/
+  #                 customTimingCurve
+  #   customBounce (bool) -> object flip, object revolve, cube, flip, scale,
+  #                          revolving door
+  #   customTravelDistance (float) -> fade and move
+  #   customTwist (float) -> twist
+  #   everything else -> none
+  # NOTE: none of these are AppleScript-settable (inspector-only); the
+  # scriptable backend leaves them at Keynote defaults.
   options: map<string, scalar> = {}   # e.g. {"customBounce": true}
   # direction: TBD (not scriptable; proto3-default-omitted; see duration note)
 }

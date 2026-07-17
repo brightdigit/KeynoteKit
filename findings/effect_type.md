@@ -88,6 +88,38 @@ Notes:
   names), and `com.apple.iWork.Keynote.*` (Keynote plug-in effects). The `Deck`
   model's effect enum can be a straight string map to these values.
 
+## Full catalog sweep (all 43 effects)
+
+`examples/effect_catalog.json` (generated from `deckkit.EFFECTS`) builds a
+43-slide deck, one effect per slide, via the backend; `build_deck.py --verify`
+confirms **all 43 archive `effect` strings** round-trip. So `tools/deckkit.py`
+`EFFECTS` is the authoritative, verified name -> archive-string -> AppleScript
+map. Two corrections came out of the sweep vs the raw sdef read:
+
+- `radial wipe` -> archive string is **`apple:radial wipe`** (contains a
+  space; the sdef value is not the space-free `apple:radial`).
+- The verifier's effect regex had to accept spaces in the value.
+
+### Per-effect extra `custom*` attributes (only these emit any)
+
+| Effect | archive `effect` | `custom*` (default) |
+|---|---|---|
+| magic move | `apple:magic-move-implied-motion-path` | `customMagicMoveFadeUnmatchedObjects=true`, `customTextDeliveryType=...ByObject`, `customTimingCurve=...EaseInEaseOut` |
+| object flip | `apple:ca-dissolve-and-flip` | `customBounce=true` |
+| object revolve | `apple:ca-revolve` | `customBounce=false` |
+| cube | `apple:3D-cube` | `customBounce=true` |
+| flip | `apple:revolve` | `customBounce=true` |
+| scale | `apple:scale` | `customBounce=false` |
+| revolving door | `com.apple.iWork.Keynote.BLTRevolvingDoor` | `customBounce=true` |
+| fade and move | `apple:fade-and-move` | `customTravelDistance=1.0` |
+| twist | `com.apple.iWork.Keynote.BUKTwist` | `customTwist=3.3` |
+
+All other effects emit **no** `custom*` keys. So the per-effect option bag is:
+`customBounce` (bool, several 3D effects), `customTravelDistance` (float),
+`customTwist` (float), plus Magic Move's three. None are AppleScript-settable
+(inspector-only), so the backend can only emit them via byte-surgery, not the
+scriptable path — for now they take Keynote's defaults shown above.
+
 ## Per-effect extra attributes (effect matrix sweep)
 
 `generators/effect_matrix.applescript` / `generators/one_effect.applescript`

@@ -53,6 +53,28 @@ def test_unknown_effect() -> None:
         pass
 
 
+def test_effects_map() -> None:
+    # full sdef enum: none + 43 effects
+    check(len(deckkit.EFFECTS) == 44, f"expected 44 EFFECTS, got {len(deckkit.EFFECTS)}")
+    check(deckkit.EFFECTS["none"][1] is None, "none must have no AppleScript term")
+    # the space-containing archive string must be preserved verbatim
+    check(deckkit.EFFECTS["radial_wipe"][0] == "apple:radial wipe",
+          "radial_wipe archive string must keep its space")
+    # every non-none effect has both an archive string and an AppleScript term
+    for name, (s, term) in deckkit.EFFECTS.items():
+        if name == "none":
+            continue
+        check(bool(s) and bool(term), f"{name} missing string/term")
+
+
+def test_verify_handles_spaces() -> None:
+    # the effect extractor must capture values with spaces (regression: radial)
+    import re
+    m = deckkit._EFFECT_RE.search("            effect: apple:radial wipe\n")
+    check(m is not None and m.group(1) == "apple:radial wipe",
+          "effect regex must capture space-containing values")
+
+
 def test_codegen() -> None:
     deck = deckkit.deck_from_dict(SPEC)
     s = deckkit.generate_applescript(deck, "/tmp/out.key")
@@ -103,7 +125,8 @@ def test_verify_positive_and_negative() -> None:
 
 
 def main() -> int:
-    for fn in (test_parse, test_unknown_effect, test_codegen,
+    for fn in (test_parse, test_unknown_effect, test_effects_map,
+               test_verify_handles_spaces, test_codegen,
                test_verify_positive_and_negative):
         fn()
     if FAILS:

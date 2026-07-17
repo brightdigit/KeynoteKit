@@ -37,18 +37,58 @@ import tempfile
 from dataclasses import dataclass, field
 
 # name -> (archive effect string, AppleScript enumerator term)
-# Verified against Keynote 15.3 (see findings/effect_type.md). "none" == off.
+# Full set from Keynote 15.3's Keynote.sdef `transition effects` enum; archive
+# strings confirmed by the catalog sweep (see findings/effect_type.md).
+# "none" == off (has no AppleScript term).
 EFFECTS: dict[str, tuple[str | None, str | None]] = {
     "none": ("none", None),
+    # object/text effects (Core Animation "ca" family)
     "magic_move": ("apple:magic-move-implied-motion-path", "magic move"),
-    "dissolve": ("apple:dissolve", "dissolve"),
-    "push": ("apple:push", "push"),
-    "wipe": ("apple:wipe", "wipe"),
-    "move_in": ("apple:slide", "move in"),
-    "iris": ("apple:wipe-iris", "iris"),
+    "shimmer": ("apple:ca-text-shimmer", "shimmer"),
+    "sparkle": ("apple:ca-text-sparkle", "sparkle"),
+    "swing": ("apple:ca-swing", "swing"),
     "object_cube": ("apple:ca-cube", "object cube"),
     "object_flip": ("apple:ca-dissolve-and-flip", "object flip"),
+    "object_pop": ("apple:ca-pop", "object pop"),
+    "object_push": ("apple:ca-push", "object push"),
+    "object_revolve": ("apple:ca-revolve", "object revolve"),
+    "object_zoom": ("apple:ca-zoom", "object zoom"),
+    "perspective": ("apple:ca-isometric", "perspective"),
+    # apple: built-in slide effects
+    "clothesline": ("apple:ClotheslinePush", "clothesline"),
+    "dissolve": ("apple:dissolve", "dissolve"),
+    "drop": ("apple:bounce", "drop"),
+    "droplet": ("apple:droplet", "droplet"),
+    "grid": ("apple:apple-grid", "grid"),
+    "iris": ("apple:wipe-iris", "iris"),
+    "move_in": ("apple:slide", "move in"),
+    "push": ("apple:push", "push"),
+    "reveal": ("apple:reveal", "reveal"),
     "switch": ("apple:FlipThrough", "switch"),
+    "wipe": ("apple:wipe", "wipe"),
+    "cube": ("apple:3D-cube", "cube"),
+    "doorway": ("apple:doorway", "doorway"),
+    "fall": ("apple:fall", "fall"),
+    "flip": ("apple:revolve", "flip"),
+    "page_flip": ("apple:pageflip", "page flip"),
+    "pivot": ("apple:pivot", "pivot"),
+    "scale": ("apple:scale", "scale"),
+    "twirl": ("apple:twirl", "twirl"),
+    "fade_and_move": ("apple:fade-and-move", "fade and move"),
+    # archive string genuinely contains a space (confirmed via the catalog sweep)
+    "radial_wipe": ("apple:radial wipe", "radial wipe"),
+    # com.apple.iWork.Keynote.* plug-in effects
+    "confetti": ("com.apple.iWork.Keynote.KLNConfetti", "confetti"),
+    "fade_through_color": ("com.apple.iWork.Keynote.BLTFadeThruColor", "fade through color"),
+    "blinds": ("com.apple.iWork.Keynote.BLTBlinds", "blinds"),
+    "color_planes": ("com.apple.iWork.Keynote.KLNColorPlanes", "color planes"),
+    "flop": ("com.apple.iWork.Keynote.BUKFlop", "flop"),
+    "mosaic": ("com.apple.iWork.Keynote.BLTMosaicFlip", "mosaic"),
+    "reflection": ("com.apple.iWork.Keynote.BLTReflection", "reflection"),
+    "revolving_door": ("com.apple.iWork.Keynote.BLTRevolvingDoor", "revolving door"),
+    "swap": ("com.apple.iWork.Keynote.KLNSwap", "swap"),
+    "swoosh": ("com.apple.iWork.Keynote.BLTSwoosh", "swoosh"),
+    "twist": ("com.apple.iWork.Keynote.BUKTwist", "twist"),
 }
 
 
@@ -189,7 +229,7 @@ def build(deck: Deck, out_path: str) -> None:
 
 # --- verification (unpack + compare transition fields) ----------------------
 
-_EFFECT_RE = re.compile(r"^\s*effect:\s*(\S+)\s*$", re.M)
+_EFFECT_RE = re.compile(r"^\s*effect:\s*(.+?)\s*$", re.M)
 _DUR_RE = re.compile(r"^\s*duration:\s*([\d.]+)\s*$", re.M)
 _DELAY_RE = re.compile(r"^\s*delay:\s*([\d.]+)\s*$", re.M)
 _AUTO_RE = re.compile(r"^\s*isAutomatic:\s*(true|false)\s*$", re.M)
