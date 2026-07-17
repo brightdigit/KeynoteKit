@@ -8,6 +8,14 @@ _.python.venv = { path = ".venv", create = true }
 description = "Validate normalize+diff on synthetic data (no Keynote needed)"
 run = "python3 tools/selftest.py"
 
+[tasks.test]
+description = "Unit-test the Deck backend (no Keynote needed)"
+run = "python3 tools/test_deckkit.py"
+
+[tasks.build-example]
+description = "Build + verify the example deck (needs Keynote + keynote-parser)"
+run = "python3 tools/build_deck.py examples/deck_example.json samples/deck_example.key --verify"
+
 [tasks.transitions]
 description = "Experiment 1: transition present vs absent"
 run = "python3 tools/run_experiment.py transitions --generate generators/transition_matrix.applescript"
