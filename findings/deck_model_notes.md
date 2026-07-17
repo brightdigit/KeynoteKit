@@ -29,6 +29,12 @@ The transition plays *into* the slide it is attached to (set on the destination
 slide, e.g. slide 2). `Document.iwa.yaml` also holds a derived `hasTransition`
 per-slide cache flag — a computed mirror, not the source of truth.
 
+Transitions are **per-slide and independent** (verified, `multi_slide.md`): a
+3-slide deck with dissolve/push/wipe stored each effect in its own slide
+archive, with no document-level list. **Slide 1 can carry a transition** too
+(plays on entry). So `Transition` is a field on every `Slide`, including the
+first.
+
 ## 2. Proposed `Deck` transition model
 
 ```
