@@ -58,17 +58,17 @@ enum the `Deck` model should target):
 | magic move | `apple:magic-move-implied-motion-path` | ✅ |
 | dissolve | `apple:dissolve` | ✅ |
 | push | `apple:push` | ✅ |
-| move in | `apple:slide` | |
-| wipe | `apple:wipe` | |
+| move in | `apple:slide` | ✅ |
+| wipe | `apple:wipe` | ✅ |
 | reveal | `apple:reveal` | |
-| iris | `apple:wipe-iris` | |
+| iris | `apple:wipe-iris` | ✅ |
 | grid | `apple:apple-grid` | |
 | drop | `apple:bounce` | |
 | droplet | `apple:droplet` | |
-| switch | `apple:FlipThrough` | |
+| switch | `apple:FlipThrough` | ✅ |
 | clothesline | `apple:ClotheslinePush` | |
-| object cube | `apple:ca-cube` | |
-| object flip | `apple:ca-dissolve-and-flip` | |
+| object cube | `apple:ca-cube` | ✅ |
+| object flip | `apple:ca-dissolve-and-flip` | ✅ (adds `customBounce`) |
 | object pop | `apple:ca-pop` | |
 | object push | `apple:ca-push` | |
 | object revolve | `apple:ca-revolve` | |
@@ -87,6 +87,34 @@ Notes:
   `apple:ca-*` (a Core-Animation "object effects" family — the "object X"
   names), and `com.apple.iWork.Keynote.*` (Keynote plug-in effects). The `Deck`
   model's effect enum can be a straight string map to these values.
+
+## Per-effect extra attributes (effect matrix sweep)
+
+`generators/effect_matrix.applescript` / `generators/one_effect.applescript`
+build one deck per effect (all else identical); transition blocks extracted from
+each. Result — `attributes` = the universal `animationAttributes` plus an
+optional set of effect-specific `custom*` siblings:
+
+| Effect | archive `effect` | extra `custom*` under `attributes` |
+|---|---|---|
+| dissolve | `apple:dissolve` | none |
+| wipe | `apple:wipe` | none |
+| move in | `apple:slide` | none |
+| iris | `apple:wipe-iris` | none |
+| object cube | `apple:ca-cube` | none |
+| switch | `apple:FlipThrough` | none |
+| **object flip** | `apple:ca-dissolve-and-flip` | **`customBounce: true`** |
+| magic move | `apple:magic-move-implied-motion-path` | `customMagicMoveFadeUnmatchedObjects`, `customTextDeliveryType`, `customTimingCurve` |
+
+Takeaways for the `Deck` model:
+- `animationAttributes` (animationType/effect/duration/delay/isAutomatic/...) is
+  universal.
+- Effect-specific knobs live as `custom*` siblings and are **sparse** (most
+  effects emit none). Model them as an extensible per-effect options bag keyed
+  by effect, not a fixed struct.
+- No effect serialized a **direction** at its default value — reinforces that
+  direction is proto3-default-omitted and only appears when changed (needs the
+  golden fixture in `duration_direction.md`).
 
 ## Open questions
 

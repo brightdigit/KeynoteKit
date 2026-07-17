@@ -37,15 +37,15 @@ Transition {
   duration_s: float = 1.0     # default Keynote writes when unset
   delay_s: float = 0.0
   auto_advance: bool = false  # -> isAutomatic
-  # Magic Move only:
-  magic_move: MagicMoveOptions?  # present iff effect == MagicMove
-}
-
-MagicMoveOptions {
-  fade_unmatched: bool = true             # -> customMagicMoveFadeUnmatchedObjects
-  text_delivery: ByObject|...             # -> customTextDeliveryType
-  timing_curve: EaseInEaseOut|...         # -> customTimingCurve
-  # direction: TBD (not scriptable; see versions/duration notes)
+  # effect-specific knobs -> `custom*` siblings of animationAttributes.
+  # SPARSE: most effects emit none. Model as an extensible per-effect bag,
+  # not a fixed struct. Observed so far (effect matrix sweep, see effect_type.md):
+  #   magic move  -> customMagicMoveFadeUnmatchedObjects (bool),
+  #                  customTextDeliveryType (enum), customTimingCurve (enum)
+  #   object flip -> customBounce (bool)
+  #   dissolve/wipe/move in/iris/object cube/switch -> (none)
+  options: map<string, scalar> = {}   # e.g. {"customBounce": true}
+  # direction: TBD (not scriptable; proto3-default-omitted; see duration note)
 }
 ```
 

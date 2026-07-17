@@ -124,8 +124,14 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
   trace; `magic-id` stays a compile-time abstraction (confirmed from 2 angles).
 - **Exp 3b auto-advance** (folded into `findings/duration_direction.md`): only
   `isAutomatic` flips; no separate auto-advance-delay field.
+- **Effect matrix** (`generators/one_effect.applescript`, table in
+  `effect_type.md`): swept dissolve/wipe/move-in/iris/object-cube/object-flip/
+  switch. `effect` strings match the sdef; effect-specific knobs are sparse
+  `custom*` siblings (only object flip -> `customBounce`; magic move -> its 3).
+  No direction serialized at default for any effect.
 - **`findings/deck_model_notes.md`**: first-cut `Deck` transition + `magic-id`
   model synthesized from all findings. Read this before designing the IR.
+  Transition `options` is an extensible per-effect bag (not a fixed struct).
 
 ## Next steps (in priority order)
 
