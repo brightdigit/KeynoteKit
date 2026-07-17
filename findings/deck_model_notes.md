@@ -123,6 +123,24 @@ making the intended pair MORE similar (content/geometry) than any competitor.
 ```
 ```
 
+## 4b. Backend — IMPLEMENTED for transitions (scriptable, no pack)
+
+`tools/deckkit.py` + `tools/build_deck.py` implement the transition half of the
+backend end-to-end:
+- `Deck`/`Slide`/`TextItem`/`Transition` dataclasses; `EFFECTS` maps a stable
+  name -> (archive string, AppleScript enumerator).
+- JSON spec loader (`examples/deck_example.json` is a working sample).
+- AppleScript code-gen that drives Keynote to build the `.key` (uses
+  `set transition properties`, per-slide incl. slide 1). No `pack` dependency.
+- Round-trip `--verify`: unpacks the built `.key` and asserts every spec
+  transition is present with matching effect/duration/delay/auto (order-
+  insensitive multiset match).
+
+Verified: `mise exec -- python3 tools/build_deck.py examples/deck_example.json
+samples/deck_example.key --verify` -> `VERIFY PASS` (4 slides, dissolve/push+
+auto/magic-move). This is the concrete proof the transition model lowers
+faithfully. Builds/direction remain future work (non-scriptable).
+
 ## 5. Status of unknowns feeding this model
 
 | Knob | Source of truth | Author via | Status |

@@ -150,6 +150,14 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
 
 Update this file and the per-experiment notes as you go.
 
+## Backend (transitions) — IMPLEMENTED
+
+`tools/deckkit.py` (Deck IR + AppleScript code-gen + verify) and
+`tools/build_deck.py` (CLI). Build + round-trip verify:
+`mise exec -- python3 tools/build_deck.py examples/deck_example.json samples/out.key --verify`
+-> `VERIFY PASS`. Scriptable knobs only (effect/duration/delay/auto_advance);
+no pack. Extend with builds/direction once those are reverse-engineered.
+
 ## Full findings index
 
 `versions.md`, `transition_present.md`, `effect_type.md`,
