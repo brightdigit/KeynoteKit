@@ -2,7 +2,16 @@
 """
 deckkit.py — a minimal `Deck` intermediate model and an AppleScript backend that
 lowers it to a real Keynote `.key`, for the SCRIPTABLE half of the format
-(slide transitions). Builds are not scriptable and are out of scope here.
+(slide transitions).
+
+Object builds (Phase 2, see findings/build_*.md) are now MODELLED and
+READABLE here, but NOT buildable: builds are absent from Keynote's AppleScript
+dictionary, so there is no osascript setter. The write side needs byte-level
+template surgery (regenerated 15.3 pack mappings, see findings/versions.md) and
+stays documented-as-future. What this module provides for builds is the IR
+(`Build` on `Slide`, `BUILD_EFFECTS`) plus the read/verify half
+(`extract_builds` / `verify_builds`), so a hand-made fixture can be parsed and
+checked.
 
 Design follows the Phase 1 findings (see findings/deck_model_notes.md):
 - A transition is a per-slide record; slide 1 may carry one.
@@ -91,6 +100,19 @@ EFFECTS: dict[str, tuple[str | None, str | None]] = {
     "twist": ("com.apple.iWork.Keynote.BUKTwist", "twist"),
 }
 
+# Build effect name -> (archive effect string, AppleScript enumerator term).
+# Builds are NOT AppleScript-settable, so the second element is always None (kept
+# for shape-parity with EFFECTS). Verified strings from findings/build_fx.md; the
+# " character" suffix marks the text-build variants. Extend as more builds are
+# reverse-engineered.
+BUILD_EFFECTS: dict[str, tuple[str | None, str | None]] = {
+    "dissolve": ("apple:dissolve character", None),
+    "move_in": ("apple:move in character", None),   # directional (carries `direction`)
+}
+
+# The two build kinds seen so far map to KN.BuildArchive.animationType.
+BUILD_KINDS = {"In", "Out"}
+
 
 @dataclass
 class TextItem:
@@ -114,9 +136,47 @@ class Transition:
 
 
 @dataclass
+class Build:
+    """One object build (Phase 2). Not buildable via AppleScript; read/verify
+    only. See findings/build_*.md.
+
+    target: symbolic reference to the object the build animates. Resolves to
+        KN.BuildArchive.drawable.identifier at emit time (byte-surgery, future).
+        Read-side extraction reports the concrete drawable id instead.
+    kind:   In | Out -> animationAttributes.animationType.
+    effect: key into BUILD_EFFECTS -> animationAttributes.effect.
+    options: sparse per-effect / delivery bag (direction, customBounce,
+        customTextDelivery, customDeliveryOption, delivery, ...), mirroring
+        Transition.options.
+    Build order on a slide is LIST POSITION (findings/build_order.md), so the
+    order of `Slide.builds` is the delivery order.
+    """
+    effect: str = "dissolve"
+    kind: str = "In"
+    duration: float = 1.0
+    delay: float = 0.0
+    target: str = ""
+    trigger: str = "on_click"     # on_click | after_previous | with_previous
+    options: dict = field(default_factory=dict)
+
+    def validate(self) -> None:
+        if self.effect not in BUILD_EFFECTS:
+            raise ValueError(
+                f"unknown build effect {self.effect!r}; known: "
+                f"{sorted(BUILD_EFFECTS)}"
+            )
+        if self.kind not in BUILD_KINDS:
+            raise ValueError(
+                f"unknown build kind {self.kind!r}; known: {sorted(BUILD_KINDS)}"
+            )
+
+
+@dataclass
 class Slide:
     items: list[TextItem] = field(default_factory=list)
     transition: Transition | None = None
+    # ordered: list position == delivery order (findings/build_order.md)
+    builds: list[Build] = field(default_factory=list)
 
 
 @dataclass
@@ -129,6 +189,8 @@ class Deck:
         for s in self.slides:
             if s.transition:
                 s.transition.validate()
+            for b in s.builds:
+                b.validate()
 
 
 # --- spec loading ------------------------------------------------------------
@@ -149,7 +211,19 @@ def deck_from_dict(d: dict) -> Deck:
                 delay=float(td.get("delay", 0.0)),
                 auto_advance=bool(td.get("auto_advance", False)),
             )
-        slides.append(Slide(items=items, transition=t))
+        builds = [
+            Build(
+                effect=bd["effect"],
+                kind=bd.get("kind", "In"),
+                duration=float(bd.get("duration", 1.0)),
+                delay=float(bd.get("delay", 0.0)),
+                target=str(bd.get("target", "")),
+                trigger=bd.get("trigger", "on_click"),
+                options=dict(bd.get("options", {})),
+            )
+            for bd in sd.get("builds", [])
+        ]
+        slides.append(Slide(items=items, transition=t, builds=builds))
     deck = Deck(slides=slides)
     deck.validate()
     return deck
@@ -233,25 +307,44 @@ _EFFECT_RE = re.compile(r"^\s*effect:\s*(.+?)\s*$", re.M)
 _DUR_RE = re.compile(r"^\s*duration:\s*([\d.]+)\s*$", re.M)
 _DELAY_RE = re.compile(r"^\s*delay:\s*([\d.]+)\s*$", re.M)
 _AUTO_RE = re.compile(r"^\s*isAutomatic:\s*(true|false)\s*$", re.M)
-# an animationAttributes block, greedy enough to grab its scalars
+_ANIMTYPE_RE = re.compile(r"^\s*animationType:\s*(\w+)\s*$", re.M)
+_DIRECTION_RE = re.compile(r"^\s*direction:\s*(-?\d+)\s*$", re.M)
+# an animationAttributes block, greedy enough to grab its scalars. NOTE this
+# matches BOTH transitions (animationType: Transition) and builds
+# (animationType: In/Out) — they share the struct — so callers MUST filter by
+# animationType.
 _ANIM_RE = re.compile(
     r"animationAttributes:\n((?:\s+\w[\w]*:.*\n)+)"
 )
+# a KN.BuildArchive object -> the following slice up to the next _pbtype
+_BUILD_RE = re.compile(
+    r"_pbtype:\s*KN\.BuildArchive\b(.*?)(?=_pbtype:|\Z)", re.S
+)
+_DRAWABLE_RE = re.compile(r"drawable:\s*\n\s*identifier:\s*'?(\d+)'?")
+
+
+def _slide_yaml_files(unpacked_dir: str):
+    import os
+    idx_dir = os.path.join(unpacked_dir, "Index")
+    for name in sorted(os.listdir(idx_dir)):
+        if name.startswith("Slide") and name.endswith(".iwa.yaml"):
+            yield os.path.join(idx_dir, name)
 
 
 def extract_transitions(unpacked_dir: str) -> list[dict]:
-    """Return one dict per slide transition found in the unpacked deck."""
-    import os
+    """Return one dict per slide TRANSITION in the unpacked deck.
 
+    Filters animationAttributes blocks to animationType == Transition so build
+    blocks (animationType In/Out, same struct) are not miscounted.
+    """
     out = []
-    idx_dir = os.path.join(unpacked_dir, "Index")
-    for name in os.listdir(idx_dir):
-        if not (name.startswith("Slide") and name.endswith(".iwa.yaml")):
-            continue
-        with open(os.path.join(idx_dir, name), "r", encoding="utf-8",
-                  errors="replace") as fh:
+    for path in _slide_yaml_files(unpacked_dir):
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
             text = fh.read()
         for block in _ANIM_RE.findall(text):
+            at = _ANIMTYPE_RE.search(block)
+            if at and at.group(1) != "Transition":
+                continue
             eff = _EFFECT_RE.search(block)
             if not eff:
                 continue
@@ -263,6 +356,39 @@ def extract_transitions(unpacked_dir: str) -> list[dict]:
                 "duration": float(dur.group(1)) if dur else None,
                 "delay": float(dly.group(1)) if dly else None,
                 "auto": (au.group(1) == "true") if au else None,
+            })
+    return out
+
+
+def extract_builds(unpacked_dir: str) -> list[dict]:
+    """Return one dict per object BUILD in the unpacked deck, in delivery order.
+
+    Order is preserved as it appears in each slide file, which IS the delivery
+    order (findings/build_order.md). Each dict carries the archive effect string,
+    duration/delay (from animationAttributes), kind (animationType), the optional
+    `direction`, and the target `drawable` id.
+    """
+    out = []
+    for path in _slide_yaml_files(unpacked_dir):
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+        for m in _BUILD_RE.finditer(text):
+            blk = m.group(1)
+            at = _ANIMTYPE_RE.search(blk)
+            eff = _EFFECT_RE.search(blk)
+            if not eff:
+                continue
+            dur = _DUR_RE.search(blk)      # first duration == animationAttributes.duration
+            dly = _DELAY_RE.search(blk)
+            dirn = _DIRECTION_RE.search(blk)
+            draw = _DRAWABLE_RE.search(blk)
+            out.append({
+                "kind": at.group(1) if at else None,
+                "effect": eff.group(1),
+                "duration": float(dur.group(1)) if dur else None,
+                "delay": float(dly.group(1)) if dly else None,
+                "direction": int(dirn.group(1)) if dirn else None,
+                "drawable": draw.group(1) if draw else None,
             })
     return out
 
@@ -306,3 +432,38 @@ def verify(deck: Deck, unpacked_dir: str) -> tuple[bool, str]:
     return True, "all %d expected transition(s) present" % (
         sum(1 for e in expected_transitions(deck) if e["effect"] != "none")
     )
+
+
+# --- builds: read/verify (no build path — builds are not scriptable) --------
+
+def expected_builds(deck: Deck) -> list[dict]:
+    """Flatten the deck's builds to archive-shaped dicts (kind/effect/timing)."""
+    exp = []
+    for s in deck.slides:
+        for b in s.builds:
+            exp.append({
+                "kind": b.kind,
+                "effect": BUILD_EFFECTS[b.effect][0],
+                "duration": b.duration,
+                "delay": b.delay,
+            })
+    return exp
+
+
+def verify_builds(deck: Deck, unpacked_dir: str) -> tuple[bool, str]:
+    """Compare the multiset of (kind, effect, duration, delay) build tuples.
+
+    Multiset because slide filenames are unordered across the deck; within one
+    slide extract_builds preserves delivery order, but this deck-wide check is
+    order-insensitive (mirrors verify() for transitions). Every expected build
+    must be matched by an actual one with the same kind + effect + timing.
+    """
+    def key(d):
+        return (d["kind"], d["effect"], d["duration"], d["delay"])
+
+    actual = {key(x) for x in extract_builds(unpacked_dir)}
+    missing = [e for e in expected_builds(deck) if key(e) not in actual]
+    if missing:
+        return False, "missing builds in deck: " + json.dumps(missing)
+    n = len(expected_builds(deck))
+    return True, "all %d expected build(s) present" % n

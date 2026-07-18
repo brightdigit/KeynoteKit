@@ -137,18 +137,33 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
 
 ## Next steps (in priority order)
 
-1. **Phase 2 builds (NEEDS HUMAN):** everything is staged in
-   `findings/builds_setup.md`. Base deck `fixtures/builds_base.key` and control
-   `fixtures/build_in_A.key` already exist. The user adds ONE build in the
-   Animate inspector, saves `fixtures/build_in_B.key`, then run:
-   `mise exec -- python3 tools/run_experiment.py build_in --skip-generate --a fixtures/build_in_A.key --b fixtures/build_in_B.key`
-   Then Exps 6 (order) and 7 (effect/timing) per `builds_setup.md`. Write
-   `findings/build_*.md` and add a `Build {}` section to `deck_model_notes.md`.
+1. **Phase 2 builds (DONE — Exps 5-7):** the human added the builds; all six
+   fixtures exist (`fixtures/build_{in,order,fx}_{A,B}.key`) and were diffed.
+   Findings written: `findings/build_in.md` (Exp 5), `build_order.md` (Exp 6),
+   `build_fx.md` (Exp 7); `deck_model_notes.md` now has a `## Build {}` section.
+   `deckkit.py` gained the `Build` IR + `BUILD_EFFECTS` + read/verify half
+   (`extract_builds`/`verify_builds`) — builds are NOT scriptable so there is no
+   build path (byte-surgery only). Key results:
+   - build = `KN.BuildArchive` (effect in a transition-shaped `animationAttributes`,
+     targets its object by `drawable.identifier`) + `KN.BuildChunkArchive`
+     (timing), referenced from new `builds`/`buildChunks` lists on `KN.SlideArchive`;
+     `Document` flips `hasExplicitBuilds -> true`.
+   - **order = list position** (no explicit order field; Exp 6).
+   - build effects: `apple:dissolve character`, `apple:move in character`
+     (distinct from transition strings; ` character` suffix on text builds).
+   - **bonus:** builds serialize `direction` (int, Move In = 13) — the same
+     `animationAttributes` field transitions omit at default (feeds the direction
+     fixture below).
+   Open follow-ups: full build-effect catalog; test whether ` character` suffix is
+   object-type-qualified (re-run on an image/shape); build-Out / Action kinds.
 2. **Direction fixture** (golden-fixture; procedure in
-   `duration_direction.md`) — the one remaining transition unknown.
+   `duration_direction.md`) — the one remaining transition unknown. Exp 7 shows
+   the field is `animationAttributes.direction` (int enum), so the fixture just
+   needs to confirm the transition side uses the same slot/values.
 3. **Backend:** the transition half (effect/duration/delay/automatic) is fully
-   AppleScript-scriptable and needs NO pack; start there. Builds/direction/
-   byte-surgery need regenerated 15.3 mappings (see `versions.md`).
+   AppleScript-scriptable and needs NO pack; DONE. Builds/direction/byte-surgery
+   need regenerated 15.3 mappings (see `versions.md`) — the build write side is
+   the main remaining backend work (read/verify already implemented).
 
 Update this file and the per-experiment notes as you go.
 

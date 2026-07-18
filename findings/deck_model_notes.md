@@ -146,6 +146,87 @@ samples/deck_example.key --verify` -> `VERIFY PASS` (4 slides, dissolve/push+
 auto/magic-move). This is the concrete proof the transition model lowers
 faithfully. Builds/direction remain future work (non-scriptable).
 
+## 6. Build {} — object builds (Phase 2, Exps 5-7)
+
+Reverse-engineered from `build_in.md` (Exp 5), `build_order.md` (Exp 6),
+`build_fx.md` (Exp 7). Unlike Magic Move, a build **does** persist an explicit
+object reference, so the model carries a real target ref.
+
+### What the format stores
+
+A build lives on the slide as **two parallel objects** referenced from two new
+lists on `KN.SlideArchive` (`builds` + `buildChunks`):
+
+```
+KN.BuildArchive:                 # the effect definition
+  attributes:
+    animationAttributes:         # SAME struct as a transition (Sec 1)
+      animationType: In          # In == build-in (Transition == slide transition)
+      effect: <string>           # apple:* enum, e.g. "apple:dissolve character"
+      duration: <float s>
+      delay: <float s>
+      direction: <int>           # only for directional effects (Move In = 13); omitted otherwise
+    customBounce / customTravelDistance / ...   # per-effect option bag (like transitions)
+    customTextDelivery: kTextDeliveryByObject|ByCharacter
+    customDeliveryOption: kDeliveryOptionForward|Random
+    eventTrigger: <int>          # start trigger; 1 == On Click
+  delivery: All at Once | By Paragraph | ...
+  drawable: { identifier: <drawable id> }   # TARGET OBJECT, explicit
+KN.BuildChunkArchive:            # the timing / sequencing unit
+  automatic: <bool>             # false == On Click
+  delay: <float s>
+  duration: <float s>           # MIRRORS animationAttributes.duration
+  buildId: {lower,upper}        # volatile 64-bit id, regenerated per save
+```
+
+`Document.iwa.yaml` caches `hasExplicitBuilds` (flips true) + `buildEventCount` —
+derived mirrors, not source of truth (like `hasTransition`).
+
+**Order:** delivery order == **position in the `builds`/`buildChunks` lists**.
+There is NO explicit order/index integer (Exp 6). So builds are an ordered list.
+
+### Proposed `Deck` build model
+
+```
+Build {
+  target: ObjectRef            # -> KN.BuildArchive.drawable.identifier (compile-time -> real drawable id)
+  kind: BuildKind = In         # In | Out (| Action?) -> animationAttributes.animationType
+  effect: BuildEffectKind      # enum below -> animationAttributes.effect
+  duration_s: float = 1.0      # -> animationAttributes.duration AND chunk.duration (write both)
+  delay_s: float = 0.0
+  trigger: Trigger = OnClick   # OnClick|AfterPrevious|WithPrevious -> eventTrigger + chunk.automatic
+  # sparse per-effect / delivery bag, exactly like Transition.options:
+  options: map<string,scalar> = {}   # direction, customBounce, customTextDelivery,
+                                      # customDeliveryOption, delivery, ...
+}
+# Slide gains:  builds: list<Build>   # ORDER = delivery order (Exp 6)
+```
+
+### BuildEffectKind -> archive `effect` string (verified subset in bold)
+
+Build effects reuse the `apple:*` namespace but are **distinct strings** from
+transitions (note the ` character` suffix on the text-build variants):
+- **Dissolve -> `apple:dissolve character`**
+- **MoveIn -> `apple:move in character`** (directional; carries `direction` int)
+
+Open: whether the ` character` suffix is object-type-qualified (re-test on a
+non-text object). Full build-effect catalog is future work (mirror the 43-effect
+transition sweep once a non-scriptable capture path exists).
+
+### Backend implications
+
+- Builds are **NOT in Keynote's AppleScript dictionary** — there is no scriptable
+  setter (confirmed: they had to be added by hand in the Animate inspector). So
+  unlike the transition half, the build backend **cannot** use the osascript
+  path. It needs byte-level template surgery, which requires regenerated 15.3
+  `pack` mappings (`versions.md`) — same blocker as transition `custom*` knobs.
+- `deckkit.py` therefore models builds + implements the **read/verify** half
+  (extract builds from an unpacked deck, compare as an ordered list) but leaves
+  the write side as documented-future.
+- The target ref is explicit (`drawable.identifier`), so builds do NOT have Magic
+  Move's runtime-matching ambiguity: the compiler resolves `target` to the
+  object's real drawable id at emit time.
+
 ## 5. Status of unknowns feeding this model
 
 | Knob | Source of truth | Author via | Status |
@@ -156,4 +237,8 @@ faithfully. Builds/direction remain future work (non-scriptable).
 | magic-move options | `custom*` | (not scriptable) surgery/defaults | partial |
 | direction | (unknown field) | golden fixture | TODO |
 | magic-id | not stored | compile-time construction | done (conceptually) |
-| builds | (unknown) | golden fixture (Phase 2) | TODO |
+| build structure | slide `builds`/`buildChunks` + `KN.Build{,Chunk}Archive` | (not scriptable) surgery | done (Exp 5) |
+| build effect/timing | build `animationAttributes` (+ chunk `duration`) | (not scriptable) surgery | done (Exp 7) |
+| build order | list position (no order field) | list order | done (Exp 6) |
+| build target ref | `KN.BuildArchive.drawable.identifier` | compile-time id resolution | done (Exp 5) |
+| build direction | `animationAttributes.direction` (int, e.g. 13) | (not scriptable) surgery | done (Exp 7) |
