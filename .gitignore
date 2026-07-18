@@ -38,6 +38,7 @@ playground.xcworkspace
 # .swiftpm
 
 .build/
+build/keynote-parser/
 
 # CocoaPods
 #

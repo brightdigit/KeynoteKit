@@ -20,6 +20,18 @@ run = "python3 tools/build_deck.py examples/deck_example.json samples/deck_examp
 description = "Read object builds from .key file(s): mise run read-builds -- <file.key>... (needs keynote-parser)"
 run = "python3 tools/read_builds.py"
 
+[tasks.prepare-keynote-parser]
+description = "Assemble and validate the cached Keynote 15.3 hybrid parser"
+run = "python3 tools/prepare_keynote_parser.py"
+
+[tasks.verify-pack]
+description = "Round-trip captured build, Action, and direction fixtures"
+run = "python3 tools/verify_hybrid_parser.py"
+
+[tasks.authored-build-smoke]
+description = "Generate, structurally verify, and reopen the authored acceptance deck"
+run = "python3 tools/authored_build_smoke.py"
+
 [tasks.transitions]
 description = "Experiment 1: transition present vs absent"
 run = "python3 tools/run_experiment.py transitions --generate generators/transition_matrix.applescript"
