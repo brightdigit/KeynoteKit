@@ -322,6 +322,38 @@ _BUILD_RE = re.compile(
 )
 _DRAWABLE_RE = re.compile(r"drawable:\s*\n\s*identifier:\s*'?(\d+)'?")
 
+# Per-build option keys (the sparse bag Build.options represents): effect knobs
+# + text delivery + start trigger. Captured from the KN.BuildArchive block.
+_BUILD_OPTION_KEYS = (
+    "customBounce", "customTravelDistance", "customTwist",
+    "customTextDelivery", "customDeliveryOption", "delivery", "eventTrigger",
+)
+
+
+def _coerce_scalar(v: str):
+    """true/false -> bool, ints/floats -> number, else the stripped string."""
+    if v in ("true", "false"):
+        return v == "true"
+    try:
+        return int(v)
+    except ValueError:
+        pass
+    try:
+        return float(v)
+    except ValueError:
+        pass
+    return v
+
+
+def _parse_build_options(blk: str) -> dict:
+    """Extract the sparse option bag from one KN.BuildArchive block."""
+    opts = {}
+    for key in _BUILD_OPTION_KEYS:
+        m = re.search(rf"^\s*{key}:\s*(.+?)\s*$", blk, re.M)
+        if m:
+            opts[key] = _coerce_scalar(m.group(1))
+    return opts
+
 
 def _slide_yaml_files(unpacked_dir: str):
     import os
@@ -366,7 +398,9 @@ def extract_builds(unpacked_dir: str) -> list[dict]:
     Order is preserved as it appears in each slide file, which IS the delivery
     order (findings/build_order.md). Each dict carries the archive effect string,
     duration/delay (from animationAttributes), kind (animationType), the optional
-    `direction`, and the target `drawable` id.
+    `direction`, the target `drawable` id, and an `options` bag (customBounce /
+    customTravelDistance / customTextDelivery / customDeliveryOption / delivery /
+    eventTrigger) — the same sparse bag `Build.options` models.
     """
     out = []
     for path in _slide_yaml_files(unpacked_dir):
@@ -389,6 +423,7 @@ def extract_builds(unpacked_dir: str) -> list[dict]:
                 "delay": float(dly.group(1)) if dly else None,
                 "direction": int(dirn.group(1)) if dirn else None,
                 "drawable": draw.group(1) if draw else None,
+                "options": _parse_build_options(blk),
             })
     return out
 

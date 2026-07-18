@@ -16,6 +16,10 @@ run = "python3 tools/test_deckkit.py"
 description = "Build + verify the example deck (needs Keynote + keynote-parser)"
 run = "python3 tools/build_deck.py examples/deck_example.json samples/deck_example.key --verify"
 
+[tasks.read-builds]
+description = "Read object builds from .key file(s): mise run read-builds -- <file.key>... (needs keynote-parser)"
+run = "python3 tools/read_builds.py"
+
 [tasks.transitions]
 description = "Experiment 1: transition present vs absent"
 run = "python3 tools/run_experiment.py transitions --generate generators/transition_matrix.applescript"

@@ -237,6 +237,48 @@ def test_extract_and_verify_builds() -> None:
         check(not ok2, "verify_builds should FAIL when a build duration mismatches")
 
 
+def test_extract_build_options() -> None:
+    # A build carrying the full option bag: booleans, enums, and a
+    # space-containing `delivery` value must all round-trip into `options`.
+    with tempfile.TemporaryDirectory() as tmp:
+        idx = os.path.join(tmp, "Index")
+        os.makedirs(idx)
+        with open(os.path.join(idx, "Slide-0.iwa.yaml"), "w") as fh:
+            fh.write(
+                "    objects:\n"
+                "    - _pbtype: KN.BuildArchive\n"
+                "      attributes:\n"
+                "        animationAttributes:\n"
+                "          animationType: In\n"
+                "          delay: 0.0\n"
+                "          direction: 13\n"
+                "          duration: 0.5\n"
+                "          effect: apple:move in character\n"
+                "          writingDirectionIsRtl: false\n"
+                "        customBounce: true\n"
+                "        customDeliveryOption: kDeliveryOptionRandom\n"
+                "        customTextDelivery: kTextDeliveryByCharacter\n"
+                "        eventTrigger: 1\n"
+                "      delivery: By Paragraph\n"
+                "      drawable:\n"
+                "        identifier: '2652601'\n"
+                "      duration: 0.0\n"
+            )
+        got = deckkit.extract_builds(tmp)
+        check(len(got) == 1, "expected 1 build")
+        opts = got[0]["options"]
+        check(opts.get("customBounce") is True, "customBounce must coerce to bool")
+        check(opts.get("eventTrigger") == 1, "eventTrigger must coerce to int")
+        check(opts.get("delivery") == "By Paragraph",
+              "delivery must keep its space-containing string")
+        check(opts.get("customTextDelivery") == "kTextDeliveryByCharacter",
+              "customTextDelivery enum captured")
+        check(opts.get("customDeliveryOption") == "kDeliveryOptionRandom",
+              "customDeliveryOption enum captured")
+        # BuildArchive.duration (0.0) must NOT leak into options
+        check("duration" not in opts, "options must not include BuildArchive.duration")
+
+
 def test_extract_transitions_excludes_builds() -> None:
     # A slide file with BOTH a Transition anim block and an In build block:
     # the animationType filter must route each to the right extractor.
@@ -282,6 +324,7 @@ def main() -> int:
                test_verify_positive_and_negative,
                test_parse_builds, test_unknown_build_effect_and_kind,
                test_build_effects_map, test_extract_and_verify_builds,
+               test_extract_build_options,
                test_extract_transitions_excludes_builds):
         fn()
     if FAILS:
