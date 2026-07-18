@@ -16,6 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import deckkit  # noqa: E402
+import archive_backend  # noqa: E402
 
 FAILS: list[str] = []
 
@@ -128,7 +129,7 @@ def test_verify_positive_and_negative() -> None:
 
 BUILD_SPEC = {
     "slides": [
-        {"items": [{"text": "Item 1"}],
+        {"items": [{"text": "Item 1"}, {"text": "Item 2"}],
          "builds": [
              {"effect": "dissolve", "kind": "In", "duration": 1.0,
               "delay": 0.0, "target": "item:0"},
@@ -169,6 +170,7 @@ def test_unknown_build_effect_and_kind() -> None:
 
 
 def test_build_effects_map() -> None:
+    check(len(deckkit.BUILD_EFFECTS) == 8, "expected all 8 verified build effects")
     check(deckkit.BUILD_EFFECTS["dissolve"][0] == "apple:dissolve character",
           "dissolve build archive string")
     check(deckkit.BUILD_EFFECTS["move_in"][0] == "apple:move in character",
@@ -176,6 +178,68 @@ def test_build_effects_map() -> None:
     # builds are not scriptable: the AppleScript term must always be None
     for name, (s, term) in deckkit.BUILD_EFFECTS.items():
         check(bool(s) and term is None, f"{name} build must have archive str, no term")
+
+
+def test_build_validation() -> None:
+    cases = [
+        ({"slides": [{"items": [{"text": "x"}], "builds": [
+            {"effect": "dissolve", "target": "item:1"}]}]}, "bounds"),
+        ({"slides": [{"items": [{"text": "x"}], "builds": [
+            {"effect": "dissolve", "target": "shape:0"}]}]}, "symbolic target"),
+        ({"slides": [{"items": [{"text": "x"}], "builds": [
+            {"effect": "dissolve", "target": "item:0",
+             "trigger": "after_previous"}]}]}, "unsupported trigger"),
+        ({"slides": [{"items": [{"text": "x"}], "builds": [
+            {"effect": "dissolve", "target": "item:0",
+             "action_attributes": {"actionAcceleration": "kEaseBoth"}}]}]},
+         "In action payload"),
+        ({"slides": [{"items": [{"text": "x"}], "builds": [
+            {"kind": "Action", "effect": "apple:action-motion-path",
+             "target": "item:0", "action_attributes": {"eventTrigger": 1}}]}]},
+         "reserved Action key"),
+    ]
+    for spec, label in cases:
+        try:
+            deckkit.deck_from_dict(spec)
+            FAILS.append(label + " should raise")
+        except ValueError:
+            pass
+    action = deckkit.deck_from_dict({"slides": [{
+        "items": [{"text": "x"}],
+        "transition": {"effect": "move_in", "direction": 11},
+        "builds": [{"kind": "Action", "effect": "apple:action-motion-path",
+                    "target": "item:0", "action_attributes": {
+                        "actionAcceleration": "kEaseBoth",
+                        "actionMotionPathSource": {"editableBezierPathSource": {
+                            "naturalSize": {"width": 50.0, "height": 0.0}}}}}],
+    }]})
+    check(action.slides[0].transition.direction == 11, "transition direction parsed")
+    check(action.slides[0].builds[0].action_attributes["actionAcceleration"] == "kEaseBoth",
+          "nested Action attributes parsed")
+
+
+def test_archive_emission() -> None:
+    dissolve_in = deckkit.Build(target="item:0", kind="In", effect="dissolve")
+    dissolve_out = deckkit.Build(target="item:0", kind="Out", effect="dissolve")
+    action = deckkit.Build(
+        target="item:0", kind="Action", effect="apple:action-motion-path",
+        action_attributes={"actionAcceleration": "kEaseBoth",
+                           "actionMotionPathSource": {"path": {"nodes": [1, 2]}}},
+    )
+    for build, kind in ((dissolve_in, "In"), (dissolve_out, "Out"),
+                        (action, "Action")):
+        archive, chunk = archive_backend.build_archive_records(build, "42", "100", "101")
+        obj = archive["objects"][0]
+        anim = obj["attributes"]["animationAttributes"]
+        check(anim["animationType"] == kind, f"{kind} animation type emission")
+        check(chunk["objects"][0]["build"]["identifier"] == "100",
+              f"{kind} chunk back-reference")
+        check(obj["drawable"]["identifier"] == "42", f"{kind} drawable emission")
+    attrs = archive_backend.build_archive_records(action, "42", "100", "101")[0]["objects"][0]["attributes"]
+    check(attrs["actionMotionPathSource"]["path"]["nodes"] == [1, 2],
+          "arbitrary nested Action attributes emitted verbatim")
+    check("customTextDelivery" not in attrs and "customDeliveryOption" not in attrs,
+          "Action omits In/Out delivery attributes")
 
 
 def _write_build_slide(path: str, effect: str, dur: float, dly: float,
@@ -323,7 +387,8 @@ def main() -> int:
                test_verify_handles_spaces, test_codegen,
                test_verify_positive_and_negative,
                test_parse_builds, test_unknown_build_effect_and_kind,
-               test_build_effects_map, test_extract_and_verify_builds,
+               test_build_effects_map, test_build_validation, test_archive_emission,
+               test_extract_and_verify_builds,
                test_extract_build_options,
                test_extract_transitions_excludes_builds):
         fn()

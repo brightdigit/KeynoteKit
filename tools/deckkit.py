@@ -44,6 +44,7 @@ import re
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
+from pathlib import Path
 
 # name -> (archive effect string, AppleScript enumerator term)
 # Full set from Keynote 15.3's Keynote.sdef `transition effects` enum; archive
@@ -106,12 +107,21 @@ EFFECTS: dict[str, tuple[str | None, str | None]] = {
 # " character" suffix marks the text-build variants. Extend as more builds are
 # reverse-engineered.
 BUILD_EFFECTS: dict[str, tuple[str | None, str | None]] = {
+    "appear": ("apple:bc-appear", None),
+    "blur": ("apple:blur character", None),
     "dissolve": ("apple:dissolve character", None),
+    "fade_and_move": ("apple:fade and move character", None),
+    "fade_in": ("com.apple.iWork.Keynote.FromDarkness", None),
+    "flip": ("apple:bc-flip", None),
     "move_in": ("apple:move in character", None),   # directional (carries `direction`)
+    "scale": ("apple:zoom character", None),
 }
 
-# The two build kinds seen so far map to KN.BuildArchive.animationType.
-BUILD_KINDS = {"In", "Out"}
+BUILD_KINDS = {"In", "Out", "Action"}
+ACTION_RESERVED_KEYS = {
+    "animationAttributes", "eventTrigger", "customTextDelivery",
+    "customDeliveryOption", "delivery",
+}
 
 
 @dataclass
@@ -127,12 +137,15 @@ class Transition:
     duration: float = 1.0
     delay: float = 0.0
     auto_advance: bool = False
+    direction: int | None = None
 
     def validate(self) -> None:
         if self.effect not in EFFECTS:
             raise ValueError(
                 f"unknown effect {self.effect!r}; known: {sorted(EFFECTS)}"
             )
+        if self.direction is not None and type(self.direction) is not int:
+            raise ValueError("transition direction must be an integer")
 
 
 @dataclass
@@ -158,17 +171,46 @@ class Build:
     target: str = ""
     trigger: str = "on_click"     # on_click | after_previous | with_previous
     options: dict = field(default_factory=dict)
+    action_attributes: dict = field(default_factory=dict)
 
     def validate(self) -> None:
-        if self.effect not in BUILD_EFFECTS:
-            raise ValueError(
-                f"unknown build effect {self.effect!r}; known: "
-                f"{sorted(BUILD_EFFECTS)}"
-            )
         if self.kind not in BUILD_KINDS:
             raise ValueError(
                 f"unknown build kind {self.kind!r}; known: {sorted(BUILD_KINDS)}"
             )
+        if self.trigger != "on_click":
+            raise ValueError(
+                f"unsupported build trigger {self.trigger!r}; only 'on_click' "
+                "can currently be written"
+            )
+        if self.kind == "Action":
+            if not isinstance(self.effect, str) or not self.effect:
+                raise ValueError("Action effect must be a raw archive effect string")
+            if not isinstance(self.action_attributes, dict):
+                raise ValueError("action_attributes must be a mapping")
+            reserved = ACTION_RESERVED_KEYS.intersection(self.action_attributes)
+            if reserved:
+                raise ValueError(
+                    f"action_attributes contains reserved structural keys: {sorted(reserved)}"
+                )
+            invalid_options = ACTION_RESERVED_KEYS.intersection(self.options)
+            if invalid_options:
+                raise ValueError(
+                    f"Action options contain text/structural keys: {sorted(invalid_options)}"
+                )
+        else:
+            if self.effect not in BUILD_EFFECTS:
+                raise ValueError(
+                    f"unknown build effect {self.effect!r}; known: "
+                    f"{sorted(BUILD_EFFECTS)}"
+                )
+            if self.action_attributes:
+                raise ValueError("action_attributes are only valid for Action builds")
+            action_options = sorted(k for k in self.options if k.startswith("action"))
+            if action_options:
+                raise ValueError(
+                    f"In/Out options contain action-only keys: {action_options}"
+                )
 
 
 @dataclass
@@ -186,11 +228,22 @@ class Deck:
     def validate(self) -> None:
         if not self.slides:
             raise ValueError("deck has no slides")
-        for s in self.slides:
+        for slide_index, s in enumerate(self.slides):
             if s.transition:
                 s.transition.validate()
             for b in s.builds:
                 b.validate()
+                match = re.fullmatch(r"item:(\d+)", b.target)
+                if not match:
+                    raise ValueError(
+                        f"slide {slide_index} build target must be zero-based 'item:N'"
+                    )
+                item_index = int(match.group(1))
+                if item_index >= len(s.items):
+                    raise ValueError(
+                        f"slide {slide_index} build target {b.target!r} is out of bounds "
+                        f"for {len(s.items)} item(s)"
+                    )
 
 
 # --- spec loading ------------------------------------------------------------
@@ -210,6 +263,7 @@ def deck_from_dict(d: dict) -> Deck:
                 duration=float(td.get("duration", 1.0)),
                 delay=float(td.get("delay", 0.0)),
                 auto_advance=bool(td.get("auto_advance", False)),
+                direction=td.get("direction"),
             )
         builds = [
             Build(
@@ -220,6 +274,7 @@ def deck_from_dict(d: dict) -> Deck:
                 target=str(bd.get("target", "")),
                 trigger=bd.get("trigger", "on_click"),
                 options=dict(bd.get("options", {})),
+                action_attributes=dict(bd.get("action_attributes", {})),
             )
             for bd in sd.get("builds", [])
         ]
@@ -244,8 +299,9 @@ def _as_str(s: str) -> str:
 def _transition_stmt(t: Transition, target: str) -> str:
     _, term = EFFECTS[t.effect]
     auto = "true" if t.auto_advance else "false"
+    subject = "transition properties" if target == "theSlide" else f"transition properties of {target}"
     return (
-        f"set transition properties of {target} to "
+        f"set {subject} to "
         f"{{transition effect:{term}, transition duration:{t.duration}, "
         f"transition delay:{t.delay}, automatic transition:{auto}}}"
     )
@@ -290,15 +346,22 @@ def generate_applescript(deck: Deck, out_path: str) -> str:
 
 
 def build(deck: Deck, out_path: str) -> None:
-    """Generate AppleScript and run it via osascript to produce out_path."""
+    """Build via AppleScript, adding archive-only fields through write-back."""
     deck.validate()
-    script = generate_applescript(deck, out_path)
-    with tempfile.NamedTemporaryFile(
-        "w", suffix=".applescript", delete=False, encoding="utf-8"
-    ) as fh:
-        fh.write(script)
-        script_path = fh.name
-    subprocess.run(["osascript", script_path], check=True)
+    needs_surgery = any(
+        s.builds or (s.transition and s.transition.direction is not None)
+        for s in deck.slides
+    )
+    with tempfile.TemporaryDirectory(prefix="keynotekit-base-") as tmp:
+        base_path = out_path if not needs_surgery else f"{tmp}/base.key"
+        script = generate_applescript(deck, base_path)
+        script_path = f"{tmp}/build.applescript"
+        with open(script_path, "w", encoding="utf-8") as fh:
+            fh.write(script)
+        subprocess.run(["osascript", script_path], check=True)
+        if needs_surgery:
+            from archive_backend import write_back
+            write_back(Path(base_path), Path(out_path), deck)
 
 
 # --- verification (unpack + compare transition fields) ----------------------
@@ -383,11 +446,13 @@ def extract_transitions(unpacked_dir: str) -> list[dict]:
             dur = _DUR_RE.search(block)
             dly = _DELAY_RE.search(block)
             au = _AUTO_RE.search(block)
+            direction = _DIRECTION_RE.search(block)
             out.append({
                 "effect": eff.group(1),
                 "duration": float(dur.group(1)) if dur else None,
                 "delay": float(dly.group(1)) if dly else None,
                 "auto": (au.group(1) == "true") if au else None,
+                "direction": int(direction.group(1)) if direction else None,
             })
     return out
 
@@ -441,6 +506,7 @@ def expected_transitions(deck: Deck) -> list[dict]:
                 "duration": t.duration,
                 "delay": t.delay,
                 "auto": t.auto_advance,
+                "direction": t.direction,
             })
     return exp
 
