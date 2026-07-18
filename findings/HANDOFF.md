@@ -154,16 +154,29 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
    - **bonus:** builds serialize `direction` (int, Move In = 13) — the same
      `animationAttributes` field transitions omit at default (feeds the direction
      fixture below).
-   Open follow-ups: full build-effect catalog; test whether ` character` suffix is
-   object-type-qualified (re-run on an image/shape); build-Out / Action kinds.
-2. **Direction fixture** (golden-fixture; procedure in
-   `duration_direction.md`) — the one remaining transition unknown. Exp 7 shows
-   the field is `animationAttributes.direction` (int enum), so the fixture just
-   needs to confirm the transition side uses the same slot/values.
+   Open follow-ups (Exps 8-11) are now STAGED in **`findings/builds_setup_2.md`**
+   with runnable base generators (`generators/base_shape_build.applescript`,
+   `generators/direction_base.applescript`): Exp 8 non-text/shape build (settles
+   the ` character` suffix question), Exp 9 build-effect catalog, Exp 10
+   Build-Out/Action, Exp 11 transition direction. Human authors the fixtures; then
+   diff/analysis is unattended. `deckkit` build read/verify is now unit-tested
+   (`tools/test_deckkit.py`, `mise run test` -> DECKKIT TEST PASS, 11 tests).
+2. **Direction fixture** (Exp 11) — the one remaining transition unknown; staged
+   in `builds_setup_2.md` (`generators/direction_base.applescript` makes a Move In
+   base; human changes only the Direction dropdown). Exp 7 shows the field is
+   `animationAttributes.direction` (int enum); the fixture confirms the transition
+   side uses the same slot/values.
 3. **Backend:** the transition half (effect/duration/delay/automatic) is fully
-   AppleScript-scriptable and needs NO pack; DONE. Builds/direction/byte-surgery
-   need regenerated 15.3 mappings (see `versions.md`) — the build write side is
-   the main remaining backend work (read/verify already implemented).
+   AppleScript-scriptable, needs NO pack; DONE + unit-tested. The build **write**
+   side needs regenerated 15.3 pack mappings — feasibility spiked in
+   **`findings/pack_mappings.md`**: the proto-definition half regenerates
+   unattended today (33 15.3 protos extracted + compiled; `proto-dump` is NOT
+   needed — the source ships a pure-Python `protodump.py`), but the
+   **`TSPRegistryMapping`** (archive-type-ID -> message-name table) is a
+   **runtime LLDB dump** of `[TSPRegistry sharedRegistry]` and is BLOCKED on
+   human/toolchain setup (Homebrew LLVM w/ matching Python + a debuggable re-sign
+   of the sandboxed Mac App Store app). Until that table exists for 15.3, byte
+   surgery can't map type IDs. Read/verify half already implemented.
 
 Update this file and the per-experiment notes as you go.
 
@@ -179,6 +192,12 @@ no pack. Extend with builds/direction once those are reverse-engineered.
 
 `versions.md`, `transition_present.md`, `effect_type.md`,
 `duration_direction.md` (+ Exp 3b), `magic_move_correspondence.md` (+ Exp 4b),
-`mm_duplicate.md` (Exp 4c), `deck_model_notes.md`, `builds_setup.md`.
+`mm_duplicate.md` (Exp 4c), `deck_model_notes.md`, `builds_setup.md`,
+`build_in.md` (Exp 5), `build_order.md` (Exp 6), `build_fx.md` (Exp 7),
+`builds_setup_2.md` (Exps 8-11, staged), `pack_mappings.md` (pack-regen
+feasibility spike).
 Generators added: `effect_type`, `duration_sweep`, `auto_advance`,
-`mm_duplicate`, `mm_shapes` (+ fixed `base_for_builds`).
+`mm_duplicate`, `mm_shapes`, `base_shape_build`, `direction_base`
+(+ fixed `base_for_builds`).
+Tests: `tools/test_deckkit.py` covers transition + build read/verify
+(`mise run test`).
