@@ -92,7 +92,14 @@ un-unattended:
 
 ## 5. The three options (this is the decision)
 
-### Option A — Cheap path first (reuse the 14.4 registry) — recommended
+> **RESOLVED (2026-07-17): Option A succeeded — outcome (a).** The hybrid (14.4
+> registry + 15.3 protos) packed `samples/regression_check.key` and **Keynote 15.3
+> opened the repacked file** (4 slides, matching the original). Type IDs are stable
+> across 14.4→15.3; all 631 registry entries resolved against the 15.3 protos with
+> no gaps. **The write backend is viable now; Option B is not needed** unless a
+> later authoring test exposes a shifted type-ID. Full writeup: `pack_option_a.md`.
+
+### Option A — Cheap path first (reuse the 14.4 registry) — ✅ DONE, ACCEPTED
 **Idea:** the installed `mapping.py` already contains the **14.4**
 `TSPRegistryMapping` (631 entries). The 15.3 type set is nearly identical. **If**
 Apple kept the integer type IDs stable across 14.4→15.3, we can pair the 14.4

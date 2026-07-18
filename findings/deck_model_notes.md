@@ -56,7 +56,8 @@ Transition {
   # NOTE: none of these are AppleScript-settable (inspector-only); the
   # scriptable backend leaves them at Keynote defaults.
   options: map<string, scalar> = {}   # e.g. {"customBounce": true}
-  # direction: TBD (not scriptable; proto3-default-omitted; see duration note)
+  # direction: int (Exp 11) -> animationAttributes.direction; absent at default,
+  #   materializes only when set (e.g. Move In non-default = 11). Same slot builds use.
 }
 ```
 
@@ -146,10 +147,11 @@ samples/deck_example.key --verify` -> `VERIFY PASS` (4 slides, dissolve/push+
 auto/magic-move). This is the concrete proof the transition model lowers
 faithfully. Builds/direction remain future work (non-scriptable).
 
-## 6. Build {} — object builds (Phase 2, Exps 5-7)
+## 6. Build {} — object builds (Phase 2, Exps 5-11)
 
 Reverse-engineered from `build_in.md` (Exp 5), `build_order.md` (Exp 6),
-`build_fx.md` (Exp 7). Unlike Magic Move, a build **does** persist an explicit
+`build_fx.md` (Exp 7), `build_shape.md` (Exp 8), `build_catalog.md` (Exp 9),
+`build_out.md` (Exp 10). Unlike Magic Move, a build **does** persist an explicit
 object reference, so the model carries a real target ref.
 
 ### What the format stores
@@ -161,11 +163,11 @@ lists on `KN.SlideArchive` (`builds` + `buildChunks`):
 KN.BuildArchive:                 # the effect definition
   attributes:
     animationAttributes:         # SAME struct as a transition (Sec 1)
-      animationType: In          # In == build-in (Transition == slide transition)
-      effect: <string>           # apple:* enum, e.g. "apple:dissolve character"
+      animationType: In          # In | Out | Action (Transition == slide transition). Exp 10.
+      effect: <string>           # apple:* / com.apple.iWork.Keynote.* enum, e.g. "apple:dissolve character"
       duration: <float s>
       delay: <float s>
-      direction: <int>           # only for directional effects (Move In = 13); omitted otherwise
+      direction: <int>           # only for directional effects (sidezoom=21, zoom=44); omitted otherwise
     customBounce / customTravelDistance / ...   # per-effect option bag (like transitions)
     customTextDelivery: kTextDeliveryByObject|ByCharacter
     customDeliveryOption: kDeliveryOptionForward|Random
@@ -185,6 +187,22 @@ derived mirrors, not source of truth (like `hasTransition`).
 **Order:** delivery order == **position in the `builds`/`buildChunks` lists**.
 There is NO explicit order/index integer (Exp 6). So builds are an ordered list.
 
+**In vs Out vs Action (Exp 10):** all three are the **same `KN.BuildArchive`
+type**, discriminated only by the `animationType` string (`In` / `Out` / `Action`)
+— the same slot that tags a slide transition. In and Out are structurally
+identical (same effect enum + text-delivery knobs). **Action is a distinct payload
+shape:** it drops the `customTextDelivery` / `customDeliveryOption` text knobs and
+adds `effect: apple:action-motion-path`, `actionAcceleration: kEaseBoth`, and an
+`actionMotionPathSource` bezier path. This argues for modelling the animation
+payload as a **variant/sum** (transition-style build vs action build) rather than
+one flat all-optional struct. The `drawable` target and `KN.BuildChunkArchive`
+timing unit are shared across all three.
+
+**Shape builds (Exp 8):** a build on a non-text object (rectangle) serializes
+identically to the text case — Dissolve → `apple:dissolve character`, suffix and
+all. The ` character` suffix is **part of the effect enum's fixed spelling, not an
+object-type marker**, so `BUILD_EFFECTS` stays a single flat name→string map.
+
 ### Proposed `Deck` build model
 
 ```
@@ -202,24 +220,39 @@ Build {
 # Slide gains:  builds: list<Build>   # ORDER = delivery order (Exp 6)
 ```
 
-### BuildEffectKind -> archive `effect` string (verified subset in bold)
+### BuildEffectKind -> archive `effect` string (Exp 9 catalog)
 
-Build effects reuse the `apple:*` namespace but are **distinct strings** from
-transitions (note the ` character` suffix on the text-build variants):
-- **Dissolve -> `apple:dissolve character`**
-- **MoveIn -> `apple:move in character`** (directional; carries `direction` int)
+Build effects span **three naming families** — the ` character` suffix is NOT
+universal (Exp 8/9 retire the earlier "suffix everywhere" generalization):
 
-Open: whether the ` character` suffix is object-type-qualified (re-test on a
-non-text object). Full build-effect catalog is future work (mirror the 43-effect
-transition sweep once a non-scriptable capture path exists).
+| Effect (inspector) | archive `effect` string | options |
+|---|---|---|
+| **Dissolve** | `apple:dissolve character` | — |
+| **Appear** | `apple:bc-appear` | — |
+| **Fade In** | `com.apple.iWork.Keynote.FromDarkness` | — (only non-`apple:` name) |
+| **Fade and Move** | `apple:fade and move character` | `customTravelDistance` |
+| **Scale** | `apple:zoom character` | `direction=44`, `customBounce` |
+| **Blur** | `apple:blur character` | — |
+| **Flip** | `apple:bc-flip` | `customBounce` |
+| **Move In** | `apple:sidezoom` | `direction=21` |
+
+**Reconciliation flag:** the Exp 9 "Move In" fixture serialized as `apple:sidezoom`
+(dir 21), which is a *different* effect from Exp 7's `apple:move in character`
+(dir 13) — the inspector selection likely differed. Keep the Exp 7 `move_in` row;
+treat `sidezoom` as its own entry pending a re-shoot. `direction` ordinals are
+effect-relative (not a shared enum). See `build_catalog.md` for the full capture.
 
 ### Backend implications
 
 - Builds are **NOT in Keynote's AppleScript dictionary** — there is no scriptable
   setter (confirmed: they had to be added by hand in the Animate inspector). So
   unlike the transition half, the build backend **cannot** use the osascript
-  path. It needs byte-level template surgery, which requires regenerated 15.3
-  `pack` mappings (`versions.md`) — same blocker as transition `custom*` knobs.
+  path. It needs byte-level template surgery via `pack`.
+- **The `pack` blocker is now cleared (2026-07-17).** `pack_option_a.md` proved the
+  14.4 registry + regenerated 15.3 protos round-trips a deck Keynote 15.3 accepts.
+  So byte-surgery for builds/direction is **viable now** (no Option B / LLDB). Next
+  step is an authoring smoke test: inject a `KN.BuildArchive` into unpacked YAML,
+  repack, reopen, and verify via `deckkit.extract_builds`.
 - `deckkit.py` therefore models builds + implements the **read/verify** half
   (extract builds from an unpacked deck, compare as an ordered list) but leaves
   the write side as documented-future.
@@ -235,10 +268,13 @@ transition sweep once a non-scriptable capture path exists).
 | duration/delay | animationAttributes | AppleScript | done |
 | auto-advance | `isAutomatic` | AppleScript `automatic transition` | done |
 | magic-move options | `custom*` | (not scriptable) surgery/defaults | partial |
-| direction | (unknown field) | golden fixture | TODO |
+| direction | `animationAttributes.direction` (int) | (not scriptable) surgery | done (Exp 11) |
 | magic-id | not stored | compile-time construction | done (conceptually) |
 | build structure | slide `builds`/`buildChunks` + `KN.Build{,Chunk}Archive` | (not scriptable) surgery | done (Exp 5) |
 | build effect/timing | build `animationAttributes` (+ chunk `duration`) | (not scriptable) surgery | done (Exp 7) |
+| build effect catalog | build `effect` string (8 effects) | (not scriptable) surgery | done (Exp 9) |
+| build In/Out/Action | `animationAttributes.animationType` | (not scriptable) surgery | done (Exp 10) |
 | build order | list position (no order field) | list order | done (Exp 6) |
 | build target ref | `KN.BuildArchive.drawable.identifier` | compile-time id resolution | done (Exp 5) |
+| pack write-backend | 14.4 registry + 15.3 protos round-trip | byte-surgery | **viable (Option A, `pack_option_a.md`)** |
 | build direction | `animationAttributes.direction` (int, e.g. 13) | (not scriptable) surgery | done (Exp 7) |

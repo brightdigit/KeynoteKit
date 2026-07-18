@@ -45,11 +45,15 @@ Output: unpacked YAML in `unpacked/<exp>/{A,B}` (normalized in place), diffs in
 ## Toolchain validation status (Phase 0: DONE)
 
 - `unpack` works and yields authentic IWA YAML (`KN.SlideArchive`, `TSP.*`).
-- **`pack` is broken for 15.3**: repacked files do not reopen in Keynote
-  (keynote-parser maps <= 14.4). Phase 1 does NOT need pack (unpack+diff only).
-  Regenerating mappings (upstream `dumper/generate_mapping.py` + proto-dump
-  against `Keynote.framework`) is a prerequisite ONLY for the pack-based
-  template-surgery backend. Details: `findings/versions.md`.
+- **`pack` — was broken on the stock wheel; NOW FIXED for 15.3 (2026-07-17).**
+  The stock keynote-parser (14.4 protos) produced files Keynote 15.3 rejected.
+  **Option A** (`findings/pack_option_a.md`) pairs the installed **14.4
+  `TSPRegistryMapping`** with **regenerated 15.3 protos** and round-trips a deck
+  Keynote 15.3 **accepts and opens** (verified on `samples/regression_check.key`,
+  4 slides). Type IDs are stable 14.4→15.3, so the LLDB runtime dump (Option B) is
+  **not needed**. The hybrid package lives in the session scratchpad
+  (`pack_optionA/`); promoting it to a reproducible vendored schema is a next step.
+  Details: `pack_option_a.md`, `pack_backend_approach.md` (§5 RESOLVED), `versions.md`.
 - `mise run selftest` -> `SELFTEST PASS`.
 
 ## Where transitions live (established)
@@ -154,29 +158,36 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
    - **bonus:** builds serialize `direction` (int, Move In = 13) — the same
      `animationAttributes` field transitions omit at default (feeds the direction
      fixture below).
-   Open follow-ups (Exps 8-11) are now STAGED in **`findings/builds_setup_2.md`**
-   with runnable base generators (`generators/base_shape_build.applescript`,
-   `generators/direction_base.applescript`): Exp 8 non-text/shape build (settles
-   the ` character` suffix question), Exp 9 build-effect catalog, Exp 10
-   Build-Out/Action, Exp 11 transition direction. Human authors the fixtures; then
-   diff/analysis is unattended. `deckkit` build read/verify is now unit-tested
-   (`tools/test_deckkit.py`, `mise run test` -> DECKKIT TEST PASS, 11 tests).
-2. **Direction fixture** (Exp 11) — the one remaining transition unknown; staged
-   in `builds_setup_2.md` (`generators/direction_base.applescript` makes a Move In
-   base; human changes only the Direction dropdown). Exp 7 shows the field is
-   `animationAttributes.direction` (int enum); the fixture confirms the transition
-   side uses the same slot/values.
-3. **Backend:** the transition half (effect/duration/delay/automatic) is fully
-   AppleScript-scriptable, needs NO pack; DONE + unit-tested. The build **write**
-   side needs regenerated 15.3 pack mappings — feasibility spiked in
-   **`findings/pack_mappings.md`**: the proto-definition half regenerates
-   unattended today (33 15.3 protos extracted + compiled; `proto-dump` is NOT
-   needed — the source ships a pure-Python `protodump.py`), but the
-   **`TSPRegistryMapping`** (archive-type-ID -> message-name table) is a
-   **runtime LLDB dump** of `[TSPRegistry sharedRegistry]` and is BLOCKED on
-   human/toolchain setup (Homebrew LLVM w/ matching Python + a debuggable re-sign
-   of the sandboxed Mac App Store app). Until that table exists for 15.3, byte
-   surgery can't map type IDs. Read/verify half already implemented.
+   **Exps 8-11 are now DONE (2026-07-17)** — fixtures authored + analyzed:
+   - **Exp 8** (`build_shape.md`): the ` character` suffix is **NOT**
+     object-type-qualified — a shape's Dissolve = `apple:dissolve character` too.
+     `BUILD_EFFECTS` stays a flat name→string map.
+   - **Exp 9** (`build_catalog.md`): 8-effect catalog across three naming families
+     (`apple:* character`, `apple:bc-*`, `com.apple.iWork.Keynote.*`). Options:
+     `direction` (sidezoom/zoom), `customBounce` (scale/flip), `customTravelDistance`
+     (fade+move). One reconciliation flag: the Move-In fixture came out `apple:sidezoom`,
+     not Exp 7's `apple:move in character`.
+   - **Exp 10** (`build_out.md`): In/Out/Action are one `animationType` enum on the
+     same `KN.BuildArchive`. Action is a distinct payload (motion path + acceleration,
+     drops text-delivery knobs) → model the payload as a variant/sum.
+   - **Exp 11** (`direction.md`): transition `direction` = `animationAttributes.direction`
+     (int), absent at default, = 11 for one non-default Move In. Same slot builds use.
+   `deckkit` build read/verify is unit-tested (`tools/test_deckkit.py`,
+   `mise run test` -> DECKKIT TEST PASS, 11 tests). Proposed `BUILD_EFFECTS` rows
+   from Exp 9 are in `build_catalog.md` (not yet wired into `deckkit.py`).
+2. **Direction (Exp 11) — DONE.** `animationAttributes.direction` (int), absent at
+   default, materializes when set (Move In non-default = 11); transitions reuse the
+   builds' slot. To map the full enum (top/bottom/left/right/…), author extra
+   direction fixtures. See `direction.md`.
+3. **Backend — pack write side is now UNBLOCKED (Option A).** Transition half stays
+   fully AppleScript-scriptable (DONE + unit-tested). The build/direction **write**
+   side needs `pack`, which **now works on 15.3** via the 14.4 registry + 15.3
+   protos (`pack_option_a.md`). The runtime LLDB `TSPRegistryMapping` dump
+   (Option B) is NOT required — type IDs proved stable. **Next:**
+   (a) promote the scratchpad hybrid schema to a reproducible vendored keynote-parser;
+   (b) authoring smoke test — inject a `KN.BuildArchive` into unpacked YAML, repack,
+   reopen, verify via `deckkit.extract_builds`;
+   (c) widen fidelity evidence (a builds-bearing deck + the transition-direction fixtures).
 
 Update this file and the per-experiment notes as you go.
 
@@ -194,8 +205,11 @@ no pack. Extend with builds/direction once those are reverse-engineered.
 `duration_direction.md` (+ Exp 3b), `magic_move_correspondence.md` (+ Exp 4b),
 `mm_duplicate.md` (Exp 4c), `deck_model_notes.md`, `builds_setup.md`,
 `build_in.md` (Exp 5), `build_order.md` (Exp 6), `build_fx.md` (Exp 7),
-`builds_setup_2.md` (Exps 8-11, staged), `pack_mappings.md` (pack-regen
-feasibility spike).
+`build_shape.md` (Exp 8), `build_catalog.md` (Exp 9), `build_out.md` (Exp 10),
+`direction.md` (Exp 11), `builds_setup_2.md` (Exps 8-11 setup),
+`pack_mappings.md` (pack-regen feasibility spike),
+`pack_backend_approach.md` (write-backend decision, §5 RESOLVED),
+`pack_option_a.md` (Option A — pack round-trip ACCEPTED).
 Generators added: `effect_type`, `duration_sweep`, `auto_advance`,
 `mm_duplicate`, `mm_shapes`, `base_shape_build`, `direction_base`
 (+ fixed `base_for_builds`).
