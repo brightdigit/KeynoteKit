@@ -72,10 +72,11 @@ mise exec -- osascript generators/base_for_builds.applescript \
 |---|---|---|
 | Appear | `fixtures/build_cat_appear.key` | simplest; baseline (may carry no anim effect) |
 | Dissolve | `fixtures/build_cat_dissolve.key` | already known (`apple:dissolve character`) — confirms method |
-| Move In | `fixtures/build_cat_movein.key` | directional (`direction` int) |
-| Fade In | `fixtures/build_cat_fadein.key` | maybe `customTravelDistance`? |
+| Fly In | `fixtures/build_cat_movein.key` | directional (`direction` int) |
+| Fade and Scale | `fixtures/build_cat_fadein.key` | maybe `customTravelDistance` / `customScale`? |
 | Fade and Move | `fixtures/build_cat_fademove.key` | transition twin carries `customTravelDistance` |
 | Scale | `fixtures/build_cat_scale.key` | transition twin carries `customBounce` |
+| Shift and Scale | `fixtures/build_cat_shiftscale.key` | scale + directional (`direction`) |
 | Blur | `fixtures/build_cat_blur.key` | text/CA effect family |
 | Flip | `fixtures/build_cat_flip.key` | 3D → likely `customBounce` / `direction` |
 
