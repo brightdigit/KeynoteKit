@@ -12,9 +12,8 @@ Please open it in Keynote Creator Studio 15.3, do not save over it, and:
 3. Advance to slide 2 and confirm the Move In transition uses the authored
    non-default direction.
 
-This visual check is currently also a blocker investigation: unattended Keynote
-automation opens the file and reports two slides, but object access fails with
-AppleEvent `-10000` (and the minimal one-build artifact invalidated the Keynote
-connection with `-609`). An unmodified Action fixture round-tripped by the same
-hybrid parser reopens and reports its five text items successfully, isolating the
-problem to newly authored build archives rather than ordinary parser packing.
+The check was completed on 2026-07-18: the acceptance deck crashes Keynote 15.3
+with `EXC_BREAKPOINT (SIGTRAP)` in the Keynote animation framework. Do not reopen
+the artifact except for controlled diagnostics. An unmodified Action fixture
+round-tripped by the same hybrid parser reopens successfully, isolating the
+problem to newly authored build graph state rather than ordinary parser packing.

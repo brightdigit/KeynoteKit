@@ -43,13 +43,18 @@ direction.
 
 ## Blocking Keynote reopen result
 
-The milestone is **not complete**. Keynote automation can open the generated
-file and report two slides, but querying its text items fails with AppleEvent
-`-10000`. A minimal newly-authored one-build deck subsequently invalidated the
-Keynote connection with `-609`. In contrast, the captured authentic Action deck
-packed without modification through this exact hybrid parser reopens and reports
-five text items, so the 15.3 schemas and general pack path are sound; some
-new-build invariant not visible in the decoded YAML remains missing.
+The milestone is **not complete**. Human reopening confirmed that the generated
+deck crashes Keynote 15.3 (7050.0.24) with `EXC_BREAKPOINT (SIGTRAP)`. The
+application-specific backtrace throws from `-[__NSSetM addObject:]` inside the
+Keynote animation framework while processing a UI event. This explains the
+earlier AppleEvent `-10000` and invalid connection `-609`: they were consequences
+of a real application crash, not an automation-only limitation.
+
+In contrast, the captured authentic Action deck packed without modification
+through this exact hybrid parser reopens and reports five text items, so the 15.3
+schemas and general pack path are sound; some newly-authored animation graph
+invariant not visible in the decoded YAML remains missing or internally
+inconsistent.
 
 Preserved diagnostic artifacts:
 
