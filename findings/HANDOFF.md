@@ -179,7 +179,7 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
    default, materializes when set (Move In non-default = 11); transitions reuse the
    builds' slot. To map the full enum (top/bottom/left/right/…), author extra
    direction fixtures. See `direction.md`.
-3. **Backend — pack write side is now UNBLOCKED (Option A).** Transition half stays
+3. **Backend — Option A authoring is implemented but BLOCKED on reopen.** Transition half stays
    fully AppleScript-scriptable (DONE + unit-tested). The build/direction **write**
    side needs `pack`, which **now works on 15.3** via the 14.4 registry + 15.3
    protos (`pack_option_a.md`). The runtime LLDB `TSPRegistryMapping` dump
@@ -188,6 +188,11 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
    (b) authoring smoke test — inject a `KN.BuildArchive` into unpacked YAML, repack,
    reopen, verify via `deckkit.extract_builds`;
    (c) widen fidelity evidence (a builds-bearing deck + the transition-direction fixtures).
+   The 2026-07-18 authored acceptance deck structurally round-trips but crashes
+   Keynote 15.3 with `EXC_BREAKPOINT/SIGTRAP` in the animation framework. An
+   unmodified Action fixture round-tripped by the same hybrid parser reopens,
+   isolating a missing newly-authored animation graph invariant. Current status,
+   isolated-deck experiments, and completion gates: `findings/write_backend.md`.
 
 Update this file and the per-experiment notes as you go.
 

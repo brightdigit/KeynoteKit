@@ -64,8 +64,31 @@ Preserved diagnostic artifacts:
   control (session-local).
 
 Do not mark the write backend complete until a newly authored build reopens with
-object access and no repair/recovery warning. The remaining human check is in
-`findings/build_setup_backend.md`.
+object access and no repair/recovery warning.
+
+## Next steps
+
+1. Generate four isolated authored decks: direction only, one Dissolve In, one
+   Dissolve Out, and one Move Action. Reopen them independently to locate the
+   first crashing feature; do not use the combined acceptance deck for diagnosis.
+2. For the smallest crashing build, compare its decoded and raw IWA state with
+   the corresponding authentic fixture. Inspect BuildArchive/BuildChunkArchive,
+   slide object references and ordering, SlideNode caches, archive identifier
+   allocation, and any document-level animation index not exposed by the
+   existing YAML findings.
+3. Starting from the authentic fixture, vary one identity invariant at a time:
+   reuse versus reallocate archive IDs, reuse versus regenerate the 64-bit build
+   ID, change only the drawable, reinsert only the existing records, and rebuild
+   only the SlideNode caches. Reopen each artifact separately.
+4. Once one newly-authored Dissolve In reopens cleanly, repeat the gate for Out,
+   Action, multiple ordered builds, and transition direction. Then regenerate
+   the combined acceptance deck and rerun `mise run authored-build-smoke`, the
+   complete unit suite, `mise run selftest`, and `git diff --check`.
+
+The leading hypothesis is a duplicate, missing, or inconsistent identity or
+reference in Keynote's animation registration graph, based on the crash in
+`-[__NSSetM addObject:]`; protobuf schema compilation and unmodified fixture
+packing are controls that already pass.
 
 ## Supported fields and limitations
 
