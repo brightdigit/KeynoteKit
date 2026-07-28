@@ -1,13 +1,14 @@
 # KeynoteKit
 
-## Corrections log (append-only)
+## Memory & Corrections Convention
 
-Whenever the user corrects me, or gives an explicit "always" or "never" directive,
-immediately append one concise line to `.claude/CORRECTIONS.md`, capturing
-the exact meaning of the instruction (not an interpretation). That file is
-append-only and the source of truth for corrections: preserve all existing entries;
-never rewrite, reorder, or delete prior notes. Read it at the start of work and
-honor every entry.
+`.claude/agent-notes.md` is the source of truth for how to work in this repo:
+corrections and standing always/never directives. Read it at the start of every
+session before doing work. Append one line per directive proactively (without
+being asked) whenever the user makes a correction or gives an always/never
+instruction. Newest lines at the bottom; one line per entry. When a directive
+supersedes an earlier one, update or remove the stale line rather than leaving
+both.
 
 ## Agent skills
 

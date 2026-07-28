@@ -19,4 +19,4 @@ should travel with the code.
 dir, mirror the same file (and the updated `MEMORY.md` index) into
 **`.claude/memory/`** in the repo (`/Users/leo/Documents/Projects/KeynoteKit/prototype`),
 and include it in the commit. `.claude/` is already tracked here (see
-`.claude/CORRECTIONS.md`). Keep the two copies in sync.
+`.claude/agent-notes.md`). Keep the two copies in sync.
