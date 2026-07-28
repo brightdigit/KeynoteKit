@@ -179,7 +179,7 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
    default, materializes when set (Move In non-default = 11); transitions reuse the
    builds' slot. To map the full enum (top/bottom/left/right/…), author extra
    direction fixtures. See `direction.md`.
-3. **Backend — Option A authoring is implemented but BLOCKED on reopen.** Transition half stays
+3. **Backend — Option A authoring is IMPLEMENTED and WORKING (unblocked 2026-07-28).** Transition half stays
    fully AppleScript-scriptable (DONE + unit-tested). The build/direction **write**
    side needs `pack`, which **now works on 15.3** via the 14.4 registry + 15.3
    protos (`pack_option_a.md`). The runtime LLDB `TSPRegistryMapping` dump
@@ -193,6 +193,22 @@ cache flag (and a `hasExplicitBuilds` flag — relevant to Phase 2).
    unmodified Action fixture round-tripped by the same hybrid parser reopens,
    isolating a missing newly-authored animation graph invariant. Current status,
    isolated-deck experiments, and completion gates: `findings/write_backend.md`.
+   **ROOT-CAUSED AND FIXED 2026-07-28** (`findings/write_backend_bisect.md`): a
+   4-deck bisect (`examples/bisect_*.json`) showed direction-only opens while
+   In/Out/Action each crash. Two document-level defects, both now fixed in
+   `tools/archive_backend.py` and covered by tests (18 pass):
+   (a) emitted builds were never registered in `Metadata.iwa.yaml` →
+   `TSP.PackageMetadata` → the slide's component → `objectUuidMapEntries`, where
+   the entry's `uuid` must equal the `KN.BuildChunkArchive`'s `buildId`
+   (8/8 human fixtures register it, 0/2 of ours; chunk ids are registered 0/8);
+   (b) `lastObjectIdentifier` was left below the ids we minted, inverting a
+   high-water mark 5/5 fixtures maintain.
+   `_verify_uuid_map` now enforces both inside `write_back`.
+   **Acceptance gate PASSED**: human reopening confirms all four bisect decks and
+   `samples/build_backend_acceptance.key` open in Keynote 15.3 with no crash and
+   no repair warning. Newly authored In/Out/Action, multiple ordered builds, and
+   transition direction all survive the round trip. The write backend is done;
+   remaining work is breadth (more effects/options), not correctness.
 
 Update this file and the per-experiment notes as you go.
 

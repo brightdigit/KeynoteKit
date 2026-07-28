@@ -1,0 +1,42 @@
+{
+  "slides": [
+    {
+      "items": [{"text": "Move Action", "x": 200, "y": 250}],
+      "builds": [
+        {
+          "kind": "Action",
+          "effect": "apple:action-motion-path",
+          "duration": 1.0,
+          "target": "item:0",
+          "action_attributes": {
+            "actionAcceleration": "kEaseBoth",
+            "actionMotionPathSource": {
+              "editableBezierPathSource": {
+                "naturalSize": {"height": 0.0, "width": 50.0},
+                "subpaths": [{
+                  "closed": false,
+                  "nodes": [
+                    {
+                      "inControlPoint": {"x": 0.0, "y": 0.0},
+                      "nodePoint": {"x": 0.0, "y": 0.0},
+                      "outControlPoint": {"x": 0.0, "y": 0.0},
+                      "type": "sharp"
+                    },
+                    {
+                      "inControlPoint": {"x": 50.0, "y": 0.0},
+                      "nodePoint": {"x": 50.0, "y": 0.0},
+                      "outControlPoint": {"x": 50.0, "y": 0.0},
+                      "type": "sharp"
+                    }
+                  ]
+                }],
+                "horizontalFlip": false,
+                "verticalFlip": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

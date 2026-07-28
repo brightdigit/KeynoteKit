@@ -26,8 +26,14 @@ def _header(identifier: str, archive_type: int) -> dict:
 
 
 def build_archive_records(build: deckkit.Build, drawable_id: str,
-                          build_id: str, chunk_id: str) -> tuple[dict, dict]:
-    """Return the exact two YAML archive mappings for one authored build."""
+                          build_id: str, chunk_id: str) -> tuple[dict, dict, dict]:
+    """Return the two YAML archive mappings for one authored build, plus the
+    128-bit build uuid.
+
+    The uuid must also be registered in the package object->uuid map (see
+    _slide_component); Keynote crashes on load without it
+    (findings/write_backend_bisect.md).
+    """
     effect = (build.effect if build.kind == "Action"
               else deckkit.BUILD_EFFECTS[build.effect][0])
     animation = {
@@ -85,7 +91,7 @@ def build_archive_records(build: deckkit.Build, drawable_id: str,
             "referent": True,
         }],
     }
-    return archive, chunk
+    return archive, chunk, random_build_id
 
 
 def _archives(doc: dict):
@@ -145,6 +151,34 @@ def _slide_order(files: dict[Path, dict]) -> list[tuple[str, str]]:
             for node_id in ordered_nodes]
 
 
+def _package_metadata(files: dict[Path, dict]) -> dict:
+    """Return the single TSP.PackageMetadata object (Index/Metadata.iwa.yaml)."""
+    for data in files.values():
+        for archive in _archives(data):
+            obj = _first_object(archive)
+            if obj.get("_pbtype") == "TSP.PackageMetadata":
+                return obj
+    raise ValueError("TSP.PackageMetadata not found in Index/*.iwa.yaml")
+
+
+def _slide_component(metadata: dict, slide_id: str) -> dict:
+    """Return the package component describing Slide-<slide_id>.
+
+    Keyed on `identifier`, which every component carries; `locator` is absent on
+    non-slide components (Document, ViewState, ...), so it is only cross-checked.
+    """
+    for component in metadata.get("components", []):
+        if str(component.get("identifier", "")) == str(slide_id):
+            locator = component.get("locator")
+            if locator is not None and str(locator) != f"Slide-{slide_id}":
+                raise ValueError(
+                    f"component {slide_id} has locator {locator!r}, "
+                    f"expected 'Slide-{slide_id}'"
+                )
+            return component
+    raise ValueError(f"no package component for slide {slide_id}")
+
+
 def author_unpacked(root: Path, deck: deckkit.Deck) -> list[dict]:
     """Mutate an unpacked deck and return authored structural expectations."""
     files = _load_index(root)
@@ -164,6 +198,8 @@ def author_unpacked(root: Path, deck: deckkit.Deck) -> list[dict]:
                 node_located[ident] = (path, obj)
 
     next_id = max(v for data in files.values() for v in _identifier_values(data)) + 1
+    first_id = next_id
+    metadata = _package_metadata(files)
     expected = []
     for slide_index, ((node_id, slide_id), spec_slide) in enumerate(zip(order, deck.slides)):
         path, data, slide_archive = located[slide_id]
@@ -185,18 +221,24 @@ def author_unpacked(root: Path, deck: deckkit.Deck) -> list[dict]:
         new_chunk_archives = []
         new_build_ids = []
         new_chunk_ids = []
+        new_uuid_entries = []
         for build in spec_slide.builds:
             target_index = int(build.target.split(":", 1)[1])
             drawable_id = drawable_ids[target_index]
             build_archive_id, chunk_archive_id = str(next_id), str(next_id + 1)
             next_id += 2
-            build_archive, chunk_archive = build_archive_records(
+            build_archive, chunk_archive, build_uuid = build_archive_records(
                 build, drawable_id, build_archive_id, chunk_archive_id
             )
             new_build_archives.append(build_archive)
             new_chunk_archives.append(chunk_archive)
             new_build_ids.append(build_archive_id)
             new_chunk_ids.append(chunk_archive_id)
+            # Only the KN.BuildArchive is registered; the chunk id is not
+            # (0/8 human-authored fixtures register it).
+            new_uuid_entries.append(
+                {"identifier": build_archive_id, "uuid": build_uuid.copy()}
+            )
             slide_obj.setdefault("builds", []).append({"identifier": build_archive_id})
             slide_obj.setdefault("buildChunks", []).append({"identifier": chunk_archive_id})
             expected.append({
@@ -209,6 +251,9 @@ def author_unpacked(root: Path, deck: deckkit.Deck) -> list[dict]:
         insertion[insert_at:insert_at] = new_build_archives + new_chunk_archives
         refs[1:1] = new_build_ids + new_chunk_ids
         if spec_slide.builds:
+            _slide_component(metadata, slide_id).setdefault(
+                "objectUuidMapEntries", []
+            ).extend(new_uuid_entries)
             node_path, node = node_located[node_id]
             node["buildEventCount"] = len(spec_slide.builds)
             node["buildEventCountCacheVersion"] = 2
@@ -217,9 +262,74 @@ def author_unpacked(root: Path, deck: deckkit.Deck) -> list[dict]:
             files[node_path] = files[node_path]
         files[path] = data
 
+    # Keynote keeps lastObjectIdentifier strictly above every archive id it has
+    # handed out (verified across 5 human-authored build fixtures). Our appended
+    # build/chunk ids would otherwise sit ABOVE the recorded high-water mark.
+    # Only bump when ids were actually allocated, so a builds-free deck (the
+    # direction-only path, which already reopens cleanly) is left untouched.
+    last = metadata.get("lastObjectIdentifier")
+    if next_id > first_id and last is not None and int(last) < next_id:
+        metadata["lastObjectIdentifier"] = str(next_id)
+
     for path, data in files.items():
         path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
     return expected
+
+
+def _verify_uuid_map(root: Path, expected_build_count: int) -> None:
+    """Assert every KN.BuildArchive is registered with uuid == its chunk buildId.
+
+    This is the invariant whose absence crashes Keynote 15.3 in
+    -[__NSSetM addObject:] (findings/write_backend_bisect.md). extract_builds()
+    reads only Index/Slide*.iwa.yaml, so it cannot observe this; check it here.
+    """
+    files = _load_index(root)
+    metadata = _package_metadata(files)
+    registered: dict[str, dict] = {}
+    for component in metadata.get("components", []):
+        for entry in component.get("objectUuidMapEntries", []):
+            registered[str(entry["identifier"])] = entry["uuid"]
+
+    build_ids: list[str] = []
+    chunk_build_ids: dict[str, dict] = {}
+    chunk_archive_ids: list[str] = []
+    for data in files.values():
+        for archive in _archives(data):
+            obj = _first_object(archive)
+            ident = str(archive.get("header", {}).get("identifier", ""))
+            if obj.get("_pbtype") == "KN.BuildArchive":
+                build_ids.append(ident)
+            elif obj.get("_pbtype") == "KN.BuildChunkArchive":
+                chunk_build_ids[str(obj["build"]["identifier"])] = obj["buildId"]
+                chunk_archive_ids.append(ident)
+
+    if len(build_ids) != expected_build_count:
+        raise ValueError(
+            f"expected {expected_build_count} build archives, found {len(build_ids)}"
+        )
+    for build_id in build_ids:
+        if build_id not in registered:
+            raise ValueError(
+                f"build archive {build_id} is not registered in "
+                f"PackageMetadata.objectUuidMapEntries (Keynote will crash)"
+            )
+        want = chunk_build_ids.get(build_id)
+        if want is None:
+            raise ValueError(f"build archive {build_id} has no KN.BuildChunkArchive")
+        if registered[build_id] != want:
+            raise ValueError(
+                f"uuid map entry for build {build_id} is {registered[build_id]!r}, "
+                f"expected chunk buildId {want!r}"
+            )
+
+    last = metadata.get("lastObjectIdentifier")
+    if last is not None and build_ids:
+        highest = max(int(i) for i in build_ids + chunk_archive_ids)
+        if int(last) < highest:
+            raise ValueError(
+                f"lastObjectIdentifier {last} is below the highest authored "
+                f"archive id {highest}"
+            )
 
 
 def _parser(command: str, source: Path, output: Path) -> None:
@@ -250,6 +360,7 @@ def write_back(base_key: Path, output_key: Path, deck: deckkit.Deck) -> None:
             for key in ("kind", "effect", "duration", "delay", "drawable"):
                 if got[key] != want[key]:
                     raise ValueError(f"build verification mismatch for {key}: {got[key]!r} != {want[key]!r}")
+        _verify_uuid_map(verified, len(expected))
         transitions = deckkit.extract_transitions(str(verified))
         wanted_directions = [s.transition.direction for s in deck.slides
                              if s.transition and s.transition.direction is not None]

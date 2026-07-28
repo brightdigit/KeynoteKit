@@ -1,0 +1,13 @@
+{
+  "slides": [
+    {
+      "items": [{"text": "Direction Only", "x": 200, "y": 250}],
+      "transition": {
+        "effect": "move_in",
+        "duration": 1.0,
+        "delay": 0.5,
+        "direction": 11
+      }
+    }
+  ]
+}

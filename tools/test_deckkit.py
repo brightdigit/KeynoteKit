@@ -11,9 +11,12 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+
+import yaml  # noqa: E402
 
 import deckkit  # noqa: E402
 import archive_backend  # noqa: E402
@@ -228,13 +231,20 @@ def test_archive_emission() -> None:
     )
     for build, kind in ((dissolve_in, "In"), (dissolve_out, "Out"),
                         (action, "Action")):
-        archive, chunk = archive_backend.build_archive_records(build, "42", "100", "101")
+        archive, chunk, build_uuid = archive_backend.build_archive_records(
+            build, "42", "100", "101")
         obj = archive["objects"][0]
         anim = obj["attributes"]["animationAttributes"]
         check(anim["animationType"] == kind, f"{kind} animation type emission")
         check(chunk["objects"][0]["build"]["identifier"] == "100",
               f"{kind} chunk back-reference")
         check(obj["drawable"]["identifier"] == "42", f"{kind} drawable emission")
+        # the returned uuid is what gets registered in the package uuid map
+        check(chunk["objects"][0]["buildId"] == build_uuid,
+              f"{kind} chunk buildId must equal the returned build uuid")
+        check(set(build_uuid) == {"lower", "upper"}
+              and all(isinstance(v, str) and v.isdigit() for v in build_uuid.values()),
+              f"{kind} build uuid must be all-digit strings")
     attrs = archive_backend.build_archive_records(action, "42", "100", "101")[0]["objects"][0]["attributes"]
     check(attrs["actionMotionPathSource"]["path"]["nodes"] == [1, 2],
           "arbitrary nested Action attributes emitted verbatim")
@@ -382,6 +392,211 @@ def test_extract_transitions_excludes_builds() -> None:
               "extract_builds must return only the In build block")
 
 
+# --- package uuid map registration (findings/write_backend_bisect.md) ---------
+#
+# Keynote registers every KN.BuildArchive id in
+# Metadata.iwa.yaml -> TSP.PackageMetadata -> the slide's component ->
+# objectUuidMapEntries, with uuid == the KN.BuildChunkArchive's buildId.
+# Omitting it crashes Keynote 15.3 in -[__NSSetM addObject:]. These tests build a
+# synthetic unpacked tree so the invariant is checked without Keynote.
+
+def _synthetic_unpacked(root: str, slides: list[tuple[str, str, int]],
+                        last_object_id: str = "9000") -> None:
+    """Write a minimal but structurally real unpacked deck.
+
+    slides: [(node_id, slide_id, n_drawables)] in presentation order.
+    """
+    idx = os.path.join(root, "Index")
+    os.makedirs(idx, exist_ok=True)
+
+    def archive(ident, obj):
+        return {"header": {"_pbtype": "TSP.ArchiveInfo", "identifier": ident,
+                           "messageInfos": [{"type": 1, "version": [1, 0, 5]}]},
+                "objects": [obj]}
+
+    components = []
+    for node_id, slide_id, n_drawables in slides:
+        components.append({
+            "identifier": slide_id, "locator": f"Slide-{slide_id}",
+            "preferredLocator": "Slide",
+            # a pre-existing entry: authored entries must APPEND, not replace
+            "objectUuidMapEntries": [
+                {"identifier": slide_id,
+                 "uuid": {"lower": "111", "upper": "222"}},
+            ],
+        })
+        slide_obj = {
+            "_pbtype": "KN.SlideArchive",
+            "drawablesZOrder": [{"identifier": f"{slide_id}0{i}"}
+                                for i in range(n_drawables)],
+            "transition": {"attributes": {"animationAttributes": {
+                "animationType": "Transition", "effect": "apple:slide",
+                "duration": 1.0, "delay": 0.0}}},
+        }
+        node_obj = {"_pbtype": "KN.SlideNodeArchive",
+                    "slide": {"identifier": slide_id}}
+        with open(os.path.join(idx, f"Slide-{slide_id}.iwa.yaml"), "w") as fh:
+            yaml.safe_dump({"chunks": [{"archives": [
+                archive(node_id, node_obj), archive(slide_id, slide_obj),
+            ]}]}, fh, sort_keys=False)
+
+    with open(os.path.join(idx, "Metadata.iwa.yaml"), "w") as fh:
+        yaml.safe_dump({"chunks": [{"archives": [archive("2", {
+            "_pbtype": "TSP.PackageMetadata",
+            "components": components,
+            "lastObjectIdentifier": last_object_id,
+        })]}]}, fh, sort_keys=False)
+
+    show = {"_pbtype": "KN.ShowArchive",
+            "slideTree": {"slides": [{"identifier": n} for n, _, _ in slides]}}
+    with open(os.path.join(idx, "Document.iwa.yaml"), "w") as fh:
+        yaml.safe_dump({"chunks": [{"archives": [archive("1", show)]}]},
+                       fh, sort_keys=False)
+
+
+def _read_component(root: str, slide_id: str) -> dict:
+    with open(os.path.join(root, "Index", "Metadata.iwa.yaml")) as fh:
+        meta = yaml.safe_load(fh)
+    obj = meta["chunks"][0]["archives"][0]["objects"][0]
+    return next(c for c in obj["components"]
+                if str(c["identifier"]) == str(slide_id)), obj
+
+
+def _slide_build_archives(root: str, slide_id: str) -> tuple[list, dict]:
+    """Return ([KN.BuildArchive ids], {build id: chunk buildId})."""
+    with open(os.path.join(root, "Index", f"Slide-{slide_id}.iwa.yaml")) as fh:
+        doc = yaml.safe_load(fh)
+    builds, chunks = [], {}
+    for ar in doc["chunks"][0]["archives"]:
+        obj = ar["objects"][0]
+        if obj.get("_pbtype") == "KN.BuildArchive":
+            builds.append(str(ar["header"]["identifier"]))
+        elif obj.get("_pbtype") == "KN.BuildChunkArchive":
+            chunks[str(obj["build"]["identifier"])] = obj["buildId"]
+    return builds, chunks
+
+
+def test_author_registers_build_uuid() -> None:
+    deck = deckkit.deck_from_dict(BUILD_SPEC)  # one slide, two builds
+    with tempfile.TemporaryDirectory() as tmp:
+        _synthetic_unpacked(tmp, [("500", "600", 2)])
+        archive_backend.author_unpacked(Path(tmp), deck)
+
+        comp, meta_obj = _read_component(tmp, "600")
+        entries = comp["objectUuidMapEntries"]
+        builds, chunks = _slide_build_archives(tmp, "600")
+
+        check(len(builds) == 2, "two build archives emitted")
+        check(len(entries) == 3, "two entries appended to the pre-existing one")
+        check(entries[0]["identifier"] == "600", "pre-existing entry preserved first")
+
+        new_entries = entries[1:]
+        check([e["identifier"] for e in new_entries] == builds,
+              "registered ids must be the KN.BuildArchive ids, in order")
+        for entry in new_entries:
+            bid = entry["identifier"]
+            check(entry["uuid"] == chunks[bid],
+                  f"entry uuid for build {bid} must equal its chunk buildId")
+            check(isinstance(bid, str)
+                  and all(isinstance(v, str) for v in entry["uuid"].values()),
+                  "uuid map entry values must be strings")
+
+        # the chunk ARCHIVE ids are deliberately not registered (0/8 fixtures do)
+        registered = {e["identifier"] for e in entries}
+        with open(os.path.join(tmp, "Index", "Slide-600.iwa.yaml")) as fh:
+            doc = yaml.safe_load(fh)
+        chunk_ids = {str(ar["header"]["identifier"])
+                     for ar in doc["chunks"][0]["archives"]
+                     if ar["objects"][0].get("_pbtype") == "KN.BuildChunkArchive"}
+        check(not (registered & chunk_ids),
+              "KN.BuildChunkArchive ids must NOT be registered")
+
+        highest = max(int(i) for i in list(builds) + list(chunk_ids))
+        check(int(meta_obj["lastObjectIdentifier"]) > highest,
+              "lastObjectIdentifier must exceed every authored archive id")
+        check(isinstance(meta_obj["lastObjectIdentifier"], str),
+              "lastObjectIdentifier must stay a string")
+
+
+def test_author_registers_per_slide_component() -> None:
+    # two slides, builds on each: entries must land in their OWN component
+    deck = deckkit.deck_from_dict({"slides": [
+        {"items": [{"text": "a"}],
+         "builds": [{"effect": "dissolve", "target": "item:0"}]},
+        {"items": [{"text": "b"}],
+         "builds": [{"effect": "blur", "target": "item:0"}]},
+    ]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _synthetic_unpacked(tmp, [("500", "600", 1), ("501", "601", 1)])
+        archive_backend.author_unpacked(Path(tmp), deck)
+        for slide_id in ("600", "601"):
+            comp, _ = _read_component(tmp, slide_id)
+            builds, chunks = _slide_build_archives(tmp, slide_id)
+            new = comp["objectUuidMapEntries"][1:]
+            check(len(new) == 1, f"slide {slide_id} got exactly one new entry")
+            if not new:
+                continue
+            check(new[0]["identifier"] == builds[0],
+                  f"slide {slide_id} entry references its own build archive")
+            check(new[0]["uuid"] == chunks[builds[0]],
+                  f"slide {slide_id} entry uuid matches its own chunk")
+
+
+def test_author_direction_only_adds_no_uuid_entries() -> None:
+    # regression guard: the direction-only deck is the one that reopens TODAY
+    deck = deckkit.deck_from_dict({"slides": [
+        {"items": [{"text": "a"}],
+         "transition": {"effect": "move_in", "duration": 1.0, "direction": 11}},
+    ]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _synthetic_unpacked(tmp, [("500", "600", 1)], last_object_id="9000")
+        archive_backend.author_unpacked(Path(tmp), deck)
+        comp, meta_obj = _read_component(tmp, "600")
+        check(comp["objectUuidMapEntries"] == [
+            {"identifier": "600", "uuid": {"lower": "111", "upper": "222"}}],
+            "a builds-free slide must not touch objectUuidMapEntries")
+        check(meta_obj["lastObjectIdentifier"] == "9000",
+              "a builds-free slide must not bump lastObjectIdentifier")
+
+
+def test_verify_uuid_map_catches_missing_entry() -> None:
+    deck = deckkit.deck_from_dict(BUILD_SPEC)
+    with tempfile.TemporaryDirectory() as tmp:
+        _synthetic_unpacked(tmp, [("500", "600", 2)])
+        archive_backend.author_unpacked(Path(tmp), deck)
+        try:
+            archive_backend._verify_uuid_map(Path(tmp), 2)
+        except ValueError as exc:
+            FAILS.append(f"authored tree must pass _verify_uuid_map: {exc}")
+
+        meta_path = os.path.join(tmp, "Index", "Metadata.iwa.yaml")
+
+        def rewrite(mutate) -> None:
+            with open(meta_path) as fh:
+                meta = yaml.safe_load(fh)
+            mutate(meta["chunks"][0]["archives"][0]["objects"][0])
+            with open(meta_path, "w") as fh:
+                yaml.safe_dump(meta, fh, sort_keys=False)
+
+        rewrite(lambda o: o["components"][0]["objectUuidMapEntries"].pop())
+        try:
+            archive_backend._verify_uuid_map(Path(tmp), 2)
+            FAILS.append("_verify_uuid_map must raise on a missing entry")
+        except ValueError:
+            pass
+
+        # restore, then corrupt a uuid instead of removing it
+        _synthetic_unpacked(tmp, [("500", "600", 2)])
+        archive_backend.author_unpacked(Path(tmp), deck)
+        rewrite(lambda o: o["components"][0]["objectUuidMapEntries"][-1]["uuid"]
+                .__setitem__("lower", "999999"))
+        try:
+            archive_backend._verify_uuid_map(Path(tmp), 2)
+            FAILS.append("_verify_uuid_map must raise on a mismatched uuid")
+        except ValueError:
+            pass
+
+
 def main() -> int:
     for fn in (test_parse, test_unknown_effect, test_effects_map,
                test_verify_handles_spaces, test_codegen,
@@ -390,7 +605,11 @@ def main() -> int:
                test_build_effects_map, test_build_validation, test_archive_emission,
                test_extract_and_verify_builds,
                test_extract_build_options,
-               test_extract_transitions_excludes_builds):
+               test_extract_transitions_excludes_builds,
+               test_author_registers_build_uuid,
+               test_author_registers_per_slide_component,
+               test_author_direction_only_adds_no_uuid_entries,
+               test_verify_uuid_map_catches_missing_entry):
         fn()
     if FAILS:
         print("DECKKIT TEST FAIL:")
