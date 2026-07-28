@@ -3,6 +3,22 @@
 Read this first after a context clear. It is self-contained: environment, how
 to run things, what is done, gotchas, and next steps.
 
+> ## ⚠️ The project has moved to its Swift phase (2026-07-28)
+>
+> **This file documents the completed reverse-engineering research.** That work
+> is DONE and squash-merged to `v0.1.x` (`ab23b45`, PR #1). Everything below is
+> still accurate as the format spec and as the Python reference backend.
+>
+> **The active work is now building the Swift package.** For that, read
+> **`PLAN.md` at the repo root** (branch `feature/swift-package`, commit
+> `a3b355c`) — goal, 7 gated steps, two named risks, and a decision log.
+>
+> Also read `.claude/agent-notes.md` (standing directives) and
+> `.claude/memory/keynotekit-v010-scope.md` (scope decisions a fresh session is
+> likely to get wrong by inference).
+>
+> Open issues #2-#10 track everything deferred out of v0.1.0.
+
 ## Mission (unchanged)
 
 Reverse-engineer how Keynote's `.key` represents **slide transitions (Magic

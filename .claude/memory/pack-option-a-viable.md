@@ -1,6 +1,6 @@
 ---
 name: pack-option-a-viable
-description: keynote-parser pack works on Keynote 15.3 via 14.4 registry + regenerated 15.3 protos (Option A); hybrid lives in ephemeral scratchpad
+description: keynote-parser pack works on Keynote 15.3 via 14.4 registry + regenerated 15.3 protos (Option A); the hybrid is now vendored in-repo and rebuilds reproducibly
 metadata: 
   node_type: memory
   type: project
@@ -15,13 +15,24 @@ Type IDs are stable 14.4→15.3, so the LLDB runtime-registry dump (Option B) is
 NOT needed. The stock wheel fails only because its protos are 14.4. Full writeup:
 `findings/pack_option_a.md`; decision doc `findings/pack_backend_approach.md` §5.
 
-**Reproduction is fragile — it depends on ephemeral scratchpad artifacts, not the
-repo.** The hybrid package (14.4 codec + 14.4 mapping.py + 15.3 `generated/`) was
-assembled in a session scratchpad, and the 15.3 protos came from a *prior*
-session's scratchpad (`gen_out/`, `proto_out/`, the keynote-parser clone). These
-get cleaned up. To make it durable, **vendor the 15.3 `generated/` + reuse 14.4
-`mapping.py` into a pinned local keynote-parser inside the repo** — this is next
-step (a) and should happen before further pack work.
+**RESOLVED 2026-07-28 — the hybrid is vendored and reproducible.** The earlier
+warning that reproduction depended on ephemeral scratchpad artifacts no longer
+applies: the schema now lives at `research/vendor/keynote-parser/`
+(15.3 `protos/`, 14.4 `compat/`), and `mise run prepare-keynote-parser` rebuilds
+the hybrid from the repo alone — verified from a clean worktree checkout with no
+scratchpad present (`631 registry entries; 0 missing message names`), followed by
+`mise run verify-pack` → PASS on build_in_B / build_action_B / direction_B.
+
+Setup needed in a fresh worktree (`.venv/` is gitignored, so this repeats):
+
+```
+mise trust                                     # new worktree => untrusted mise.toml
+mise exec -- python3 -m ensurepip --upgrade    # venv ships without pip
+mise exec -- python3 -m pip install 'keynote-parser==1.14.4.0' 'grpcio-tools==1.82.1'
+```
+
+`prepare_keynote_parser.py` pins both versions and fails loudly on a mismatch.
+Note `verify_hybrid_parser.py` compares **structurally**, not byte-wise.
 
 Gotchas when rebuilding the hybrid: 15.3 `_pb2.py` need **protobuf ≥ 7.34.1**
 (use the repo `.venv`'s 7.35.1, NOT the spike's protovenv 3.20.3); run
