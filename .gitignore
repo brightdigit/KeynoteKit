@@ -1,6 +1,6 @@
-# keynote-format-lab
-samples/
-unpacked/
+# keynote-format-lab (research/)
+research/samples/
+research/unpacked/
 .venv/
 .DS_Store
 __pycache__/
@@ -38,7 +38,7 @@ playground.xcworkspace
 # .swiftpm
 
 .build/
-build/keynote-parser/
+research/build/keynote-parser/
 
 # CocoaPods
 #

@@ -17,10 +17,10 @@ parameter values to learn which fields encode which knobs.
 The two hard parts are both handled by the tooling here:
 
 1. **Noise.** Between saves, Keynote reshuffles object ids, UUIDs, and
-   timestamps. A raw diff is useless. `tools/normalize.py` collapses that churn
+   timestamps. A raw diff is useless. `research/tools/normalize.py` collapses that churn
    to placeholders so only structural change survives.
 2. **Localization.** keynote-parser unpacks a `.key` into many YAML files
-   (~one per internal component). `tools/diff.py` reports *which files changed*
+   (~one per internal component). `research/tools/diff.py` reports *which files changed*
    first — that alone points at the responsible component before you read a
    single line.
 
@@ -28,12 +28,12 @@ The two hard parts are both handled by the tooling here:
 
 ```
 generator (osascript)  ->  A.key, B.key          # controlled minimal pair
-keynote-parser unpack  ->  unpacked/<exp>/{A,B}  # YAML dump of the graph
+keynote-parser unpack  ->  research/unpacked/<exp>/{A,B}  # YAML dump of the graph
 normalize.py --in-place->  collapse volatile noise
 diff.py                ->  findings/<exp>/*.diff # the isolated delta
 ```
 
-`tools/run_experiment.py` runs all four steps. `mise run transitions` is the
+`research/tools/run_experiment.py` runs all four steps. `mise run transitions` is the
 first worked example.
 
 ## Prerequisites (runs on your Mac)
@@ -103,11 +103,22 @@ not the raw diffs — become the spec your `Deck` model and backends target.
 
 ## Layout
 
+All reverse-engineering content lives under `research/`, leaving the repo root
+free for the Swift package (`Package.swift`, `Sources/`, `Tests/`).
+
 ```
-generators/   AppleScript sample generators (automated setup)
-tools/        normalize.py, diff.py, run_experiment.py, selftest.py
-fixtures/     hand-authored golden decks (build experiments)
-samples/      generated .key pairs                 (gitignore)
-unpacked/     keynote-parser YAML output           (gitignore)
-findings/     isolated diffs + your written notes
+research/
+  generators/   AppleScript sample generators (automated setup)
+  tools/        normalize.py, diff.py, run_experiment.py, selftest.py
+  fixtures/     hand-authored golden decks (build experiments)
+  examples/     Deck spec JSON (deck_example, build_acceptance, bisect_*)
+  vendor/       Keynote 15.3 protos + 14.4 registry (hybrid parser inputs)
+  samples/      generated .key pairs                 (gitignore)
+  unpacked/     keynote-parser YAML output           (gitignore)
+  build/        compiled hybrid parser cache         (gitignore)
+  findings/     isolated diffs + written notes
 ```
+
+`mise` tasks are run from the repo root and already point into `research/`;
+the Python tools resolve their own paths relative to `research/`, so they work
+unchanged.
