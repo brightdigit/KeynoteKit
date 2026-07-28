@@ -1,0 +1,11 @@
+--- A/Index/Slide.iwa.yaml
++++ B/Index/Slide.iwa.yaml
+@@ -51,7 +51,7 @@
+             delay: 0.5
+             duration: 1.5
+             effect: apple:dissolve
+-            isAutomatic: false
++            isAutomatic: true
+             randomNumberSeed: <vol>
+             writingDirectionIsRtl: false
+       userDefinedGuideStorage:

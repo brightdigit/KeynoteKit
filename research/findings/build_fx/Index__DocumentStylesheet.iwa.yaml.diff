@@ -1,0 +1,201 @@
+--- A/Index/DocumentStylesheet.iwa.yaml
++++ B/Index/DocumentStylesheet.iwa.yaml
+@@ -86830,42 +86830,6 @@
+     objects:
+     - _pbtype: TSWP.CharacterStyleArchive
+       charProperties:
+-        bold: true
+-      overrideCount: 1
+-      super:
+-        name: Bold
+-        stylesheet:
+-          identifier: <vol>
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+-      - type: 2021
+-        version:
+-        - 1
+-        - 0
+-        - 5
+-    objects:
+-    - _pbtype: TSWP.CharacterStyleArchive
+-      charProperties:
+-        italic: true
+-      overrideCount: 1
+-      super:
+-        name: Italic
+-        stylesheet:
+-          identifier: <vol>
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+-      - type: 2021
+-        version:
+-        - 1
+-        - 0
+-        - 5
+-    objects:
+-    - _pbtype: TSWP.CharacterStyleArchive
+-      charProperties:
+         underline: kSingleUnderline
+       overrideCount: 1
+       super:
+@@ -86916,60 +86880,38 @@
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
+-      - objectReferences:
+-        - <id:279>
+-        type: 2025
++      - type: 2021
+         version:
+         - 1
+         - 0
+         - 5
+     objects:
+-    - _pbtype: TSWP.ShapeStyleArchive
+-      overrideCount: 4
+-      shapeProperties:
+-        padding:
+-          bottom: 3.6
+-          left: 3.6
+-          right: 3.6
+-          top: 3.6
+-        shrinkToFit: true
+-        verticalAlignment: kFrameAlignTop
++    - _pbtype: TSWP.CharacterStyleArchive
++      charProperties:
++        bold: true
++      overrideCount: 1
+       super:
+-        overrideCount: 4
+-        shapeProperties:
+-          fill: {}
+-        super:
+-          isVariation: true
+-          parent:
+-            identifier: <vol>
+-          stylesheet:
+-            identifier: <vol>
++        name: Bold
++        stylesheet:
++          identifier: <vol>
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
+-      - objectReferences:
+-        - <id:494>
+-        type: 2025
++      - type: 2021
+         version:
+         - 1
+         - 0
+         - 5
+     objects:
+-    - _pbtype: TSWP.ShapeStyleArchive
+-      overrideCount: 2
+-      shapeProperties:
+-        shrinkToFit: true
+-        verticalAlignment: kFrameAlignBottom
++    - _pbtype: TSWP.CharacterStyleArchive
++      charProperties:
++        italic: true
++      overrideCount: 1
+       super:
+-        overrideCount: 2
+-        shapeProperties: {}
+-        super:
+-          isVariation: true
+-          parent:
+-            identifier: <vol>
+-          stylesheet:
+-            identifier: <vol>
++        name: Italic
++        stylesheet:
++          identifier: <vol>
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+@@ -86985,7 +86927,7 @@
+     - _pbtype: TSWP.ShapeStyleArchive
+       overrideCount: 1
+       shapeProperties:
+-        shrinkToFit: true
++        verticalAlignment: kFrameAlignBottom
+       super:
+         overrideCount: 1
+         shapeProperties: {}
+@@ -87059,10 +87001,68 @@
+     - _pbtype: TSWP.ShapeStyleArchive
+       overrideCount: 1
+       shapeProperties:
+-        verticalAlignment: kFrameAlignBottom
++        shrinkToFit: true
+       super:
+         overrideCount: 1
+         shapeProperties: {}
++        super:
++          isVariation: true
++          parent:
++            identifier: <vol>
++          stylesheet:
++            identifier: <vol>
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
++      - objectReferences:
++        - <id:494>
++        type: 2025
++        version:
++        - 1
++        - 0
++        - 5
++    objects:
++    - _pbtype: TSWP.ShapeStyleArchive
++      overrideCount: 2
++      shapeProperties:
++        shrinkToFit: true
++        verticalAlignment: kFrameAlignBottom
++      super:
++        overrideCount: 2
++        shapeProperties: {}
++        super:
++          isVariation: true
++          parent:
++            identifier: <vol>
++          stylesheet:
++            identifier: <vol>
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
++      - objectReferences:
++        - <id:279>
++        type: 2025
++        version:
++        - 1
++        - 0
++        - 5
++    objects:
++    - _pbtype: TSWP.ShapeStyleArchive
++      overrideCount: 4
++      shapeProperties:
++        padding:
++          bottom: 3.6
++          left: 3.6
++          right: 3.6
++          top: 3.6
++        shrinkToFit: true
++        verticalAlignment: kFrameAlignTop
++      super:
++        overrideCount: 4
++        shapeProperties:
++          fill: {}
+         super:
+           isVariation: true
+           parent:

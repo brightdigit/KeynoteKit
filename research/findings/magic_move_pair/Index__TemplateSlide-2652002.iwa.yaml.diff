@@ -1,0 +1,47 @@
+--- A/Index/TemplateSlide-2652002.iwa.yaml
++++ B/Index/TemplateSlide-2652002.iwa.yaml
+@@ -16,9 +16,9 @@
+           unknownFieldRule: IgnoreAndPreserve
+         objectReferences:
+         - <id:4>
+-        - <id:1>
+         - <id:2>
+         - <id:3>
++        - <id:1>
+         - <id:5>
+         - <id:6>
+         - <id:7>
+@@ -49,28 +49,28 @@
+       classicStylesheetRecord:
+         identifier: <vol>
+       drawablesZOrder:
+-      - identifier: <id:1>
+       - identifier: <id:2>
+       - identifier: <id:3>
++      - identifier: <id:1>
+       inDocument: true
+       instructionalTextMap:
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
++          instructionalText: Agenda Topics
++        - info:
++            identifier: <vol>
+           instructionalText: Agenda Title
+         - info:
+             identifier: <vol>
+           instructionalText: Agenda Subtitle
+-        - info:
+-            identifier: <vol>
+-          instructionalText: Agenda Topics
+       name: Agenda
+       objectPlaceholder:
+         identifier: <vol>
+       ownedDrawables:
+-      - identifier: <id:1>
+       - identifier: <id:2>
+       - identifier: <id:3>
++      - identifier: <id:1>
+       sageTagToInfoMap:
+       - info:
+           identifier: <vol>

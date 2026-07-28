@@ -1,0 +1,50 @@
+--- A/Index/TemplateSlide-2651870.iwa.yaml
++++ B/Index/TemplateSlide-2651870.iwa.yaml
+@@ -17,9 +17,9 @@
+         objectReferences:
+         - <id:4>
+         - <id:1>
++        - <id:2>
++        - <id:5>
+         - <id:3>
+-        - <id:5>
+-        - <id:2>
+         - <id:6>
+         - <id:7>
+         - <id:8>
+@@ -51,9 +51,9 @@
+         identifier: <vol>
+       drawablesZOrder:
+       - identifier: <id:1>
++      - identifier: <id:2>
++      - identifier: <id:5>
+       - identifier: <id:3>
+-      - identifier: <id:5>
+-      - identifier: <id:2>
+       inDocument: true
+       instructionalTextMap:
+         instructionalTextForInfos:
+@@ -62,18 +62,18 @@
+           instructionalText: Slide Subtitle
+         - info:
+             identifier: <vol>
++          instructionalText: Slide bullet text
++        - info:
++            identifier: <vol>
+           instructionalText: Slide Title
+-        - info:
+-            identifier: <vol>
+-          instructionalText: Slide bullet text
+       name: Title, Bullets & Photo
+       objectPlaceholder:
+         identifier: <vol>
+       ownedDrawables:
+       - identifier: <id:1>
++      - identifier: <id:2>
++      - identifier: <id:5>
+       - identifier: <id:3>
+-      - identifier: <id:5>
+-      - identifier: <id:2>
+       sageTagToInfoMap:
+       - info:
+           identifier: <vol>

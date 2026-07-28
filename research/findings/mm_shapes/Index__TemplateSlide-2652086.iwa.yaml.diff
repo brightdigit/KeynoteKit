@@ -1,0 +1,22 @@
+--- A/Index/TemplateSlide-2652086.iwa.yaml
++++ B/Index/TemplateSlide-2652086.iwa.yaml
+@@ -298,8 +298,8 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '5643'
+         - '5644'
+-        - '5643'
+         fieldInfos:
+         - path:
+             path:
+@@ -492,8 +492,8 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '8048'
+         - '8049'
+-        - '8048'
+         fieldInfos:
+         - path:
+             path:

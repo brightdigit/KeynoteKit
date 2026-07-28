@@ -1,0 +1,19 @@
+{
+  "slides": [
+    {
+      "items": [{ "text": "Title", "x": 200, "y": 200 }],
+      "transition": { "effect": "dissolve", "duration": 1.0, "delay": 0.0, "auto_advance": false }
+    },
+    {
+      "items": [{ "text": "Agenda", "x": 250, "y": 250 }],
+      "transition": { "effect": "push", "duration": 2.0, "delay": 0.5, "auto_advance": true }
+    },
+    {
+      "items": [{ "text": "Alpha", "x": 200, "y": 200 }],
+      "transition": { "effect": "magic_move", "duration": 1.5, "delay": 0.0, "auto_advance": false }
+    },
+    {
+      "items": [{ "text": "Alpha", "x": 600, "y": 400 }]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+--- A/Index/Slide.iwa.yaml
++++ B/Index/Slide.iwa.yaml
+@@ -50,7 +50,7 @@
+             animationType: Transition
+             delay: 0.5
+             duration: 1.5
+-            effect: apple:dissolve
++            effect: apple:push
+             isAutomatic: false
+             randomNumberSeed: <vol>
+             writingDirectionIsRtl: false

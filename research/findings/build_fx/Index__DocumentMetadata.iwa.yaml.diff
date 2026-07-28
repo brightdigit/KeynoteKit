@@ -1,0 +1,108 @@
+--- A/Index/DocumentMetadata.iwa.yaml
++++ B/Index/DocumentMetadata.iwa.yaml
+@@ -47,37 +47,7 @@
+           - 1
+           digest: XpQAuVLxcUjb4T2GWgUkBZTMjq4=
+           expectsMatchedDigest: true
+-        - digest: Mc4dszH/QPPstJ78QqkBYvRro5Y=
+-          expectsMatchedDigest: true
+-        - creationTimeIntervalSince1970: <ts>
+-          creationVersion:
+-          - 26
+-          - 0
+-          - 0
+-          digest: UE00G6KjWs+RwSydFg06TuSuml0=
+-          expectsMatchedDigest: true
+-        - creationTimeIntervalSince1970: <ts>
+-          creationVersion:
+-          - 26
+-          - 0
+-          - 0
+-          digest: zljuLD4cR5YBd30dPFZssdWVEVw=
+-          expectsMatchedDigest: true
+-        - creationTimeIntervalSince1970: <ts>
+-          creationVersion:
+-          - 26
+-          - 0
+-          - 0
+-          digest: gVHi+DsLEJOgvjPlEwqo1lHsEEs=
+-          expectsMatchedDigest: true
+-        - digest: rpjRClGUWvDO3eJI+G1QwPCCr+E=
+-          expectsMatchedDigest: true
+-        - creationTimeIntervalSince1970: <ts>
+-          creationVersion:
+-          - 26
+-          - 0
+-          - 0
+-          digest: 8aipDkZwTsG4cHXRKmQtfaZiL8A=
++        - digest: YkB8BwM18cRrKdpnIBVEB+KqCcM=
+           expectsMatchedDigest: true
+         - creationTimeIntervalSince1970: <ts>
+           creationVersion:
+@@ -102,7 +72,37 @@
+           expectsMatchedDigest: true
+         - digest: 7Gbz25Ttp5gIUz3foPSTRIZiatc=
+           expectsMatchedDigest: true
+-        - digest: YkB8BwM18cRrKdpnIBVEB+KqCcM=
++        - creationTimeIntervalSince1970: <ts>
++          creationVersion:
++          - 26
++          - 0
++          - 0
++          digest: gVHi+DsLEJOgvjPlEwqo1lHsEEs=
++          expectsMatchedDigest: true
++        - creationTimeIntervalSince1970: <ts>
++          creationVersion:
++          - 26
++          - 0
++          - 0
++          digest: 8aipDkZwTsG4cHXRKmQtfaZiL8A=
++          expectsMatchedDigest: true
++        - digest: rpjRClGUWvDO3eJI+G1QwPCCr+E=
++          expectsMatchedDigest: true
++        - creationTimeIntervalSince1970: <ts>
++          creationVersion:
++          - 26
++          - 0
++          - 0
++          digest: zljuLD4cR5YBd30dPFZssdWVEVw=
++          expectsMatchedDigest: true
++        - creationTimeIntervalSince1970: <ts>
++          creationVersion:
++          - 26
++          - 0
++          - 0
++          digest: UE00G6KjWs+RwSydFg06TuSuml0=
++          expectsMatchedDigest: true
++        - digest: Mc4dszH/QPPstJ78QqkBYvRro5Y=
+           expectsMatchedDigest: true
+         - creationTimeIntervalSince1970: <ts>
+           creationVersion:
+@@ -117,6 +117,13 @@
+           - 3
+           - 1
+           digest: yCPKWoXjmalZRQ+G7KUC7dQvv/I=
++          expectsMatchedDigest: true
++        - creationTimeIntervalSince1970: <ts>
++          creationVersion:
++          - 26
++          - 0
++          - 0
++          digest: TcOTbutwb91HYlSaLul3yjzoj2I=
+           expectsMatchedDigest: true
+         - creationTimeIntervalSince1970: <ts>
+           creationVersion:
+@@ -148,13 +155,6 @@
+           - 26
+           - 0
+           - 0
+-          digest: TcOTbutwb91HYlSaLul3yjzoj2I=
+-          expectsMatchedDigest: true
+-        - creationTimeIntervalSince1970: <ts>
+-          creationVersion:
+-          - 26
+-          - 0
+-          - 0
+           digest: Yxo8/m9h/MjEgnfCiYTsfI/gfjs=
+           expectsMatchedDigest: true
+         - creationTimeIntervalSince1970: <ts>

@@ -1,0 +1,250 @@
+--- A/Index/CalculationEngine.iwa.yaml
++++ B/Index/CalculationEngine.iwa.yaml
+@@ -29,6 +29,38 @@
+         - identifier: <id:1>
+         - identifier: <id:2>
+         formulaOwnerInfo:
++        - cellDependencies: {}
++          cellErrors: {}
++          formulaOwnerId:
++            uuidW0: 958754378
++            uuidW1: 692357636
++            uuidW2: 1738363269
++            uuidW3: 222280221
++          rangeDependencies: {}
++          spanningColumnDependencies:
++            bodyRangeForDeletedTable:
++              bottomRightColumn: 32767
++              bottomRightRow: 2147483647
++              topLeftColumn: 32767
++              topLeftRow: 2147483647
++            totalRangeForDeletedTable:
++              bottomRightColumn: 32767
++              bottomRightRow: 2147483647
++              topLeftColumn: 32767
++              topLeftRow: 2147483647
++          spanningRowDependencies:
++            bodyRangeForDeletedTable:
++              bottomRightColumn: 32767
++              bottomRightRow: 2147483647
++              topLeftColumn: 32767
++              topLeftRow: 2147483647
++            totalRangeForDeletedTable:
++              bottomRightColumn: 32767
++              bottomRightRow: 2147483647
++              topLeftColumn: 32767
++              topLeftRow: 2147483647
++          volatileDependencies: {}
++          wholeOwnerDependencies: {}
+         - cellDependencies:
+             cellRecord:
+             - column: 0
+@@ -68,38 +100,6 @@
+               topLeftRow: 2147483647
+           volatileDependencies: {}
+           wholeOwnerDependencies: {}
+-        - cellDependencies: {}
+-          cellErrors: {}
+-          formulaOwnerId:
+-            uuidW0: 3705446354
+-            uuidW1: 725894974
+-            uuidW2: 1911774399
+-            uuidW3: 2203541730
+-          rangeDependencies: {}
+-          spanningColumnDependencies:
+-            bodyRangeForDeletedTable:
+-              bottomRightColumn: 32767
+-              bottomRightRow: 2147483647
+-              topLeftColumn: 32767
+-              topLeftRow: 2147483647
+-            totalRangeForDeletedTable:
+-              bottomRightColumn: 32767
+-              bottomRightRow: 2147483647
+-              topLeftColumn: 32767
+-              topLeftRow: 2147483647
+-          spanningRowDependencies:
+-            bodyRangeForDeletedTable:
+-              bottomRightColumn: 32767
+-              bottomRightRow: 2147483647
+-              topLeftColumn: 32767
+-              topLeftRow: 2147483647
+-            totalRangeForDeletedTable:
+-              bottomRightColumn: 32767
+-              bottomRightRow: 2147483647
+-              topLeftColumn: 32767
+-              topLeftRow: 2147483647
+-          volatileDependencies: {}
+-          wholeOwnerDependencies: {}
+         numberOfFormulas: '1'
+         ownerIdMap:
+           mapEntry:
+@@ -109,12 +109,12 @@
+               uuidW1: 0
+               uuidW2: 0
+               uuidW3: 0
+-          - internalOwnerId: 2
++          - internalOwnerId: 3
+             ownerId:
+-              uuidW0: 3705446354
+-              uuidW1: 725894974
+-              uuidW2: 1911774399
+-              uuidW3: 2203541730
++              uuidW0: 958754378
++              uuidW1: 692357636
++              uuidW2: 1738363269
++              uuidW3: 222280221
+       documentRandomSeed: <id:6>
+       documentTimestamp: <ts>
+       documentTimezone: America/Detroit
+@@ -126,13 +126,69 @@
+         identifier: <vol>
+       refsToDirty:
+         identifier: <vol>
++      savedLocaleIdentifier: en_US
++      savedLocaleIdentifierFor42: en_US
+       uuidReferenceMap: {}
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
++      - type: 4008
++        version:
++        - 3
++        - 2
++        - 10
++    objects:
++    - _pbtype: TSCE.FormulaOwnerDependenciesArchive
++      cellDependencies: {}
++      cellErrors: {}
++      formulaOwnerUid:
++        lower: <id:7>
++        upper: <id:8>
++      internalFormulaOwnerId: 3
++      ownerKind: 7
++      rangeDependencies: {}
++      spanningColumnDependencies:
++        bodyRangeForTable:
++          bottomRightColumn: 32767
++          bottomRightRow: 2147483647
++          topLeftColumn: 32767
++          topLeftRow: 2147483647
++        totalRangeForTable:
++          bottomRightColumn: 32767
++          bottomRightRow: 2147483647
++          topLeftColumn: 32767
++          topLeftRow: 2147483647
++      spanningRowDependencies:
++        bodyRangeForTable:
++          bottomRightColumn: 32767
++          bottomRightRow: 2147483647
++          topLeftColumn: 32767
++          topLeftRow: 2147483647
++        totalRangeForTable:
++          bottomRightColumn: 32767
++          bottomRightRow: 2147483647
++          topLeftColumn: 32767
++          topLeftRow: 2147483647
++      spillRangeSizes: {}
++      tiledCellDependencies: {}
++      tiledRangeDependencies: {}
++      uuidReferences: {}
++      volatileDependencies:
++        volatileGeometryCellRefs: {}
++        volatileLocaleCells: {}
++        volatileRandomCells: {}
++        volatileRemoteDataCells: {}
++        volatileSheetTableNameCells: {}
++        volatileTimeCells: {}
++      wholeOwnerDependencies:
++        dependentCells: {}
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
+       - objectReferences:
+-        - <id:7>
++        - <id:9>
+         type: 4008
+         version:
+         - 3
+@@ -184,7 +240,7 @@
+       spillRangeSizes: {}
+       tiledCellDependencies:
+         cellRecordTiles:
+-        - identifier: <id:7>
++        - identifier: <id:9>
+       tiledRangeDependencies: {}
+       uuidReferences: {}
+       volatileDependencies:
+@@ -222,60 +278,6 @@
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
+-      - type: 4008
+-        version:
+-        - 3
+-        - 2
+-        - 10
+-    objects:
+-    - _pbtype: TSCE.FormulaOwnerDependenciesArchive
+-      cellDependencies: {}
+-      cellErrors: {}
+-      formulaOwnerUid:
+-        lower: <id:8>
+-        upper: <id:9>
+-      internalFormulaOwnerId: 2
+-      ownerKind: 7
+-      rangeDependencies: {}
+-      spanningColumnDependencies:
+-        bodyRangeForTable:
+-          bottomRightColumn: 32767
+-          bottomRightRow: 2147483647
+-          topLeftColumn: 32767
+-          topLeftRow: 2147483647
+-        totalRangeForTable:
+-          bottomRightColumn: 32767
+-          bottomRightRow: 2147483647
+-          topLeftColumn: 32767
+-          topLeftRow: 2147483647
+-      spanningRowDependencies:
+-        bodyRangeForTable:
+-          bottomRightColumn: 32767
+-          bottomRightRow: 2147483647
+-          topLeftColumn: 32767
+-          topLeftRow: 2147483647
+-        totalRangeForTable:
+-          bottomRightColumn: 32767
+-          bottomRightRow: 2147483647
+-          topLeftColumn: 32767
+-          topLeftRow: 2147483647
+-      spillRangeSizes: {}
+-      tiledCellDependencies: {}
+-      tiledRangeDependencies: {}
+-      uuidReferences: {}
+-      volatileDependencies:
+-        volatileGeometryCellRefs: {}
+-        volatileLocaleCells: {}
+-        volatileRandomCells: {}
+-        volatileRemoteDataCells: {}
+-        volatileSheetTableNameCells: {}
+-        volatileTimeCells: {}
+-      wholeOwnerDependencies:
+-        dependentCells: {}
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+       - objectReferences:
+         - <id:10>
+         type: 4003
+@@ -315,8 +317,8 @@
+     objects:
+     - _pbtype: TST.HeaderNameMgrArchive
+       nrmOwnerUid:
+-        lower: '0'
+-        upper: '0'
++        lower: <id:7>
++        upper: <id:8>
+       ownerUid:
+         lower: '666'
+         upper: '0'

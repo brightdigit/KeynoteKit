@@ -1,0 +1,45 @@
+--- A/Index/TemplateSlide-2652064.iwa.yaml
++++ B/Index/TemplateSlide-2652064.iwa.yaml
+@@ -16,9 +16,9 @@
+           unknownFieldRule: IgnoreAndPreserve
+         objectReferences:
+         - <id:4>
+-        - <id:2>
+         - <id:1>
+         - <id:3>
++        - <id:2>
+         - <id:5>
+         - <id:6>
+         - <id:7>
+@@ -49,26 +49,26 @@
+       classicStylesheetRecord:
+         identifier: <vol>
+       drawablesZOrder:
+-      - identifier: <id:2>
+       - identifier: <id:1>
++      - identifier: <id:3>
+       inDocument: true
+       instructionalTextMap:
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
+-          instructionalText: "\u201CNotable Quote\u201D"
+-        - info:
+-            identifier: <vol>
+           instructionalText: Attribution
+         - info:
+             identifier: <vol>
+           instructionalText: Slide Title
++        - info:
++            identifier: <vol>
++          instructionalText: "\u201CNotable Quote\u201D"
+       name: Quote
+       objectPlaceholder:
+         identifier: <vol>
+       ownedDrawables:
+-      - identifier: <id:2>
+       - identifier: <id:1>
++      - identifier: <id:3>
+       sageTagToInfoMap:
+       - info:
+           identifier: <vol>

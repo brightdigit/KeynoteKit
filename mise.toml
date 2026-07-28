@@ -1,0 +1,41 @@
+[tools]
+python = "3.12"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.selftest]
+description = "Validate normalize+diff on synthetic data (no Keynote needed)"
+run = "python3 research/tools/selftest.py"
+
+[tasks.test]
+description = "Unit-test the Deck backend (no Keynote needed)"
+run = "python3 research/tools/test_deckkit.py"
+
+[tasks.build-example]
+description = "Build + verify the example deck (needs Keynote + keynote-parser)"
+run = "python3 research/tools/build_deck.py research/examples/deck_example.json research/samples/deck_example.key --verify"
+
+[tasks.read-builds]
+description = "Read object builds from .key file(s): mise run read-builds -- <file.key>... (needs keynote-parser)"
+run = "python3 research/tools/read_builds.py"
+
+[tasks.prepare-keynote-parser]
+description = "Assemble and validate the cached Keynote 15.3 hybrid parser"
+run = "python3 research/tools/prepare_keynote_parser.py"
+
+[tasks.verify-pack]
+description = "Round-trip captured build, Action, and direction fixtures"
+run = "python3 research/tools/verify_hybrid_parser.py"
+
+[tasks.authored-build-smoke]
+description = "Generate, structurally verify, and reopen the authored acceptance deck"
+run = "python3 research/tools/authored_build_smoke.py"
+
+[tasks.transitions]
+description = "Experiment 1: transition present vs absent"
+run = "python3 research/tools/run_experiment.py transitions --generate research/generators/transition_matrix.applescript"
+
+[tasks.experiment]
+description = "Run an arbitrary experiment: mise run experiment -- <name> [args...]"
+run = "python3 research/tools/run_experiment.py"

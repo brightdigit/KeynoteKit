@@ -1,0 +1,26 @@
+--- A/Index/TemplateSlide-2652158.iwa.yaml
++++ B/Index/TemplateSlide-2652158.iwa.yaml
+@@ -15,8 +15,8 @@
+           unknownFieldRule: IgnoreAndPreserve
+         objectReferences:
+         - <id:3>
++        - <id:1>
+         - <id:2>
+-        - <id:1>
+         - <id:4>
+         - <id:5>
+         - <id:6>
+@@ -51,10 +51,10 @@
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
++          instructionalText: Slide Title
++        - info:
++            identifier: <vol>
+           instructionalText: Slide bullet text
+-        - info:
+-            identifier: <vol>
+-          instructionalText: Slide Title
+       name: Blank
+       objectPlaceholder:
+         identifier: <vol>

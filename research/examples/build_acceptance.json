@@ -1,0 +1,57 @@
+{
+  "slides": [
+    {
+      "items": [
+        {"text": "Build In", "x": 200, "y": 180},
+        {"text": "Build Out", "x": 200, "y": 360},
+        {"text": "Move Action", "x": 200, "y": 540}
+      ],
+      "builds": [
+        {"kind": "In", "effect": "dissolve", "duration": 1.0, "target": "item:0"},
+        {"kind": "Out", "effect": "dissolve", "duration": 1.0, "target": "item:1"},
+        {
+          "kind": "Action",
+          "effect": "apple:action-motion-path",
+          "duration": 1.0,
+          "target": "item:2",
+          "action_attributes": {
+            "actionAcceleration": "kEaseBoth",
+            "actionMotionPathSource": {
+              "editableBezierPathSource": {
+                "naturalSize": {"height": 0.0, "width": 50.0},
+                "subpaths": [{
+                  "closed": false,
+                  "nodes": [
+                    {
+                      "inControlPoint": {"x": 0.0, "y": 0.0},
+                      "nodePoint": {"x": 0.0, "y": 0.0},
+                      "outControlPoint": {"x": 0.0, "y": 0.0},
+                      "type": "sharp"
+                    },
+                    {
+                      "inControlPoint": {"x": 50.0, "y": 0.0},
+                      "nodePoint": {"x": 50.0, "y": 0.0},
+                      "outControlPoint": {"x": 50.0, "y": 0.0},
+                      "type": "sharp"
+                    }
+                  ]
+                }],
+                "horizontalFlip": false,
+                "verticalFlip": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "items": [{"text": "Directed Move In", "x": 200, "y": 250}],
+      "transition": {
+        "effect": "move_in",
+        "duration": 1.0,
+        "delay": 0.5,
+        "direction": 11
+      }
+    }
+  ]
+}

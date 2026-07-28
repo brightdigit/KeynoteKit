@@ -1,3 +1,11 @@
+# keynote-format-lab (research/)
+research/samples/
+research/unpacked/
+.venv/
+.DS_Store
+__pycache__/
+*.pyc
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
@@ -30,6 +38,7 @@ playground.xcworkspace
 # .swiftpm
 
 .build/
+research/build/keynote-parser/
 
 # CocoaPods
 #

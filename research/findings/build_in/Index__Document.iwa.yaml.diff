@@ -1,0 +1,48 @@
+--- A/Index/Document.iwa.yaml
++++ B/Index/Document.iwa.yaml
+@@ -353,7 +353,7 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
+-        - '9058'
++        - '9076'
+         fieldInfos:
+         - path:
+             path:
+@@ -373,10 +373,11 @@
+     objects:
+     - _pbtype: KN.SlideNodeArchive
+       backgroundIsNoFillOrColorFillWithAlpha: false
+-      buildEventCountCacheVersion: 4294967295
++      buildEventCount: 1
++      buildEventCountCacheVersion: 2
+       depth: 1
+       hasBuilds: false
+-      hasExplicitBuilds: false
++      hasExplicitBuilds: true
+       hasExplicitBuildsCacheVersion: 2
+       hasNote: false
+       hasTransition: false
+@@ -391,19 +392,19 @@
+       - height: 200.0
+         width: 356.0
+       thumbnails:
+-      - identifier: '9058'
+-      thumbnailsAreDirty: true
++      - identifier: '9076'
++      thumbnailsAreDirty: false
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '16'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
+-        - '16'
+         fieldInfos:
+         - path:
+             path:

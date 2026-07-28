@@ -1,0 +1,38 @@
+--- A/Index/Document.iwa.yaml
++++ B/Index/Document.iwa.yaml
+@@ -399,7 +399,9 @@
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
+-      - fieldInfos:
++      - dataReferences:
++        - '9058'
++        fieldInfos:
+         - path:
+             path:
+             - 27
+@@ -432,18 +434,23 @@
+       templateSlideId:
+         lower: <id:12>
+         upper: <id:13>
++      thumbnailSizes:
++      - height: 200.0
++        width: 356.0
++      thumbnails:
++      - identifier: '9058'
+       thumbnailsAreDirty: true
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
+-        - '16'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
++        - '16'
+         fieldInfos:
+         - path:
+             path:

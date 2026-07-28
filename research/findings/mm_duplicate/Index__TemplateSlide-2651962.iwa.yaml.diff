@@ -1,0 +1,39 @@
+--- A/Index/TemplateSlide-2651962.iwa.yaml
++++ B/Index/TemplateSlide-2651962.iwa.yaml
+@@ -15,8 +15,8 @@
+           unknownFieldRule: IgnoreAndPreserve
+         objectReferences:
+         - <id:3>
++        - <id:2>
+         - <id:1>
+-        - <id:2>
+         - <id:4>
+         - <id:5>
+         - <id:6>
+@@ -47,21 +47,21 @@
+       classicStylesheetRecord:
+         identifier: <vol>
+       drawablesZOrder:
+-      - identifier: <id:1>
++      - identifier: <id:2>
+       inDocument: true
+       instructionalTextMap:
+         instructionalTextForInfos:
+         - info:
+             identifier: <vol>
++          instructionalText: Slide Subtitle
++        - info:
++            identifier: <vol>
+           instructionalText: Section Title
+-        - info:
+-            identifier: <vol>
+-          instructionalText: Slide Subtitle
+       name: Section
+       objectPlaceholder:
+         identifier: <vol>
+       ownedDrawables:
+-      - identifier: <id:1>
++      - identifier: <id:2>
+       slideNumberPlaceholder:
+         identifier: <vol>
+       slideObjectsLayerWithTemplate: false
