@@ -1,48 +1,82 @@
 name: KeynoteKit
 
+# CI on GitHub-hosted runners, following the BrightDigit pattern (SyndiKit is
+# the reference). Scope is deliberately narrower than SyndiKit's: this package
+# is Swift 6.4+ only, so there is no multi-version matrix and no source-compat
+# leg, and no Windows/Android/wasm legs. What remains is macOS — the platform
+# Keynote runs on — plus Ubuntu, which is what actually enforces the
+# cross-platform constraint: only KeynoteKitScripting is Apple-only, and it is
+# gated on canImport rather than a linked framework.
 on:
   push:
-    branches: [main, feature/swift-package]
+    branches: [main, v0.1.x]
     tags: ['v*.*.*']
-    paths-ignore: ['**.md', 'LICENSE', 'research/**', 'docs/**']
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'research/**'
+      - 'docs/**'
   pull_request:
-    paths-ignore: ['**.md', 'LICENSE', 'research/**', 'docs/**']
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'research/**'
+      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-jobs:
-  build-macos:
-    name: Build on macOS (Swift 6.4)
-    runs-on: xcode-27
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and test
-        run: swift build --build-tests && swift test
+env:
+  PACKAGE_NAME: KeynoteKit
 
-  # Guards the cross-platform constraint. Only KeynoteKitScripting is
-  # Apple-only, and it is gated on canImport rather than a linked framework,
-  # so every target must keep compiling here.
-  build-linux:
-    name: Build on Linux (Swift 6.4)
+jobs:
+  # Without this leg a stray `import ScriptingBridge` or `Darwin` in the write
+  # path regresses portability silently.
+  build-ubuntu:
+    name: Build on Ubuntu
     runs-on: ubuntu-latest
-    container: swiftlang/swift:nightly-6.4-noble
+    container: swiftlang/swift:nightly-6.4.x-noble
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Build and test
-        run: swift build --build-tests && swift test
+      - uses: actions/checkout@v6
+      - uses: brightdigit/swift-build@v1
+        id: build
+
+  build-macos:
+    name: Build on macOS
+    runs-on: ${{ matrix.runs-on }}
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs-on: macos-26
+            xcode: /Applications/Xcode_26.6.app
+          - runs-on: xcode-27
+            xcode: /Applications/Xcode_27.0.app
+    steps:
+      - uses: actions/checkout@v6
+      - uses: brightdigit/swift-build@v1
+        id: build
+        with:
+          scheme: ${{ env.PACKAGE_NAME }}
+          xcode: ${{ matrix.xcode }}
 
   lint:
-    name: Lint
-    needs: [build-macos]
-    if: ${{ !cancelled() && !failure() }}
+    name: Linting
+    if: ${{ !cancelled() && !failure() && !contains(github.event.head_commit.message, 'ci skip') }}
+    needs: [build-ubuntu, build-macos]
+    # SyndiKit lints in an Ubuntu container, but Scripts/lint.sh here ends in
+    # `xcrun swift build --build-tests` against DEVELOPER_DIR, so this runs on
+    # macOS where that Xcode exists.
     runs-on: xcode-27
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-tools
       - name: Lint
         run: ./Scripts/lint.sh
         env:
           LINT_MODE: STRICT
+          DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
