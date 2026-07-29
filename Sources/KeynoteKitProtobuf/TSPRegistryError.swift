@@ -1,5 +1,5 @@
 //
-//  KeynoteKitProtobuf.swift
+//  TSPRegistryError.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,22 +27,8 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Namespace for the generated Keynote protobuf messages and the
-/// ``TSPRegistryMapping`` table.
-///
-/// Generated sources are checked in rather than produced at build time, so
-/// consumers never need `protoc` and the package has no build-tool plugin.
-///
-/// The two vendored halves are deliberately from different Keynote releases:
-/// the message schema comes from 15.3, while the archive-type registry comes
-/// from 14.4, which is the last release the registry was extracted from and is
-/// still wire-compatible with the 15.3 messages. ``schemaVersion`` and
-/// ``registryVersion`` record that split so a mismatch is visible rather than
-/// inferred.
-public enum KeynoteKitProtobuf {
-  /// The Keynote release the vendored `.proto` schema was taken from.
-  public static let schemaVersion = "15.3"
-
-  /// The Keynote release the vendored archive-type registry was taken from.
-  public static let registryVersion = "14.4"
+/// A failure raised while resolving an archive type against the registry.
+public enum TSPRegistryError: Error, Equatable, Sendable {
+  /// The registry defines no message for this archive-type identifier.
+  case unknownIdentifier(UInt32)
 }

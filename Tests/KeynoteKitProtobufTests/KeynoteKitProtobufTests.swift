@@ -8,6 +8,7 @@ internal struct KeynoteKitProtobufTests {
 
   @Test("module is linkable")
   internal func moduleIsLinkable() {
-    #expect(KeynoteKitProtobuf.version == "0.1.0")
+    #expect(KeynoteKitProtobuf.schemaVersion == "15.3")
+    #expect(KeynoteKitProtobuf.registryVersion == "14.4")
   }
 }
