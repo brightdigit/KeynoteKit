@@ -126,7 +126,7 @@ Active v0.1.0 work is filed on GitHub under map
 [#12](https://github.com/brightdigit/KeynoteKit/issues/12) (label `v0.1.0`).
 Claim, block, and close tickets there — not in local scratch files.
 
-Parallel lanes / worktree layout: [`.claude/PARALLEL-WORKTREES.md`](.claude/PARALLEL-WORKTREES.md).
+Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.md).
 
 | PLAN step | Ticket |
 |---|---|

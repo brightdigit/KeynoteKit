@@ -8,7 +8,7 @@ metadata:
 
 Scope decisions for the Swift package, made 2026-07-28. A fresh session is
 likely to get these wrong by reasonable-sounding inference, so check here first.
-Full reasoning + decision log: `PLAN.md` on `feature/swift-package`.
+Full reasoning + decision log: `.claude/PLAN.md` on `feature/swift-package`.
 
 **The goal is AUTHORING a `.key` from Swift.** Reading one is explicitly not a
 v0.1.0 feature. Archive-level navigation IS built, but only as internal test

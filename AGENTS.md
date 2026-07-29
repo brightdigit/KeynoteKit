@@ -8,7 +8,7 @@ object builds — by writing the format directly, with no Python, `keynote-parse
 
 **Start here:**
 
-1. **`PLAN.md`** (repo root) — the v0.1.0 goal, 7 gated steps, the two real
+1. **`.claude/PLAN.md`** — the v0.1.0 goal, 7 gated steps, the two real
    risks, and a decision log explaining *why* each choice was made. Read before
    proposing architecture.
 2. **`.claude/agent-notes.md`** — standing directives (below).

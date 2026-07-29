@@ -28,8 +28,8 @@ try deck.write(to: url)  // basedOn: defaults to bundled template
 ```
 
 **Status:** research is done; the Swift package is in progress on
-`feature/swift-package`. See [`PLAN.md`](PLAN.md) for the v0.1.0 goal, gated
-steps, and decision log. Active work is tracked under GitHub map
+`feature/swift-package`. See [`.claude/PLAN.md`](.claude/PLAN.md) for the v0.1.0
+goal, gated steps, and decision log. Active work is tracked under GitHub map
 [#12](https://github.com/brightdigit/KeynoteKit/issues/12) (tickets #13–#24).
 
 ## Requirements
@@ -42,7 +42,7 @@ steps, and decision log. Active work is tracked under GitHub map
 ## Layout
 
 ```
-PLAN.md                 v0.1.0 goal, steps, decision log
+.claude/PLAN.md         v0.1.0 goal, steps, decision log
 Package.swift           (lands with #13)
 Sources/                Swift products (Snappy, IWAFraming, …)
 research/               completed reverse-engineering (format spec + Python reference)

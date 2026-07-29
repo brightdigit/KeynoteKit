@@ -190,7 +190,7 @@ Run at most **one** Keynote-bound lane at a time on a given Mac.
 |---|---|---|
 | `Package.swift` | #13 primarily; later tickets add deps sparingly | After #13, only add a dependency in the ticket that owns that product |
 | `KeynoteKit` | #21 (thin), then #20–#24 | Finish #21 before #20 starts if both touch write entry |
-| `PLAN.md` decision log | #15, #22 | Tiny additive edits; rebase carefully |
+| `.claude/PLAN.md` decision log | #15, #22 | Tiny additive edits; rebase carefully |
 | GitHub issues (#13–#24) | Claim / close / unlock dependents | Source of truth; see map #12 |
 | Goldens / samples | #19 | Don’t let #20 rewrite goldens — only consume them |
 
