@@ -2,17 +2,18 @@
 
 How to run the [12 tickets](https://github.com/brightdigit/KeynoteKit/issues/12)
 (#13–#24) across **git worktrees** without stepping on each other. Integration
-branch: `feature/swift-package`.
+branch: **`v0.1.x`**. (The old `feature/swift-package` branch was squashed into
+`v0.1.x` and no longer exists — if you find it referenced anywhere, read it as
+`v0.1.x`.)
 
-This repo already lives as a worktree of the bare clone
-`../KeynoteKit.git`. Add sibling worktrees next to `swift-package`, not nested
-inside it.
+This repo lives as a worktree of the bare clone `../KeynoteKit.git`. Add sibling
+worktrees at the repo root, not nested inside another worktree.
 
 ## Principles
 
 1. **One worktree ↔ one parallel lane** (not one ticket). A lane is a chain that
    can move without waiting on another lane’s *code*.
-2. **Merge into `feature/swift-package` when a ticket’s gate is green** — don’t
+2. **Merge into `v0.1.x` when a ticket’s gate is green** — don’t
    stack long-lived lane branches past their join points.
 3. **Rebase or merge from integration before starting the next ticket** in that
    lane so product seams (`Snappy`, `IWAFraming`, …) stay aligned.
@@ -68,12 +69,11 @@ flowchart LR
 
 ## Suggested worktree layout
 
-From the KeynoteKit parent directory (sibling of `swift-package`):
+From the KeynoteKit repo root:
 
 ```text
 KeynoteKit/
-  KeynoteKit.git          # bare
-  swift-package/          # integration: feature/swift-package
+  KeynoteKit.git          # bare — never modify directly
   wt-scaffold/            # lane 0 — #13
   wt-survey/              # lane S — #15
   wt-goldens/             # lane G — #19 (Keynote machine)
@@ -89,33 +89,40 @@ starts; remove it when the lane’s tickets are merged.
 
 ### Create / remove
 
-```bash
-# From swift-package (or any worktree of the bare repo)
-git fetch origin
-git worktree add -b v010/13-scaffold ../wt-scaffold feature/swift-package
-git worktree add -b v010/15-survey  ../wt-survey  feature/swift-package
-git worktree add -b v010/19-goldens ../wt-goldens feature/swift-package
+Run these from the repo root (the directory holding `KeynoteKit.git`). Use raw
+`git worktree add`, **not** `git trees add` — the latter derives the directory
+name from the branch and pushes immediately, creating a remote branch before
+there is a commit. `--no-track` keeps the lane branch from inheriting `v0.1.x`'s
+upstream and silently pushing to integration.
 
-# After #13 is on feature/swift-package:
-git worktree add -b v010/14-protobuf ../wt-protobuf feature/swift-package
-git worktree add -b v010/16-snappy   ../wt-snappy   feature/swift-package
-git worktree add -b v010/21-template ../wt-template feature/swift-package
+```bash
+git fetch origin
+
+git worktree add --no-track -b 13-package-skeleton ../wt-scaffold origin/v0.1.x
+git worktree add --no-track -b 15-snappy-survey    ../wt-survey   origin/v0.1.x
+git worktree add --no-track -b 19-goldens          ../wt-goldens  origin/v0.1.x
+
+# After #13 is on v0.1.x:
+git worktree add --no-track -b 14-protobuf ../wt-protobuf origin/v0.1.x
+git worktree add --no-track -b 16-snappy   ../wt-snappy   origin/v0.1.x
+git worktree add --no-track -b 21-template ../wt-template origin/v0.1.x
 
 # After #14+#16 merged:
-git worktree add -b v010/17-iwa ../wt-iwa feature/swift-package
+git worktree add --no-track -b 17-iwa-framing ../wt-iwa origin/v0.1.x
 
 # After #18+#19+#21 merged:
-git worktree add -b v010/20-authoring ../wt-authoring feature/swift-package
+git worktree add --no-track -b 20-writer ../wt-authoring origin/v0.1.x
 ```
 
-Branch naming: `v010/<issue>-<slug>` for single-ticket lanes; keep one branch
-per lane when the lane is a short chain (e.g. `v010/iwa` for #17→#18).
+Branch naming: standard GitHub issue branching — `<issue>-<slug>`, no slashes
+(e.g. `13-package-skeleton`). For a lane that chains several tickets, name it
+after the first issue in the chain (e.g. `17-iwa-framing` for #17→#18).
 
 Remove when done:
 
 ```bash
 git worktree remove ../wt-scaffold
-git branch -d v010/13-scaffold   # after merge
+git branch -d 13-package-skeleton   # after merge
 ```
 
 Each new worktree that runs Python research tools needs its own venv setup
@@ -131,7 +138,7 @@ Each new worktree that runs Python research tools needs its own venv setup
 | `wt-survey` | #15 | Docs-only; merge anytime; unblocks #16’s *decision* |
 | `wt-goldens` | #19 | **Exclusive Keynote use** while regenerating |
 
-Do not start #14/#16/#21 until #13 is merged to `feature/swift-package`.
+Do not start #14/#16/#21 until #13 is merged to `v0.1.x`.
 
 ### Phase 1 — after #13 (max 3 code worktrees + goldens if still open)
 
@@ -173,7 +180,7 @@ Land in this order when multiple PRs are ready:
 5. **#18**, **#19**, **#21** before **#20** (any order among those three)
 6. **#20** → **#22** → **#23** → **#24**
 
-Prefer small PRs into `feature/swift-package`, not lane-to-lane merges.
+Prefer small PRs into `v0.1.x`, not lane-to-lane merges.
 
 ## Agent / human split
 
@@ -196,10 +203,10 @@ Run at most **one** Keynote-bound lane at a time on a given Mac.
 
 ## Checklist per lane session
 
-1. Create/update worktree from current `feature/swift-package`.
+1. Create/update worktree from current `v0.1.x`.
 2. Claim the ticket (`gh issue edit <n> --add-assignee @me`).
 3. Implement until the ticket’s acceptance checklist is green.
-4. Open PR → merge to `feature/swift-package`.
+4. Open PR → merge to `v0.1.x`.
 5. Delete lane branch / remove worktree (or reset branch for the next ticket in-lane).
 6. Close the GitHub issue; dependents unblock via native `blocked_by` edges.
 

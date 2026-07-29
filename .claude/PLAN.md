@@ -1,7 +1,9 @@
 # KeynoteKit — v0.1.0 Goal & Plan
 
-Branch: `feature/swift-package` (off `v0.1.x`, which carries the squash-merged
-prototype research, `ab23b45` / PR #1).
+Integration branch: **`v0.1.x`**. It carries the squash-merged prototype research
+(`ab23b45` / PR #1) and the squash-merged planning work (`62a68f3` / PR #11) —
+the former `feature/swift-package` branch was squashed into it and no longer
+exists. Ticket lanes branch off `v0.1.x` and PR back into it.
 
 ## Goal
 
@@ -84,7 +86,7 @@ Verified working from a clean checkout on 2026-07-28. `.venv/` is gitignored, so
 **each fresh worktree repeats this**:
 
 ```
-mise trust                                            # new worktree => untrusted mise.toml
+mise trust                                            # new worktree => untrusted .mise.toml
 mise exec -- python3 -m ensurepip --upgrade           # venv ships without pip
 mise exec -- python3 -m pip install 'keynote-parser==1.14.4.0' 'grpcio-tools==1.82.1'
 mise run test                     # => DECKKIT TEST PASS
@@ -171,13 +173,24 @@ Keep `research/` untouched as the reference corpus.
 Bring over the BrightDigit scaffolding from **SyndiKit** (closest reference —
 already on Swift 6.4 tooling): `.swift-format`, `.swiftlint.yml`,
 `.periphery.yml`, `.spi.yml`, `Scripts/lint.sh`, `.github/workflows/` with
-`brightdigit/swift-build@v1`. Deviations: **macOS-only** (no Ubuntu/Windows/WASM
-— we target Keynote), **6.4+ only** (no `Package@swift-*.swift` fallbacks).
+`brightdigit/swift-build@v1`. Deviation: **6.4+ only** (no
+`Package@swift-*.swift` fallbacks).
 
-**Watch out:** the repo already has a root `mise.toml` for the Python research
-tasks; SyndiKit's scaffolding uses `.mise.toml`. Merge deliberately — do not
-clobber `test` / `prepare-keynote-parser` / `verify-pack`, which are how the
-Step 4 goldens get regenerated.
+**Cross-platform, not macOS-only** (decided in #13, superseding this plan's
+earlier "macOS-only — we target Keynote"). Most of the package is portable:
+`Snappy` is a generic block codec, `IWAFraming` is zip + protobuf framing, and
+`KeynoteKitProtobuf` is generated messages. Only `KeynoteKitScripting` needs
+Apple frameworks, and it is gated with `#if canImport(ScriptingBridge)` so it
+compiles to an empty module elsewhere rather than failing the build. Never use
+`.linkedFramework("ScriptingBridge")` — that would break Linux unconditionally.
+CI runs a Linux job to keep this honest; without it, a stray `Darwin` import
+regresses portability silently. Keeping `Snappy` Linux-clean also enforces the
+separation that #5 depends on.
+
+**Resolved in #13:** the root `mise.toml` was renamed to `.mise.toml` and the
+Swift toolchain merged into it — one config file, matching SyndiKit and Bitness.
+The two sets of keys are disjoint, and all nine Python research tasks
+(`test` / `prepare-keynote-parser` / `verify-pack` included) are preserved.
 
 **Gate:** empty package builds and tests on 6.4; all five products declared;
 `KeynoteKit` does not import ScriptingBridge; `Scripts/lint.sh` clean.

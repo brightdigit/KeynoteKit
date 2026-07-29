@@ -1,0 +1,34 @@
+name: Swift Source Compatibility
+
+# SyndiKit runs this across Swift 5.10–6.4. This package is
+# `swift-tools-version: 6.4`, so every older container fails at manifest parse
+# rather than telling us anything — the matrix is 6.4 only. It still earns its
+# place: this is the only leg building `--configuration release` with the
+# sandbox disabled, which catches optimizer- and sandbox-specific breakage the
+# debug builds miss. Add rows here if the floor ever drops below 6.4.
+on:
+  push:
+    branches: [main, v0.1.x]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  swift-source-compat-suite:
+    name: Test Swift ${{ matrix.container }} For Source Compatibility Suite
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - swiftlang/swift:nightly-6.4.x-noble
+
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Test Swift 6.x For Source Compatibility
+        run: swift build --disable-sandbox --verbose --configuration release
