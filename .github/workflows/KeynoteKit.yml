@@ -32,6 +32,41 @@ env:
   PACKAGE_NAME: KeynoteKit
 
 jobs:
+  # Two tiers. Ordinary PRs get SPM-only on macOS (macos-spm.json); main,
+  # semver branches, dispatch, and PRs into main add the platform/simulator
+  # legs (macos-full.json). Matrix rows live in .github/matrices/ so they can
+  # be edited without touching workflow logic.
+  configure:
+    name: Configure Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      macos-matrix: ${{ steps.matrix.outputs.macos-matrix }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: check
+        name: Determine matrix scope
+        run: |
+          FULL=false
+          REF="${{ github.ref }}"; EVENT="${{ github.event_name }}"; BASE_REF="${{ github.base_ref }}"
+          if [[ "$REF" == "refs/heads/main" ]]; then FULL=true
+          elif [[ "$REF" =~ ^refs/heads/v?[0-9]+\.[0-9]+\.[0-9x]+ ]]; then FULL=true
+          elif [[ "$EVENT" == "workflow_dispatch" ]]; then FULL=true
+          elif [[ "$EVENT" == "pull_request" ]]; then
+            if [[ "$BASE_REF" == "main" ]]; then FULL=true
+            elif [[ "$BASE_REF" =~ ^v?[0-9]+\.[0-9]+\.[0-9x]+ ]]; then FULL=true
+            fi
+          fi
+          echo "full=$FULL" >> "$GITHUB_OUTPUT"
+      - id: matrix
+        name: Build matrix values
+        run: |
+          if [[ "${{ steps.check.outputs.full }}" == "true" ]]; then
+            MACOS=$(jq -c . .github/matrices/macos-full.json)
+          else
+            MACOS=$(jq -c . .github/matrices/macos-spm.json)
+          fi
+          echo "macos-matrix={\"include\":${MACOS}}" >> "$GITHUB_OUTPUT"
+
   # Without this leg a stray `import ScriptingBridge` or `Darwin` in the write
   # path regresses portability silently.
   build-ubuntu:
@@ -46,23 +81,23 @@ jobs:
 
   build-macos:
     name: Build on macOS
+    needs: configure
     runs-on: ${{ matrix.runs-on }}
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - runs-on: macos-26
-            xcode: /Applications/Xcode_26.6.app
-          - runs-on: xcode-27
-            xcode: /Applications/Xcode_27.0.app
+      matrix: ${{ fromJSON(needs.configure.outputs.macos-matrix) }}
     steps:
       - uses: actions/checkout@v6
       - uses: brightdigit/swift-build@v1
         id: build
         with:
           scheme: ${{ env.PACKAGE_NAME }}
+          type: ${{ matrix.type }}
           xcode: ${{ matrix.xcode }}
+          deviceName: ${{ matrix.deviceName }}
+          osVersion: ${{ matrix.osVersion }}
+          download-platform: ${{ matrix.download-platform }}
 
   lint:
     name: Linting
