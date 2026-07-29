@@ -1,4 +1,4 @@
-# HANDOFF — resume point for keynote-format-lab
+# HANDOFF — resume point for the research phase
 
 Read this first after a context clear. It is self-contained: environment, how
 to run things, what is done, gotchas, and next steps.
@@ -25,12 +25,12 @@ to run things, what is done, gotchas, and next steps.
 Reverse-engineer how Keynote's `.key` represents **slide transitions (Magic
 Move)** and **object builds** via differential diffing of minimal pairs, so we
 can design a `Deck` intermediate model + an AppleScript / template-surgery
-backend. See `README.md` for full methodology. Favor written findings over raw
-diffs.
+backend. Methodology summary is in the repo-root `README.md` (Research
+section). Favor written findings over raw diffs.
 
 ## Environment (already set up)
 
-- Repo: `/Users/leo/Documents/Projects/KeynoteKit/prototype`
+- Repo: this worktree (`…/KeynoteKit/swift-package`); research lives under `research/`
 - Apple Keynote **15.3** is installed but presents as
   `/Applications/Keynote Creator Studio.app` (genuine; see
   `findings/versions.md` for the forensic proof). `tell application "Keynote"`

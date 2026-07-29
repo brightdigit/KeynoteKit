@@ -22,7 +22,10 @@ working Python reference backend, and `research/fixtures/` has 24 human-authored
 `.key` files used as test corpus. Treat findings as established — don't
 re-derive them. `research/findings/HANDOFF.md` is that phase's own resume point.
 
-Deferred work is tracked as GitHub issues #2-#10.
+Active v0.1.0 work: GitHub map
+[#12](https://github.com/brightdigit/KeynoteKit/issues/12) (tickets #13–#24);
+parallel lanes in [`.claude/PARALLEL-WORKTREES.md`](.claude/PARALLEL-WORKTREES.md).
+Deferred past v0.1.0: issues [#2](https://github.com/brightdigit/KeynoteKit/issues/2)–[#10](https://github.com/brightdigit/KeynoteKit/issues/10).
 
 ## Memory & Corrections Convention
 
