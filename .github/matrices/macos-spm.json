@@ -1,9 +1,5 @@
 [
   {
-    "runs-on": "macos-26",
-    "xcode": "/Applications/Xcode_26.6.app"
-  },
-  {
     "runs-on": "xcode-27",
     "xcode": "/Applications/Xcode_27.0.app"
   }
