@@ -1,7 +1,9 @@
 # KeynoteKit — v0.1.0 Goal & Plan
 
-Branch: `feature/swift-package` (off `v0.1.x`, which carries the squash-merged
-prototype research, `ab23b45` / PR #1).
+Integration branch: **`v0.1.x`**. It carries the squash-merged prototype research
+(`ab23b45` / PR #1) and the squash-merged planning work (`62a68f3` / PR #11) —
+the former `feature/swift-package` branch was squashed into it and no longer
+exists. Ticket lanes branch off `v0.1.x` and PR back into it.
 
 ## Goal
 
@@ -84,7 +86,7 @@ Verified working from a clean checkout on 2026-07-28. `.venv/` is gitignored, so
 **each fresh worktree repeats this**:
 
 ```
-mise trust                                            # new worktree => untrusted mise.toml
+mise trust                                            # new worktree => untrusted .mise.toml
 mise exec -- python3 -m ensurepip --upgrade           # venv ships without pip
 mise exec -- python3 -m pip install 'keynote-parser==1.14.4.0' 'grpcio-tools==1.82.1'
 mise run test                     # => DECKKIT TEST PASS
