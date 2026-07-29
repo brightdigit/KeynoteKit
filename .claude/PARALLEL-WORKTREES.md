@@ -130,7 +130,11 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-### Phase 0 — before #13 lands (max 3 worktrees)
+> **Current position (2026-07-29): phases 0 and 1 are complete.** All six of
+> #13, #15, #19, #14, #16, #21 are merged to `v0.1.x` and their worktrees have
+> been removed. **Phase 2 (#17 → #18) is the frontier and has not started.**
+
+### ~~Phase 0 — before #13 lands~~ (complete)
 
 | Worktree | Ticket | Notes |
 |---|---|---|
@@ -138,15 +142,18 @@ Each new worktree that runs Python research tools needs its own venv setup
 | `wt-survey` | #15 | Docs-only; merge anytime; unblocks #16’s *decision* |
 | `wt-goldens` | #19 | **Exclusive Keynote use** while regenerating |
 
-Do not start #14/#16/#21 until #13 is merged to `v0.1.x`.
-
-### Phase 1 — after #13 (max 3 code worktrees + goldens if still open)
+### ~~Phase 1 — after #13~~ (complete)
 
 | Worktree | Ticket | Touches |
 |---|---|---|
 | `wt-protobuf` | #14 | `KeynoteKitProtobuf` only |
 | `wt-snappy` | #16 | `Snappy` only (needs #15’s decision merged) |
 | `wt-template` | #21 | Resource + thin `basedOn:` wiring on `KeynoteKit` |
+
+In practice #16 was chained in-lane after #15 in `wt-survey` rather than run in
+its own `wt-snappy`, since #15 is docs-only and its decision was "vendor" (no
+`Package.swift` edit, so no conflict with #14). #21 ran after #19 finished with
+Keynote, not alongside it.
 
 Conflict risk: #21 vs later authoring on `KeynoteKit` — keep #21 minimal (resource
 + default path only). Leave DSL to lane W.

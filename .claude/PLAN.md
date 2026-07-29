@@ -145,7 +145,11 @@ Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.m
 | 5 Authoring API | [#23](https://github.com/brightdigit/KeynoteKit/issues/23) |
 | 6 Acceptance (Keynote 15.3) | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) |
 
-Frontier (unblocked now): #13, #15, #19.
+**Done and merged on `v0.1.x`:** #13 (`d17ae91`), #15 (`d5bb1ef`),
+#19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`).
+
+**Frontier (unblocked now): #17** — its gates #14 and #16 have both landed.
+#17 → #18 run serially in one lane; #20 → #22 → #23 → #24 then need #18.
 
 ## Plan
 
@@ -517,6 +521,7 @@ Every decision above, with the reasoning that is easy to lose:
 | Snappy | **vendor a pure-Swift block codec** (#15 survey; exit stays #5) | Block-level APIs *are* common (google/snappy's C API, `codelynx/snappy-swift`) — but the only pure-Swift candidate is 2★/1-commit/no-CI, and a C/C++ shim would owe per-platform stdlib linking + hand-generated `config.h` across the Ubuntu/Windows/Android legs. ~200 lines of a format frozen since 2011 beats both. See `research/findings/snappy_survey.md` |
 | protobuf | depend on swift-protobuf | 13,863 lines of `.proto`; hand-rolling is not sensible |
 | Archive decoding | **always `partial: true`** (#14) — applies to *any* archive decode, not just the registry | The 15.3 protos mark **1,497 fields `required`** (proto2), but Keynote does not populate all of them. Strict decoding throws `.missingRequiredFields` on components Keynote itself round-trips, so enforcement would reject valid documents — partial is *correct*, not a workaround. Pairing the 15.3 schema with the 14.4 registry widens the gap further. #17/#18 inherit this |
+| `.key` zip members | **always `STORED`, never `DEFLATED`** (#17 must not deflate) | Measured 2026-07-29: **1,604/1,604 entries across all 30 `.key` files** (24 fixtures + 5 goldens + the #21 template) are stored. Keynote's own writer never compresses — `.iwa` payloads are already Snappy-compressed and `Data/` members are JPEG, so deflate would cost CPU for nothing. Most zip libraries default to deflate, so this is an easy latent bug: the output would only fail at #24 acceptance as "Keynote won't open it" |
 | Step 2 gate | semantic round-trip | Keynote requires *acceptance*, not byte-equality |
 | Reading | internal only (#6) | goal is authoring; reading is test infrastructure |
 | ScriptingBridge | escape hatch only (#10); **separate product** `KeynoteKitScripting` | keeping the authoring path free of live Keynote — module boundary, not a comment |
