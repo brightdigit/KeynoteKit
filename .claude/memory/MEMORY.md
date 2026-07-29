@@ -7,3 +7,4 @@
 - [Memories live in repo](memories-live-in-repo.md) — mirror every memory into `.claude/memory/` in the repo, keep in sync with the global copy
 - [KeynoteKit integration branch](keynotekit-integration-branch.md) — `v0.1.x` is integration; lane branches are slash-free issue names off it
 - [KeynoteKit CI conventions](keynotekit-ci-conventions.md) — BrightDigit pattern, Xcode 27 only, cross-platform via canImport; never pass `scheme:` to swift-build
+- [KeynoteKit v0.1.0 progress](keynotekit-v010-progress.md) — container stack (#13–#16, #19, #21) merged on `v0.1.x`; #17 IWAFraming is the frontier; three measured constraints not to re-derive

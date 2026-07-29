@@ -145,7 +145,11 @@ Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.m
 | 5 Authoring API | [#23](https://github.com/brightdigit/KeynoteKit/issues/23) |
 | 6 Acceptance (Keynote 15.3) | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) |
 
-Frontier (unblocked now): #13, #15, #19.
+**Done and merged on `v0.1.x`:** #13 (`d17ae91`), #15 (`d5bb1ef`),
+#19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`).
+
+**Frontier (unblocked now): #17** — its gates #14 and #16 have both landed.
+#17 → #18 run serially in one lane; #20 → #22 → #23 → #24 then need #18.
 
 ## Plan
 
