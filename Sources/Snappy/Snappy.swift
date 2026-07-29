@@ -27,11 +27,77 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Namespace for the generic Snappy block codec.
+/// The generic Snappy block codec.
 ///
-/// Nothing in this module is Apple-specific; it is the seam intended to become
-/// an external package dependency. The codec itself lands in issue #16.
+/// This module implements the *block* format only — the varint length preamble
+/// followed by literal and copy elements. It deliberately knows nothing about
+/// any stream framing:
+///
+/// - The `sNaPpY` stream identifier, chunk headers, and CRC-32C checksums of
+///   Snappy's standard framing format are **not** implemented here.
+/// - Apple's `.iwa` framing, which uses this same block format under a
+///   *different* chunk layout, lives in `IWAFraming`.
+///
+/// Keeping that seam clean is what lets this codec be swapped for an external
+/// package later without touching callers.
+///
+/// ```swift
+/// let compressed = Snappy.compress(Array("hello".utf8))
+/// let original = try Snappy.decompress(compressed)
+/// ```
 public enum Snappy {
-  /// Placeholder version, replaced when the codec lands.
-  public static let version = "0.1.0"
+  /// Largest block this codec will encode or decode, in bytes.
+  ///
+  /// The format bounds a block's uncompressed length to 32 bits. Producers
+  /// typically chunk well below that; Apple's `.iwa` writer uses 64 KiB.
+  public static let maximumBlockSize = Int(UInt32.max)
+
+  /// The worst-case encoded size for `count` bytes.
+  ///
+  /// Useful for sizing a destination buffer up front. The bound covers the
+  /// length preamble plus the literal-tag overhead the format adds roughly
+  /// every 60 bytes when the input is incompressible.
+  ///
+  /// - Parameter count: The uncompressed byte count.
+  /// - Returns: The maximum number of bytes ``compress(_:)`` can produce.
+  public static func maximumCompressedLength(for count: Int) -> Int {
+    Varint.maximumEncodedWidth + count + (count / Element.maximumInlineLiteralLength) + 1
+  }
+
+  /// Compresses `input` into a Snappy block.
+  ///
+  /// Compression never fails: any input encodes, in the worst case entirely as
+  /// literal elements.
+  ///
+  /// - Parameter input: The bytes to compress.
+  /// - Returns: A block including its length preamble.
+  public static func compress(_ input: [UInt8]) -> [UInt8] {
+    input.withUnsafeBufferPointer(SnappyEncoder.encode)
+  }
+
+  /// Decompresses a Snappy block.
+  ///
+  /// - Parameter input: A block including its length preamble.
+  /// - Returns: The original bytes.
+  /// - Throws: A ``SnappyError`` if `input` is malformed. Malformed input never
+  ///   traps, so this is safe to call on bytes read from a file.
+  public static func decompress(_ input: [UInt8]) throws -> [UInt8] {
+    try input.withUnsafeBufferPointer(SnappyDecoder.decode)
+  }
+
+  /// Reads the uncompressed length recorded in a block's preamble.
+  ///
+  /// Parses only the preamble, so it stays cheap on large blocks and can size a
+  /// buffer before committing to a full decode.
+  ///
+  /// - Parameter input: A block including its length preamble.
+  /// - Returns: The length the block claims to decode to.
+  /// - Throws: ``SnappyError/invalidLengthPreamble`` if the preamble is
+  ///   truncated or wider than 32 bits.
+  public static func uncompressedLength(of input: [UInt8]) throws -> Int {
+    try input.withUnsafeBufferPointer { buffer in
+      var index = 0
+      return try Varint.decode(from: buffer, at: &index)
+    }
+  }
 }
