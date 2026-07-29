@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build-macos:
     name: Build on macOS (Swift 6.4)
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
       - name: Build and test
@@ -38,7 +38,7 @@ jobs:
     name: Lint
     needs: [build-macos]
     if: ${{ !cancelled() && !failure() }}
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
