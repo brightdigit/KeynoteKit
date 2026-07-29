@@ -89,10 +89,14 @@ jobs:
       matrix: ${{ fromJSON(needs.configure.outputs.macos-matrix) }}
     steps:
       - uses: actions/checkout@v6
+      # No `scheme:` here on purpose. Passing the product name skips the
+      # action's "Calculate Scheme" step, and `-scheme KeynoteKit` resolves to
+      # something xcodebuild reports as having no supported platforms. SwiftPM
+      # names the aggregate scheme `KeynoteKit-Package`; letting the action
+      # derive it gets that right.
       - uses: brightdigit/swift-build@v1
         id: build
         with:
-          scheme: ${{ env.PACKAGE_NAME }}
           type: ${{ matrix.type }}
           xcode: ${{ matrix.xcode }}
           deviceName: ${{ matrix.deviceName }}
