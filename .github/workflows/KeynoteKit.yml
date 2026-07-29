@@ -68,10 +68,21 @@ jobs:
             MACOS=$(jq -c . .github/matrices/macos-spm.json)
           fi
           echo "macos-matrix={\"include\":${MACOS}}" >> "$GITHUB_OUTPUT"
-          # wasm / wasm-embedded are build-only legs on the Ubuntu job. Set the
-          # ENABLE_WASM repo variable to 'false' if a dependency ever stops
-          # building for wasm.
-          if [[ "${{ vars.ENABLE_WASM }}" != "false" ]]; then
+          # wasm / wasm-embedded are build-only legs on the Ubuntu job, opt-in
+          # via the ENABLE_WASM repo variable.
+          #
+          # Off by default because the pieces cannot currently be version-matched:
+          # the wasm SDK is a dated snapshot shipping a prebuilt stdlib, while
+          # swiftlang/swift publishes only rolling `nightly-6.4.x-*` tags (no
+          # date-pinned ones). The rolling compiler drifts past the SDK and the
+          # build fails with "compiled module was created by an older version of
+          # the compiler". Nothing to do with this package — Snappy and
+          # IWAFraming are pure Swift and should build for wasm fine.
+          #
+          # To re-enable: set ENABLE_WASM=true once 6.4 has a stable release
+          # whose toolchain and wasm SDK ship together, and update the SDK URL
+          # and checksum below to match.
+          if [[ "${{ vars.ENABLE_WASM }}" == "true" ]]; then
             echo 'ubuntu-type=["","wasm","wasm-embedded"]' >> "$GITHUB_OUTPUT"
           else
             echo 'ubuntu-type=[""]' >> "$GITHUB_OUTPUT"
