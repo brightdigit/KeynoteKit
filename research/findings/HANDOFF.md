@@ -1,19 +1,36 @@
-# HANDOFF — resume point for keynote-format-lab
+# HANDOFF — resume point for the research phase
 
 Read this first after a context clear. It is self-contained: environment, how
 to run things, what is done, gotchas, and next steps.
+
+> ## ⚠️ The project has moved to its Swift phase (2026-07-28)
+>
+> **This file documents the completed reverse-engineering research.** That work
+> is DONE and squash-merged to `v0.1.x` (`ab23b45`, PR #1). Everything below is
+> still accurate as the format spec and as the Python reference backend.
+>
+> **The active work is now building the Swift package.** For that, read:
+>
+> 1. **`.claude/PLAN.md`** (branch `feature/swift-package`) — goal,
+>    gated steps, two named risks, and a decision log.
+> 2. **GitHub map [#12](https://github.com/brightdigit/KeynoteKit/issues/12)** —
+>    v0.1.0 tracer bullets (#13–#24, label `v0.1.0`); claim / close there.
+> 3. **`.claude/PARALLEL-WORKTREES.md`** — parallel lanes and worktree layout.
+> 4. **`.claude/agent-notes.md`** and **`.claude/memory/keynotekit-v010-scope.md`**.
+>
+> Deferred past v0.1.0 remains issues [#2](https://github.com/brightdigit/KeynoteKit/issues/2)–[#10](https://github.com/brightdigit/KeynoteKit/issues/10).
 
 ## Mission (unchanged)
 
 Reverse-engineer how Keynote's `.key` represents **slide transitions (Magic
 Move)** and **object builds** via differential diffing of minimal pairs, so we
 can design a `Deck` intermediate model + an AppleScript / template-surgery
-backend. See `README.md` for full methodology. Favor written findings over raw
-diffs.
+backend. Methodology summary is in the repo-root `README.md` (Research
+section). Favor written findings over raw diffs.
 
 ## Environment (already set up)
 
-- Repo: `/Users/leo/Documents/Projects/KeynoteKit/prototype`
+- Repo: this worktree (`…/KeynoteKit/swift-package`); research lives under `research/`
 - Apple Keynote **15.3** is installed but presents as
   `/Applications/Keynote Creator Studio.app` (genuine; see
   `findings/versions.md` for the forensic proof). `tell application "Keynote"`
