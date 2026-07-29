@@ -36,7 +36,25 @@ let package = Package(
     ),
 
     // Public authoring API. Must never import or link ScriptingBridge.
-    .target(name: "KeynoteKit", dependencies: ["IWAFraming", "KeynoteKitProtobuf"]),
+    //
+    // `blank.key` is the minimal base document for template surgery (#21/#7).
+    // `.copy` — not `.process` — because a `.key` is a zip archive whose bytes
+    // must survive verbatim; `.process` licenses SwiftPM to transform or rename
+    // resources per platform, and today's no-op for an unknown extension is not
+    // a guarantee. `.copy` also keeps the resource at a stable, predictable
+    // path across the Darwin/Linux/Windows/Android legs.
+    //
+    // Redistribution caveat (#7): this template is derived from Keynote's
+    // `21_basicwhite`, so a small amount of Apple-authored theme content ships
+    // in this package — a 2.5 KB `Data/st-*.jpg`, a 50 KB
+    // `DocumentStylesheet.iwa`, and three theme-bundle resource locators.
+    // Reducing the template from 458 KB minimized this; it did not eliminate
+    // it. See the note on `KeynoteTemplate`.
+    .target(
+      name: "KeynoteKit",
+      dependencies: ["IWAFraming", "KeynoteKitProtobuf"],
+      resources: [.copy("Resources/blank.key")]
+    ),
 
     // ScriptingBridge escape hatch (#10). Reserved here, empty until then.
     // The body is gated on `canImport(ScriptingBridge)` rather than a linked
