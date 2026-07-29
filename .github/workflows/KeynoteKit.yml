@@ -1,0 +1,48 @@
+name: KeynoteKit
+
+on:
+  push:
+    branches: [main, feature/swift-package]
+    tags: ['v*.*.*']
+    paths-ignore: ['**.md', 'LICENSE', 'research/**', 'docs/**']
+  pull_request:
+    paths-ignore: ['**.md', 'LICENSE', 'research/**', 'docs/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macos:
+    name: Build on macOS (Swift 6.4)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: swift build --build-tests && swift test
+
+  # Guards the cross-platform constraint. Only KeynoteKitScripting is
+  # Apple-only, and it is gated on canImport rather than a linked framework,
+  # so every target must keep compiling here.
+  build-linux:
+    name: Build on Linux (Swift 6.4)
+    runs-on: ubuntu-latest
+    container: swiftlang/swift:nightly-6.4-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: swift build --build-tests && swift test
+
+  lint:
+    name: Lint
+    needs: [build-macos]
+    if: ${{ !cancelled() && !failure() }}
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Lint
+        run: ./Scripts/lint.sh
+        env:
+          LINT_MODE: STRICT

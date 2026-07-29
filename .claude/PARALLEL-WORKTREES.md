@@ -108,8 +108,13 @@ git worktree add -b v010/17-iwa ../wt-iwa feature/swift-package
 git worktree add -b v010/20-authoring ../wt-authoring feature/swift-package
 ```
 
-Branch naming: `v010/<issue>-<slug>` for single-ticket lanes; keep one branch
-per lane when the lane is a short chain (e.g. `v010/iwa` for #17→#18).
+Branch naming: standard GitHub issue branching — `<issue>-<slug>`, no slashes
+(e.g. `13-package-skeleton`). For a lane that chains several tickets, name it
+after the first issue in the chain (e.g. `17-iwa-framing` for #17→#18).
+
+Slash-free names also avoid `git trees add` slugging the branch into a
+differently-named directory. The commands above use raw `git worktree add` so
+the lane directory name stays independent of the branch name.
 
 Remove when done:
 
