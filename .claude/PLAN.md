@@ -197,7 +197,8 @@ The two sets of keys are disjoint, and all nine Python research tasks
 
 ### 1. Vendor the schema into Swift (#14)
 Generate Swift types from `research/vendor/keynote-parser/protos/15.3/*.proto`
-(35 files) with swift-protobuf into the **`KeynoteKitProtobuf`** product.
+(33 files; 34 compiled including `compat/14.4/TSKArchives_sos.proto`) with
+swift-protobuf into the **`KeynoteKitProtobuf`** product.
 Port the 14.4 `TSPRegistryMapping` (type ID → message name, e.g.
 `8: KN.BuildArchive`, `153: KN.BuildChunkArchive`) into generated Swift — it is
 a flat table, so this is mechanical. Check generated sources in; do not require
@@ -476,9 +477,18 @@ for a live-Keynote dependency. Not the plan; the escape route.
    [#2](https://github.com/brightdigit/KeynoteKit/issues/2).
 2. ~~**Drawable authoring depth.**~~ **RESOLVED: option (a)** — parity with the
    Python IR (`text`, `x`, `y`). Geometry → #3, shapes/images → #4.
-3. ~~**Snappy dependency.**~~ **RESOLVED:** vendor the Apple-variant Snappy
-   framing for v0.1.0, depend on swift-protobuf. Vendoring is an **expedient,
-   not the destination** — moving to a package dependency is #5.
+3. ~~**Snappy dependency.**~~ **RESOLVED 2026-07-29 (#15): vendor a pure-Swift
+   block codec**, and vendor the Apple-variant framing on top; depend on
+   swift-protobuf. The survey overturned the premise that stock libraries hide
+   the block codec — they don't — but no *trustworthy* Swift package exposes it:
+   the sole pure-Swift candidate (`codelynx/snappy-swift`) is 2★, one author, a
+   single squashed commit, no CI, and its product name collides with ours; every
+   other option is a C/C++ shim, Apple-only, half-finished, or unlicensed.
+   Measured, not assumed: all 25 fixture `.iwa` files decode with a stock block
+   decompressor, and Apple's chunk header is 4 bytes with no `sNaPpY` identifier
+   and no CRC-32C. Vendoring is still an **expedient, not the destination** —
+   moving to a package dependency is #5. Full writeup:
+   `research/findings/snappy_survey.md`.
 
 4. ~~**Step 2 gate: byte-identical or semantic?**~~ **RESOLVED: semantic.**
    Byte-identity is a diagnostic, not a blocking gate — see Step 2.
@@ -504,7 +514,7 @@ Every decision above, with the reasoning that is easy to lose:
 | Swift floor | 6.4 (dev)+ only | user directive; no back-compat shims |
 | Template | surgery on a bundled minimal template | from-scratch synthesis is unresearched (#2) |
 | Drawable IR | `text`/`x`/`y` parity with Python | smallest proven step; geometry #3, shapes #4 |
-| Snappy | vendor now, depend later (#5); **survey block-level packages first** (Step 2) | Apple's framing isn't exposed by stock libraries; a block-level dep may skip vendoring the codec |
+| Snappy | **vendor a pure-Swift block codec** (#15 survey; exit stays #5) | Block-level APIs *are* common (google/snappy's C API, `codelynx/snappy-swift`) — but the only pure-Swift candidate is 2★/1-commit/no-CI, and a C/C++ shim would owe per-platform stdlib linking + hand-generated `config.h` across the Ubuntu/Windows/Android legs. ~200 lines of a format frozen since 2011 beats both. See `research/findings/snappy_survey.md` |
 | protobuf | depend on swift-protobuf | 13,863 lines of `.proto`; hand-rolling is not sensible |
 | Step 2 gate | semantic round-trip | Keynote requires *acceptance*, not byte-equality |
 | Reading | internal only (#6) | goal is authoring; reading is test infrastructure |
