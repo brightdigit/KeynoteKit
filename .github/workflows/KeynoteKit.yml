@@ -40,7 +40,9 @@ jobs:
     name: Configure Matrix
     runs-on: ubuntu-latest
     outputs:
+      full-matrix: ${{ steps.check.outputs.full }}
       macos-matrix: ${{ steps.matrix.outputs.macos-matrix }}
+      ubuntu-type: ${{ steps.matrix.outputs.ubuntu-type }}
     steps:
       - uses: actions/checkout@v6
       - id: check
@@ -66,18 +68,38 @@ jobs:
             MACOS=$(jq -c . .github/matrices/macos-spm.json)
           fi
           echo "macos-matrix={\"include\":${MACOS}}" >> "$GITHUB_OUTPUT"
+          # wasm / wasm-embedded are build-only legs on the Ubuntu job. Set the
+          # ENABLE_WASM repo variable to 'false' if a dependency ever stops
+          # building for wasm.
+          if [[ "${{ vars.ENABLE_WASM }}" != "false" ]]; then
+            echo 'ubuntu-type=["","wasm","wasm-embedded"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ubuntu-type=[""]' >> "$GITHUB_OUTPUT"
+          fi
 
-  # Without this leg a stray `import ScriptingBridge` or `Darwin` in the write
-  # path regresses portability silently.
+  # Without the standard leg here, a stray `import ScriptingBridge` or `Darwin`
+  # in the write path regresses portability silently. The wasm legs are
+  # build-only and prove the package carries no accidental host dependency.
   build-ubuntu:
     name: Build on Ubuntu
+    needs: configure
     runs-on: ubuntu-latest
     container: swiftlang/swift:nightly-6.4.x-noble
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        type: ${{ fromJSON(needs.configure.outputs.ubuntu-type) }}
     steps:
       - uses: actions/checkout@v6
       - uses: brightdigit/swift-build@v1
         id: build
+        with:
+          type: ${{ matrix.type }}
+          build-only: ${{ matrix.type != '' }}
+          wasm-sdk-url: ${{ matrix.type != '' && 'https://download.swift.org/swift-6.4.x-branch/wasm-sdk/swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-15-a/swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-15-a_wasm.artifactbundle.tar.gz' || '' }}
+          wasm-sdk-checksum: ${{ matrix.type != '' && 'c014a0162de6eeeef4f07904ce096ccee5405c1478a12c99a3a9750bd42d7702' || '' }}
+          wasm-swift-flags: ${{ matrix.type != '' && '-Xcc -D_WASI_EMULATED_SIGNAL -Xcc -D_WASI_EMULATED_MMAN -Xlinker -lwasi-emulated-signal -Xlinker -lwasi-emulated-mman -Xlinker -lwasi-emulated-getpid -Xlinker --initial-memory=536870912 -Xlinker --max-memory=536870912' || '' }}
 
   build-macos:
     name: Build on macOS
@@ -103,10 +125,70 @@ jobs:
           osVersion: ${{ matrix.osVersion }}
           download-platform: ${{ matrix.download-platform }}
 
+  # Windows and Android are full-matrix-only: they are the most expensive legs
+  # and the package has no platform-specific code outside KeynoteKitScripting,
+  # which is canImport-gated. They exist to catch a host dependency creeping
+  # into Snappy or IWAFraming, which must stay portable for #5.
+  build-windows:
+    name: Build on Windows
+    needs: configure
+    if: ${{ needs.configure.outputs.full-matrix == 'true' }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [windows-2022, windows-2025]
+        swift:
+          - version: swift-6.4.x-branch
+            build: 6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-01-a
+    steps:
+      - uses: actions/checkout@v6
+      - uses: brightdigit/swift-build@v1
+        id: build
+        with:
+          windows-swift-version: ${{ matrix.swift.version }}
+          windows-swift-build: ${{ matrix.swift.build }}
+
+  build-android:
+    name: Build on Android
+    needs: configure
+    if: ${{ needs.configure.outputs.full-matrix == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift:
+          - version: 6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-15-a
+            label: "6.4"
+            sdk-url: https://download.swift.org/swift-6.4.x-branch/android-sdk/swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-15-a/swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-15-a_android.artifactbundle.tar.gz
+            sdk-id: swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-06-15-a_android
+        android-api-level: [28, 34]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+      - uses: brightdigit/swift-build@v1
+        id: build
+        with:
+          type: android
+          android-swift-version: ${{ matrix.swift.version }}
+          android-api-level: ${{ matrix.android-api-level }}
+          android-run-tests: false
+          android-sdk-url: ${{ matrix.swift.sdk-url }}
+          android-sdk-id: ${{ matrix.swift.sdk-id }}
+
   lint:
     name: Linting
     if: ${{ !cancelled() && !failure() && !contains(github.event.head_commit.message, 'ci skip') }}
-    needs: [build-ubuntu, build-macos]
+    needs: [build-ubuntu, build-macos, build-windows, build-android]
     # SyndiKit lints in an Ubuntu container, but Scripts/lint.sh here ends in
     # `xcrun swift build --build-tests` against DEVELOPER_DIR, so this runs on
     # macOS where that Xcode exists.
