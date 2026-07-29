@@ -123,6 +123,9 @@ excluded:
   - "*/.swiftpm"
   - "*/.build"
   - Package.swift
+  # protoc output — checked in, never hand-edited. Linting generated code would
+  # only force us to weaken the rules that guard the hand-written sources.
+  - Sources/KeynoteKitProtobuf/Generated
 indentation_width:
   indentation_width: 2
 file_name:

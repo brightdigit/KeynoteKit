@@ -516,6 +516,7 @@ Every decision above, with the reasoning that is easy to lose:
 | Drawable IR | `text`/`x`/`y` parity with Python | smallest proven step; geometry #3, shapes #4 |
 | Snappy | **vendor a pure-Swift block codec** (#15 survey; exit stays #5) | Block-level APIs *are* common (google/snappy's C API, `codelynx/snappy-swift`) — but the only pure-Swift candidate is 2★/1-commit/no-CI, and a C/C++ shim would owe per-platform stdlib linking + hand-generated `config.h` across the Ubuntu/Windows/Android legs. ~200 lines of a format frozen since 2011 beats both. See `research/findings/snappy_survey.md` |
 | protobuf | depend on swift-protobuf | 13,863 lines of `.proto`; hand-rolling is not sensible |
+| Archive decoding | **always `partial: true`** (#14) — applies to *any* archive decode, not just the registry | The 15.3 protos mark **1,497 fields `required`** (proto2), but Keynote does not populate all of them. Strict decoding throws `.missingRequiredFields` on components Keynote itself round-trips, so enforcement would reject valid documents — partial is *correct*, not a workaround. Pairing the 15.3 schema with the 14.4 registry widens the gap further. #17/#18 inherit this |
 | Step 2 gate | semantic round-trip | Keynote requires *acceptance*, not byte-equality |
 | Reading | internal only (#6) | goal is authoring; reading is test infrastructure |
 | ScriptingBridge | escape hatch only (#10); **separate product** `KeynoteKitScripting` | keeping the authoring path free of live Keynote — module boundary, not a comment |
