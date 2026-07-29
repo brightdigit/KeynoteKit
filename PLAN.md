@@ -10,11 +10,32 @@ transitions and object builds — no Python, no `keynote-parser`, no `mise`, no
 AppleScript at runtime.
 
 ```swift
-let deck = Deck {
-  Slide(transition: .magicMove(duration: 1.0)) { … }
-  Slide { Text("Hi").build(.dissolve, order: 0) }
+struct TitleSlide: SlideContent {
+  var body: some SlideContent {
+    Slide {
+      Text("Title")
+        .magicId("title")
+        .position(x: 200, y: 200)
+        .build(.in) {
+          Dissolve()
+            .duration(1)
+            .trigger(.onClick)
+        }
+        .action {
+          MotionPath(/* full bezier */)
+            .duration(1)
+            .trigger(.afterPrevious)
+        }
+    }
+    .transition(.magicMove.duration(1))
+  }
 }
-try deck.write(to: url)   // real .key, opens in Keynote 15.3
+
+let deck = Deck {
+  TitleSlide()
+  // …more SlideContent
+}
+try deck.write(to: url)  // basedOn: defaults to bundled template
 ```
 
 "Self-contained" means **no Python/keynote-parser/mise/AppleScript at runtime**.
@@ -105,9 +126,22 @@ Each step ends in a runnable gate. Steps 2 and 4b carry the risk; do them in
 order and don't start authoring code until Step 2's gate is green.
 
 ### 0. Package skeleton + scaffolding (#9)
-`Package.swift` (tools 6.4); targets `KeynoteKit` (public API), `Snappy`
-(generic block codec), `IWAFraming` (Apple chunk layout), plus tests. Keep
-`research/` untouched as the reference corpus.
+`Package.swift` (tools 6.4). Prefer **fine-grained products/targets** — splitting
+is cheap; gluing later is not. v0.1.0 ships these **products** (each with a
+matching library target unless noted):
+
+| Product | Role | v0.1.0 |
+|---|---|---|
+| `Snappy` | Generic block codec (nothing Apple-specific) | Implemented (or thin wrapper over a dep after the Step 2 survey); exit → #5 |
+| `IWAFraming` | Apple chunk layout over the block codec | Implemented |
+| `KeynoteKitProtobuf` | Generated 15.3 messages + `TSPRegistryMapping` | Implemented (Step 1); keeps protoc output out of the DSL module |
+| `KeynoteKit` | Public authoring API + `deck.write(to:)` | Implemented — **must not** link ScriptingBridge |
+| `KeynoteKitScripting` | ScriptingBridge escape hatch (#10) | **Scaffolded empty** in Step 0 (name + product reserved); body is #10, past v0.1 |
+
+Dependency direction: `KeynoteKit` → (`IWAFraming` → `Snappy`) + `KeynoteKitProtobuf`.
+`KeynoteKitScripting` depends on Apple frameworks only — **not** on the write
+path, and the write path must not depend on it. Tests per product as needed.
+Keep `research/` untouched as the reference corpus.
 
 Bring over the BrightDigit scaffolding from **SyndiKit** (closest reference —
 already on Swift 6.4 tooling): `.swift-format`, `.swiftlint.yml`,
@@ -120,14 +154,16 @@ tasks; SyndiKit's scaffolding uses `.mise.toml`. Merge deliberately — do not
 clobber `test` / `prepare-keynote-parser` / `verify-pack`, which are how the
 Step 4 goldens get regenerated.
 
-**Gate:** empty package builds and tests on 6.4; `Scripts/lint.sh` clean.
+**Gate:** empty package builds and tests on 6.4; all five products declared;
+`KeynoteKit` does not import ScriptingBridge; `Scripts/lint.sh` clean.
 
 ### 1. Vendor the schema into Swift
 Generate Swift types from `research/vendor/keynote-parser/protos/15.3/*.proto`
-(35 files) with swift-protobuf. Port the 14.4 `TSPRegistryMapping` (type ID →
-message name, e.g. `8: KN.BuildArchive`, `153: KN.BuildChunkArchive`) into
-generated Swift — it is a flat table, so this is mechanical. Check generated
-sources in; do not require `protoc` at build time.
+(35 files) with swift-protobuf into the **`KeynoteKitProtobuf`** product.
+Port the 14.4 `TSPRegistryMapping` (type ID → message name, e.g.
+`8: KN.BuildArchive`, `153: KN.BuildChunkArchive`) into generated Swift — it is
+a flat table, so this is mechanical. Check generated sources in; do not require
+`protoc` at build time.
 **Gate:** every archive type named in the findings decodes from its `.proto`.
 
 ### 2. IWA container read/write — **the crux**
@@ -140,9 +176,11 @@ only the innermost layer; Steps 1–2 build the rest.
 
 Snappy is a fast/low-ratio LZ77-style codec. Apple uses the standard **block
 format** but a **non-standard stream framing** — no `sNaPpY` stream identifier,
-custom chunk headers, no CRC-32C checksums — so a stock Snappy package will
-reject `.iwa` input outright. **Vendor** it for v0.1.0 (per Q3); the decompressor
-is small and the compressor need only be Keynote-compatible, not optimal.
+custom chunk headers, no CRC-32C checksums — so a stock *stream*-oriented Snappy
+package will reject `.iwa` input outright. The compressor need only be
+Keynote-compatible, not optimal. Default plan: **vendor** the block codec (Q3 /
+#5); the Step 2 survey may replace that with a package dependency if one exposes
+block-level APIs.
 
 **Vendoring here is temporary — design for its removal (#5).** Keep a hard
 seam between the two layers:
@@ -153,11 +191,15 @@ seam between the two layers:
   API.
 
 If the framing layer never reaches into codec internals, #5 becomes a
-`Package.swift` edit rather than a refactor. Its first task — surveying which
-Swift Snappy packages expose **block-level** access, and whether they are pure
-Swift or C++ shims — is unstarted and may be worth doing at the top of this step
-instead: if a suitable package already exists, we skip vendoring the codec
-entirely and write only the framing.
+`Package.swift` edit rather than a refactor.
+
+**First task of this step — Snappy package survey (blocking on vendor-vs-depend).**
+Survey which Swift Snappy packages expose **block-level** compress/decompress
+(not only the standard framed stream), and whether they are pure Swift or C++
+shims. If a suitable package already exists, depend on it and write only
+`IWAFraming`. Otherwise vendor the block codec as planned above; #5 remains the
+exit either way. Record the survey result in the decision log before implementing
+the codec.
 **Gate (hard, blocking) — SEMANTIC round-trip:** for all 24 committed
 fixtures in `research/fixtures/`, unpack → repack → unpack and assert the
 **archive graph is identical**. This mirrors what the Python backend already
@@ -255,24 +297,68 @@ slides already existed. This is new work on exactly the invariant-maintenance
 that caused the SIGTRAP crash, and it is the **second-biggest risk in the plan
 after the Snappy framing**.
 
-Text items are the same problem one level down. **Look up before deciding:**
-whether a blank template's placeholder text items can be reused (cheap) or
-`TSWP` archives must be synthesized (a slice of #2 leaking into v0.1.0).
+Text items are the same problem one level down.
+
+**First task of this step — text-item supply lookup (blocked on #7's template).**
+Once the minimal blank-theme template exists, inspect it and decide: reuse
+placeholder text items (cheap) or synthesize `TSWP` archives (a slice of #2
+leaking into v0.1.0). Record the choice in the decision log before implementing
+supply. Do not guess from themed fixtures — the blank template is the authority.
 
 **Gate:** author a deck with more slides — and more text items per slide — than
 the template contains; `_verify_uuid_map`'s invariants hold for every minted id.
 
 ### 5. Authoring API
-The result-builder surface (`Deck { Slide { … } }`), `magic-id` compile-time
-resolution per the lowering rule in `deck_model_notes.md` §3, and the
-`BUILD_EFFECTS` / `EFFECTS` catalogs as Swift enums.
 
-Drawable IR is **text + position only** (`text`, `x`, `y`), at parity with the
-Python prototype. Consequence to accept knowingly: Magic Move can express a
-**translation** but **not a size or style change**, since the IR has no
-width/height/style to differ between slides. Geometry is #3; shapes/images #4.
+Ship the grilled public surface (canonical sketch in **Goal** above). Details:
 
-**Gate:** the README example compiles and produces a valid deck.
+**Composition (SwiftUI mirror at slide level):**
+- `SlideContent` protocol + `@SlideBuilder` — custom slide types, extracted
+  helpers, shallow `Deck { }` bodies. `Deck` accepts `SlideContent` values.
+- Inside a slide: concrete `Text` only for v0.1.0. No item-level `SlideItem`
+  protocol yet — revisit when shapes/images land (#4).
+
+**Drawables:**
+- `Text("…")` with `.position(x:y:)` (default documented; Python parity 200/200)
+  and optional `.magicId(_:)` for Magic Move pairing (compile-time only; lowering
+  rule in `deck_model_notes.md` §3).
+
+**Builds (In/Out):**
+- `.build(.in|.out) { effects… }` — required kind on the call; one or more
+  effects in the builder; target = enclosing `Text`.
+- Delivery order = **encounter order** walking the slide builder. No
+  `buildOrder`, no build-event ids.
+- Timing/triggers via SwiftUI-style chaining on each effect: `.duration`,
+  `.delay`, `.trigger(.onClick | .afterPrevious | .withPrevious)` (default
+  `.onClick`).
+
+**Action (distinct payload):**
+- Separate `.action { MotionPath(/* full bezier */) … }` on `Text`.
+- Same delivery timeline as builds (one ordered `builds`/`buildChunks` list);
+  same chaining for duration/delay/trigger. Full `editableBezierPathSource` in
+  v0.1.0 (not a simplified Move-only sugar).
+
+**Transitions:**
+- Modifier on `Slide`: `.transition(.magicMove.duration(1).delay(0).autoAdvance(false))`.
+- Direction via a **typed enum** on directional effects only (e.g. `.push`,
+  `.moveIn`), chained as `.direction(.…)`.
+
+**Catalogs — acceptance-proven cases only:**
+- Transitions: the set exercised by acceptance (including `none`, `magicMove`,
+  `dissolve`, `push`, `moveIn`) — not all 43.
+- Build In/Out effects: the Exp 9 catalog set used by acceptance.
+- Directions: only ordinals verified for those effects.
+- No `.custom(archiveName:)` and no raw-`Int` direction escapes in v0.1.0.
+
+**Write:**
+- `try deck.write(to: url, basedOn: …)` — method on `Deck`; `basedOn` defaults
+  to the bundled template (#7). Must never require a running Keynote.
+
+Drawable IR remains **text + position only**. Consequence: Magic Move can
+express a **translation** but **not a size or style change**. Geometry is #3;
+shapes/images #4.
+
+**Gate:** the Goal sketch compiles and produces a valid deck.
 
 ### 6. Acceptance — human-in-the-loop
 
@@ -295,7 +381,8 @@ Procedure:
    - **no repair warning** — a silent "repair" means we emitted something
      invalid that Keynote chose to tolerate; that is a failure, not a pass
    - In/Out/Action builds, multiple ordered builds, and transition direction
-     all survived
+     all survived — Action via the public `.action { MotionPath… }` API;
+     direction via the typed `.direction(…)` enum on the transition
 4. Tag `v0.1.0`.
 
 **Automation limit — do not skip the human.** `authored_build_smoke.py` can
@@ -313,8 +400,10 @@ rather than a fresh judgment call each time.
 ## Deferred past v0.1.0
 
 **Breadth, not correctness:** the remaining 35 of 43 transition effects, the full
-`direction` enum (only two ordinals observed), per-effect option coverage, and
-Keynote versions other than 15.3.
+`direction` enum (only two ordinals observed), per-effect option coverage,
+`buildOrder` / build-event ids (layout≠timeline), an item-level `SlideItem`
+protocol, simplified Move sugar over `MotionPath`, and Keynote versions other
+than 15.3.
 
 **Filed as issues:**
 
@@ -362,6 +451,10 @@ for a live-Keynote dependency. Not the plan; the escape route.
    is #6.
 7. ~~**ScriptingBridge: escape hatch or backend?**~~ **RESOLVED: escape hatch
    only** (#10). `deck.write(to:)` must never require a running Keynote.
+8. ~~**Public authoring API shape?**~~ **RESOLVED 2026-07-28** — see Step 5 and
+   the Goal sketch. Highlights: `SlideContent` composition; `.build(.in|.out)` +
+   separate `.action`; encounter-order builds (no `buildOrder`); transition /
+   position / magicId as modifiers; proven-only catalogs; all three triggers.
 
 ## Decision log
 
@@ -373,11 +466,23 @@ Every decision above, with the reasoning that is easy to lose:
 | Swift floor | 6.4 (dev)+ only | user directive; no back-compat shims |
 | Template | surgery on a bundled minimal template | from-scratch synthesis is unresearched (#2) |
 | Drawable IR | `text`/`x`/`y` parity with Python | smallest proven step; geometry #3, shapes #4 |
-| Snappy | vendor now, depend later (#5) | Apple's framing isn't exposed by stock libraries |
+| Snappy | vendor now, depend later (#5); **survey block-level packages first** (Step 2) | Apple's framing isn't exposed by stock libraries; a block-level dep may skip vendoring the codec |
 | protobuf | depend on swift-protobuf | 13,863 lines of `.proto`; hand-rolling is not sensible |
 | Step 2 gate | semantic round-trip | Keynote requires *acceptance*, not byte-equality |
 | Reading | internal only (#6) | goal is authoring; reading is test infrastructure |
-| ScriptingBridge | escape hatch only (#10) | keeping the authoring path free of live Keynote |
+| ScriptingBridge | escape hatch only (#10); **separate product** `KeynoteKitScripting` | keeping the authoring path free of live Keynote — module boundary, not a comment |
+| Package products | split finely by default (`Snappy`, `IWAFraming`, `KeynoteKitProtobuf`, `KeynoteKit`, `KeynoteKitScripting`) | cheap now; gluing coupled modules later is expensive |
+| Build DSL | `.build(.in\|.out) { effects… }`; separate `.action` | In/Out share shape; Action's motion-path payload differs enough for its own function |
+| Build order | encounter order only | `buildOrder` / build-event ids cut — declaration order is enough for v0.1 |
+| Triggers | all three (onClick / afterPrevious / withPrevious) | archive supports them; default onClick |
+| Timing knobs | SwiftUI-style chaining on effect/action/transition | matches inspector mental model; duration lives with the effect, not the build call |
+| Magic Move id | `.magicId(_:)` + `.transition(.magicMove…)` | Keynote vocabulary; don't over-promise SwiftUI's `matchedGeometryEffect` |
+| Transitions | `.transition` modifier on `Slide` | slide-level state expressed like SwiftUI, not an init arg |
+| Direction | typed enum, proven ordinals only | raw ints are opaque; expand when more ordinals are verified |
+| Effect catalogs | acceptance-proven cases only | no `.custom` escape — breadth is deferred, not correctness |
+| Composition | `SlideContent` + `@SlideBuilder`; concrete `Text` inside | SwiftUI-scale decks without a second item protocol yet |
+| Write entry | `deck.write(to:basedOn:)` | README-shaped; `basedOn` defaulted from day one |
+| Action path | full `MotionPath` bezier in v0.1 | acceptance includes Action; simplified Move deferred as sugar |
 
 ### Known consequences we accepted knowingly
 
@@ -389,3 +494,9 @@ Every decision above, with the reasoning that is easy to lose:
   every consumer, and it carries Apple-authored theme content (#7 minimizes,
   does not eliminate).
 - **v0.1.0 writes but cannot read** — an odd shape for a library (#6 lifts this).
+- **No `buildOrder` / build-event ids** — layout order of `Text` declarations
+  *is* delivery order; decoupling them is a later escape hatch if needed.
+- **No item-level `SlideItem` protocol** — only `SlideContent` scales composition
+  in v0.1; item extraction waits on shapes/images (#4).
+- **Public effect/direction enums are narrow** — unproven archive strings are
+  not expressible without expanding the catalog.

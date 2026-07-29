@@ -26,11 +26,17 @@ output). A public `Deck(readingKeynoteAt:)` is issue #6, not v0.1.0.
   is issue #2 and needs theme/master/stylesheet research comparable to Exps 1-11.
 
 **ScriptingBridge is a developer escape hatch (#10), never an authoring
-backend.** `deck.write(to:)` must never require a running Keynote. Noted because
-the AppleScript path is tempting: it creates slides/text items with Keynote
-maintaining every invariant itself (`research/tools/deckkit.py:308`), which would
-sidestep the riskiest part of the plan — at the cost of self-containment. It is
-the documented escape route if slide-duplication proves intractable, not the plan.
+backend.** `deck.write(to:)` must never require a running Keynote. It ships as a
+separate product `KeynoteKitScripting`; `KeynoteKit` must not link
+ScriptingBridge. Noted because the AppleScript path is tempting: it creates
+slides/text items with Keynote maintaining every invariant itself
+(`research/tools/deckkit.py:308`), which would sidestep the riskiest part of the
+plan — at the cost of self-containment. It is the documented escape route if
+slide-duplication proves intractable, not the plan.
+
+**Prefer fine-grained SwiftPM products/targets** — splitting is cheap; collapsing
+coupled modules later is not. v0.1 products: `Snappy`, `IWAFraming`,
+`KeynoteKitProtobuf`, `KeynoteKit`, `KeynoteKitScripting` (scaffolded).
 
 **Gates are STRUCTURAL, not byte-identical.** Keynote requires the file be
 *accepted*, not byte-equal to an original. Snappy leaves the encoder real freedom
