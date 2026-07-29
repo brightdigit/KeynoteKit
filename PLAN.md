@@ -120,12 +120,37 @@ already existed).
 *Mitigation:* its own gate; and #10's AppleScript path is the known escape route,
 at the cost of a live-Keynote dependency.
 
+## Execution tracker
+
+Active v0.1.0 work is filed on GitHub under map
+[#12](https://github.com/brightdigit/KeynoteKit/issues/12) (label `v0.1.0`).
+Claim, block, and close tickets there — not in local scratch files.
+
+Parallel lanes / worktree layout: [`.claude/PARALLEL-WORKTREES.md`](.claude/PARALLEL-WORKTREES.md).
+
+| PLAN step | Ticket |
+|---|---|
+| 0 Package skeleton + scaffolding | [#13](https://github.com/brightdigit/KeynoteKit/issues/13) (overlaps [#9](https://github.com/brightdigit/KeynoteKit/issues/9)) |
+| 1 Vendor schema (`KeynoteKitProtobuf`) | [#14](https://github.com/brightdigit/KeynoteKit/issues/14) |
+| 2 Snappy package survey | [#15](https://github.com/brightdigit/KeynoteKit/issues/15) |
+| 2 Snappy block codec | [#16](https://github.com/brightdigit/KeynoteKit/issues/16) |
+| 2 IWA framing + `.key` zip round-trip | [#17](https://github.com/brightdigit/KeynoteKit/issues/17) |
+| 3 Archive navigation | [#18](https://github.com/brightdigit/KeynoteKit/issues/18) |
+| 4 Regenerate Python golden decks | [#19](https://github.com/brightdigit/KeynoteKit/issues/19) |
+| 4 Writer + invariants | [#20](https://github.com/brightdigit/KeynoteKit/issues/20) |
+| 4b Minimal bundled template | [#21](https://github.com/brightdigit/KeynoteKit/issues/21) (see also [#7](https://github.com/brightdigit/KeynoteKit/issues/7)) |
+| 4b Slide + text-item supply | [#22](https://github.com/brightdigit/KeynoteKit/issues/22) |
+| 5 Authoring API | [#23](https://github.com/brightdigit/KeynoteKit/issues/23) |
+| 6 Acceptance (Keynote 15.3) | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) |
+
+Frontier (unblocked now): #13, #15, #19.
+
 ## Plan
 
 Each step ends in a runnable gate. Steps 2 and 4b carry the risk; do them in
 order and don't start authoring code until Step 2's gate is green.
 
-### 0. Package skeleton + scaffolding (#9)
+### 0. Package skeleton + scaffolding (#13, overlaps #9)
 `Package.swift` (tools 6.4). Prefer **fine-grained products/targets** — splitting
 is cheap; gluing later is not. v0.1.0 ships these **products** (each with a
 matching library target unless noted):
@@ -157,7 +182,7 @@ Step 4 goldens get regenerated.
 **Gate:** empty package builds and tests on 6.4; all five products declared;
 `KeynoteKit` does not import ScriptingBridge; `Scripts/lint.sh` clean.
 
-### 1. Vendor the schema into Swift
+### 1. Vendor the schema into Swift (#14)
 Generate Swift types from `research/vendor/keynote-parser/protos/15.3/*.proto`
 (35 files) with swift-protobuf into the **`KeynoteKitProtobuf`** product.
 Port the 14.4 `TSPRegistryMapping` (type ID → message name, e.g.
@@ -166,7 +191,7 @@ a flat table, so this is mechanical. Check generated sources in; do not require
 `protoc` at build time.
 **Gate:** every archive type named in the findings decodes from its `.proto`.
 
-### 2. IWA container read/write — **the crux**
+### 2. IWA container read/write — **the crux** (#15 survey, #16 codec, #17 framing)
 Implement Apple's Snappy variant + `TSP.ArchiveInfo` framing, and the `.key`
 bundle (zip) layer around it.
 
@@ -223,7 +248,7 @@ A cheap early probe, if we ever want the answer sooner: unpack+repack a fixture
 with the **Python** `keynote-parser` and compare bytes. If Python can't
 reproduce them, Swift won't either.
 
-### 3. Archive navigation (internal — **not** a public reading API)
+### 3. Archive navigation (internal — **not** a public reading API) (#18)
 
 **Reading a `.key` is explicitly out of scope as a feature.** The goal is
 *authoring*. But archive-level reading is still **required infrastructure**, for
@@ -249,13 +274,13 @@ fixtures — compared at **archive level**, which is the representation both sid
 genuinely share (comparing two `Deck` IRs would test our own abstraction as much
 as the format).
 
-### 4. Writer / archive surgery
+### 4. Writer / archive surgery (#19 goldens, #20 writer)
 Port `archive_backend.py`: mint archives, wire `builds`/`buildChunks`, flip
 `hasExplicitBuilds`, and **enforce the two invariants from Step 0's notes** —
 port `_verify_uuid_map` as a precondition, not an afterthought. This is where
 the crash came from last time.
 
-**First task of this step — regenerate the golden decks.** The Python
+**First task of this step — regenerate the golden decks (#19).** The Python
 backend's outputs are *gone*: `research/samples/` is gitignored, so only the
 five JSON specs survive (`examples/bisect_{in,out,action,direction}.json`,
 `examples/build_acceptance.json`). Regenerate with the Python backend, then
@@ -280,14 +305,14 @@ by a backend that has since been fixed twice.
    `lastObjectIdentifier` exceeds every minted id. These make a red diff
    *diagnosable*.
 
-### 4b. Bundled template + slide/text-item supply (#7)
+### 4b. Bundled template + slide/text-item supply (#21 template, #22 supply; see also #7)
 
 Template surgery needs a base deck shipped as a SwiftPM **resource** — a
 minimal hand-authored blank-theme `.key`, not one of the 460 KB themed
 fixtures. Use `.copy(...)` (not `.process(...)`): a `.key` is a
 directory-shaped bundle. Expose `basedOn:` on the write entry point from day
 one, defaulting to the bundled template — retrofitting it later breaks the
-primary API. Full rationale and the redistribution caveat: #7.
+primary API. Full rationale and the redistribution caveat: #7 / #21.
 
 **The unproven part — supply.** The template has a fixed number of slides and
 text items; users author arbitrarily many. So the writer must **duplicate**
@@ -299,7 +324,7 @@ after the Snappy framing**.
 
 Text items are the same problem one level down.
 
-**First task of this step — text-item supply lookup (blocked on #7's template).**
+**First task of this step — text-item supply lookup (blocked on #21 / #7's template).**
 Once the minimal blank-theme template exists, inspect it and decide: reuse
 placeholder text items (cheap) or synthesize `TSWP` archives (a slice of #2
 leaking into v0.1.0). Record the choice in the decision log before implementing
@@ -308,7 +333,7 @@ supply. Do not guess from themed fixtures — the blank template is the authorit
 **Gate:** author a deck with more slides — and more text items per slide — than
 the template contains; `_verify_uuid_map`'s invariants hold for every minted id.
 
-### 5. Authoring API
+### 5. Authoring API (#23)
 
 Ship the grilled public surface (canonical sketch in **Goal** above). Details:
 
@@ -360,7 +385,7 @@ shapes/images #4.
 
 **Gate:** the Goal sketch compiles and produces a valid deck.
 
-### 6. Acceptance — human-in-the-loop
+### 6. Acceptance — human-in-the-loop (#24)
 
 **Why this step exists.** On 2026-07-18 the Python backend produced a deck that
 passed *every* automated check — round-tripped, structurally correct,
@@ -405,7 +430,7 @@ rather than a fresh judgment call each time.
 protocol, simplified Move sugar over `MotionPath`, and Keynote versions other
 than 15.3.
 
-**Filed as issues:**
+**Filed as issues** (separate from the v0.1.0 tracer bullets #13–#24):
 
 | # | Item | Note |
 |---|---|---|
@@ -413,9 +438,9 @@ than 15.3.
 | [#3](https://github.com/brightdigit/KeynoteKit/issues/3) | Drawable geometry (w/h, z-order) | unblocks size-changing Magic Move |
 | [#4](https://github.com/brightdigit/KeynoteKit/issues/4) | Shapes and images | Exp 8 proved shape *builds* work; authoring doesn't |
 | [#6](https://github.com/brightdigit/KeynoteKit/issues/6) | Public `Deck(readingKeynoteAt:)` | reading is explicitly not a v0.1.0 feature |
-| [#7](https://github.com/brightdigit/KeynoteKit/issues/7) | Minimal bundled template | **v0.1.0 blocker** — see step 4b |
+| [#7](https://github.com/brightdigit/KeynoteKit/issues/7) | Minimal bundled template | **v0.1.0 blocker** — execution ticket is [#21](https://github.com/brightdigit/KeynoteKit/issues/21); see step 4b |
 | [#8](https://github.com/brightdigit/KeynoteKit/issues/8) | Self-hosted macOS runner | Keynote-dependent CI jobs |
-| [#9](https://github.com/brightdigit/KeynoteKit/issues/9) | BrightDigit scaffolding (lint/CI) | SyndiKit is the reference; already on 6.4 tooling |
+| [#9](https://github.com/brightdigit/KeynoteKit/issues/9) | BrightDigit scaffolding (lint/CI) | SyndiKit is the reference; overlapped by [#13](https://github.com/brightdigit/KeynoteKit/issues/13) |
 | [#10](https://github.com/brightdigit/KeynoteKit/issues/10) | ScriptingBridge escape hatch | **additive only** — not an authoring backend |
 
 ### On #10 and the authoring path

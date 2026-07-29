@@ -9,15 +9,16 @@ to run things, what is done, gotchas, and next steps.
 > is DONE and squash-merged to `v0.1.x` (`ab23b45`, PR #1). Everything below is
 > still accurate as the format spec and as the Python reference backend.
 >
-> **The active work is now building the Swift package.** For that, read
-> **`PLAN.md` at the repo root** (branch `feature/swift-package`, commit
-> `a3b355c`) — goal, 7 gated steps, two named risks, and a decision log.
+> **The active work is now building the Swift package.** For that, read:
 >
-> Also read `.claude/agent-notes.md` (standing directives) and
-> `.claude/memory/keynotekit-v010-scope.md` (scope decisions a fresh session is
-> likely to get wrong by inference).
+> 1. **`PLAN.md` at the repo root** (branch `feature/swift-package`) — goal,
+>    gated steps, two named risks, and a decision log.
+> 2. **GitHub map [#12](https://github.com/brightdigit/KeynoteKit/issues/12)** —
+>    v0.1.0 tracer bullets (#13–#24, label `v0.1.0`); claim / close there.
+> 3. **`.claude/PARALLEL-WORKTREES.md`** — parallel lanes and worktree layout.
+> 4. **`.claude/agent-notes.md`** and **`.claude/memory/keynotekit-v010-scope.md`**.
 >
-> Open issues #2-#10 track everything deferred out of v0.1.0.
+> Deferred past v0.1.0 remains issues [#2](https://github.com/brightdigit/KeynoteKit/issues/2)–[#10](https://github.com/brightdigit/KeynoteKit/issues/10).
 
 ## Mission (unchanged)
 

@@ -1,7 +1,8 @@
 # Parallel worktrees for v0.1.0 tickets
 
-How to run the [12 tickets](issues/README.md) across **git worktrees** without
-stepping on each other. Integration branch: `feature/swift-package`.
+How to run the [12 tickets](https://github.com/brightdigit/KeynoteKit/issues/12)
+across **git worktrees** without stepping on each other. Integration branch:
+`feature/swift-package`.
 
 This repo already lives as a worktree of the bare clone
 `../KeynoteKit.git`. Add sibling worktrees next to `swift-package`, not nested
@@ -190,17 +191,17 @@ Run at most **one** Keynote-bound lane at a time on a given Mac.
 | `Package.swift` | 01 primarily; later tickets add deps sparingly | After 01, only add a dependency in the ticket that owns that product |
 | `KeynoteKit` | 09 (thin), then 08–12 | Finish 09 before 08 starts if both touch write entry |
 | `PLAN.md` decision log | 03, 10 | Tiny additive edits; rebase carefully |
-| `.scratch/.../issues` | Status updates only | Optional; don’t block merges on scratch edits |
+| GitHub issues (#13–#24) | Claim / close / unlock dependents | Source of truth; see map #12 |
 | Goldens / samples | 07 | Don’t let 08 rewrite goldens — only consume them |
 
 ## Checklist per lane session
 
 1. Create/update worktree from current `feature/swift-package`.
-2. Claim the ticket (assignee if on GitHub; otherwise note in scratch Status).
+2. Claim the ticket (`gh issue edit <n> --add-assignee @me`).
 3. Implement until the ticket’s acceptance checklist is green.
 4. Open PR → merge to `feature/swift-package`.
 5. Delete lane branch / remove worktree (or reset branch for the next ticket in-lane).
-6. Mark the scratch issue done; unlock dependents.
+6. Close the GitHub issue; dependents unblock via native `blocked_by` edges.
 
 ## What not to do
 
