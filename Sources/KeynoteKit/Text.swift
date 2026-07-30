@@ -38,6 +38,31 @@ public struct Text: Sendable {
   /// The item's y position (Python-parity default 200).
   internal var y: Double = 200
 
+  /// Authored width in points; `nil` leaves the template placeholder size.
+  internal var width: Double?
+
+  /// Authored height in points; `nil` leaves the template placeholder size.
+  internal var height: Double?
+
+  /// Layer order; higher values draw above lower ones. `nil` means 0.
+  /// Declaration order breaks ties. Final order becomes `drawablesZOrder`.
+  internal var zIndex: Int?
+
+  /// Authored font family; `nil` leaves the template style.
+  internal var fontName: String?
+
+  /// Authored font size in points; `nil` leaves the template style.
+  internal var fontSize: Double?
+
+  /// Authored bold; `nil` leaves the template style.
+  internal var isBold: Bool?
+
+  /// Authored italic; `nil` leaves the template style.
+  internal var isItalic: Bool?
+
+  /// Authored text color; `nil` leaves the template style.
+  internal var color: TextColor?
+
   /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
   internal var magicIdentifier: String?
 
@@ -59,6 +84,59 @@ public struct Text: Sendable {
     var text = self
     text.x = x
     text.y = y
+    return text
+  }
+
+  /// Sets the item's size. Unset dimensions leave the template size.
+  public func frame(width: Double, height: Double) -> Text {
+    var text = self
+    text.width = width
+    text.height = height
+    return text
+  }
+
+  /// Sets the item's layer order. Higher values draw above lower ones.
+  public func zIndex(_ index: Int) -> Text {
+    var text = self
+    text.zIndex = index
+    return text
+  }
+
+  /// Sets the font family and optional size.
+  public func font(_ name: String, size: Double? = nil) -> Text {
+    var text = self
+    text.fontName = name
+    if let size {
+      text.fontSize = size
+    }
+    return text
+  }
+
+  /// Sets the font size in points.
+  public func fontSize(_ size: Double) -> Text {
+    var text = self
+    text.fontSize = size
+    return text
+  }
+
+  /// Marks the text bold.
+  public func bold(_ isBold: Bool = true) -> Text {
+    var text = self
+    text.isBold = isBold
+    return text
+  }
+
+  /// Marks the text italic.
+  public func italic(_ isItalic: Bool = true) -> Text {
+    var text = self
+    text.isItalic = isItalic
+    return text
+  }
+
+  /// Sets the text color.
+  public func foregroundColor(_ color: TextColor) -> Text {
+    var text = self
+    text.color = color
     return text
   }
 

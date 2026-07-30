@@ -37,15 +37,9 @@ extension Deck {
 
   /// Lowers one slide.
   private func authoredSlide(from slide: Slide) -> AuthoredSlide {
-    var builds: [AuthoredBuild] = []
-    for (index, text) in slide.items.enumerated() {
-      for configuration in text.builds {
-        builds.append(authoredBuild(from: configuration, targetIndex: index))
-      }
-      if let action = text.action {
-        builds.append(authoredAction(from: action, targetIndex: index))
-      }
-    }
+    let ordered = orderedDrawables(from: slide)
+    touchMagicIdentifiers(in: ordered)
+    let builds = collectedBuilds(from: ordered)
     let transition = slide.slideTransition.map { value in
       AuthoredSlide.Transition(
         effect: value.effect,
@@ -55,12 +49,87 @@ extension Deck {
       )
     }
     return AuthoredSlide(
-      itemCount: slide.items.count,
+      itemCount: ordered.count,
       transitionDirection: slide.slideTransition?.directionOrdinal,
       builds: builds,
-      items: slide.items.map { AuthoredSlide.TextItem(text: $0.content, x: $0.x, y: $0.y) },
+      items: ordered.map(authoredDrawable(from:)),
       transition: transition
     )
+  }
+
+  /// Layer order = drawablesZOrder = build targetIndex. Higher zIndex draws
+  /// above; declaration order breaks ties (and is the default when unset).
+  private func orderedDrawables(from slide: Slide) -> [SlideDrawable] {
+    slide.items
+      .enumerated()
+      .sorted { left, right in
+        let leftIndex = left.element.zIndex
+        let rightIndex = right.element.zIndex
+        if leftIndex != rightIndex {
+          return leftIndex < rightIndex
+        }
+        return left.offset < right.offset
+      }
+      .map(\.element)
+  }
+
+  /// `.magicId` is authoring-time only — Keynote stores no correspondence
+  /// (`magic_move_correspondence.md`). Touch the values so the IR keeps them.
+  private func touchMagicIdentifiers(in drawables: [SlideDrawable]) {
+    for drawable in drawables {
+      switch drawable {
+      case .text(let text): _ = text.magicIdentifier
+      case .image(let image): _ = image.magicIdentifier
+      }
+    }
+  }
+
+  /// Flattens each drawable's builds then action into delivery order.
+  private func collectedBuilds(from drawables: [SlideDrawable]) -> [AuthoredBuild] {
+    var builds: [AuthoredBuild] = []
+    for (index, drawable) in drawables.enumerated() {
+      for configuration in drawable.builds {
+        builds.append(authoredBuild(from: configuration, targetIndex: index))
+      }
+      if let action = drawable.action {
+        builds.append(authoredAction(from: action, targetIndex: index))
+      }
+    }
+    return builds
+  }
+
+  /// Lowers one drawable.
+  private func authoredDrawable(from drawable: SlideDrawable) -> AuthoredSlide.DrawableItem {
+    switch drawable {
+    case .text(let text):
+      .text(
+        AuthoredSlide.TextItem(
+          text: text.content,
+          x: text.x,
+          y: text.y,
+          width: text.width,
+          height: text.height,
+          fontName: text.fontName,
+          fontSize: text.fontSize,
+          isBold: text.isBold,
+          isItalic: text.isItalic,
+          color: text.color
+        )
+      )
+    case .image(let image):
+      .image(
+        AuthoredSlide.ImageItem(
+          data: image.data,
+          fileExtension: image.fileExtension,
+          x: image.x,
+          y: image.y,
+          width: image.width,
+          height: image.height,
+          naturalWidth: image.naturalWidth,
+          naturalHeight: image.naturalHeight
+        )
+      )
+    }
   }
 
   /// Lowers one In/Out build.

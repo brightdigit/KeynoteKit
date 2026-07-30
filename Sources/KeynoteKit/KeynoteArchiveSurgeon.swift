@@ -44,7 +44,7 @@ package struct KeynoteArchiveSurgeon {
   package internal(set) var members: [Member]
 
   /// The member path holding `TSP.PackageMetadata`, once discovered.
-  private var metadataPathHint: String?
+  internal var metadataPathHint: String?
 
   /// Parses every `Index/*.iwa` member of `bundle`.
   package init(bundle: KeyBundle) throws {
@@ -84,20 +84,16 @@ package struct KeynoteArchiveSurgeon {
     var mintedMaximum: UInt64 = 0
     var dirtyPaths = Set<String>()
     for (slideIndex, pair) in zip(slides, deck.slides).enumerated() {
-      try expandTextItems(to: pair.1.itemCount, at: pair.0, nextIdentifier: &nextIdentifier)
-      let minted = try authorSlide(
+      try authorOneSlide(
         pair.1,
         at: pair.0,
         slideIndex: slideIndex,
+        into: &bundle,
         nextIdentifier: &nextIdentifier,
+        mintedMaximum: &mintedMaximum,
+        dirtyPaths: &dirtyPaths,
         using: &generator
       )
-      dirtyPaths.formUnion(minted.dirtyPaths)
-      mintedMaximum = max(mintedMaximum, minted.maximumIdentifier)
-      if !minted.uuidEntries.isEmpty {
-        try registerUUIDEntries(minted.uuidEntries, slideIdentifier: pair.0.slideIdentifier)
-        dirtyPaths.insert(metadataPathHint ?? "")
-      }
     }
     if nextIdentifier > firstIdentifier {
       try bumpLastObjectIdentifier(to: nextIdentifier)
@@ -113,57 +109,53 @@ package struct KeynoteArchiveSurgeon {
     }
   }
 
-  // MARK: - Package metadata
-
-  /// Appends uuid-map entries to the slide's component.
-  private mutating func registerUUIDEntries(
-    _ entries: [TSP_ObjectUUIDMapEntry],
-    slideIdentifier: UInt64
+  /// Authors a single slide and folds its minted artifacts into the
+  /// running bookkeeping for the deck-level write.
+  private mutating func authorOneSlide(
+    _ spec: AuthoredSlide,
+    at location: SlideCatalog.Slide,
+    slideIndex: Int,
+    into bundle: inout KeyBundle,
+    nextIdentifier: inout UInt64,
+    mintedMaximum: inout UInt64,
+    dirtyPaths: inout Set<String>,
+    using generator: inout some RandomNumberGenerator
   ) throws {
-    try withPackageMetadata { metadata in
-      guard
-        let componentIndex = metadata.components.firstIndex(where: {
-          $0.identifier == slideIdentifier
-        })
-      else {
-        throw ArchiveSurgeryError.missingSlideComponent(slideIdentifier: slideIdentifier)
-      }
-      let locator = metadata.components[componentIndex].locator
-      guard locator.isEmpty || locator == "Slide-\(slideIdentifier)" else {
-        throw ArchiveSurgeryError.unexpectedComponentLocator(locator)
-      }
-      metadata.components[componentIndex].objectUuidMapEntries.append(contentsOf: entries)
+    if spec.items.isEmpty {
+      try expandTextItems(to: spec.itemCount, at: location, nextIdentifier: &nextIdentifier)
+    } else {
+      try expandDrawables(
+        spec.items,
+        at: location,
+        into: &bundle,
+        nextIdentifier: &nextIdentifier,
+        using: &generator
+      )
     }
-  }
-
-  /// Raises `lastObjectIdentifier` to `value` when it sits below it.
-  private mutating func bumpLastObjectIdentifier(to value: UInt64) throws {
-    try withPackageMetadata { metadata in
-      if metadata.hasLastObjectIdentifier, metadata.lastObjectIdentifier < value {
-        metadata.lastObjectIdentifier = value
-      }
-    }
-  }
-
-  /// Decodes, mutates, and re-serializes the single `TSP.PackageMetadata`.
-  internal mutating func withPackageMetadata(
-    _ mutate: (inout TSP_PackageMetadata) throws -> Void
-  ) throws {
-    guard
-      let location = try SlideCatalog(members: members)
-        .locateFirst(named: "TSP.PackageMetadata")
-    else {
-      throw ArchiveSurgeryError.missingSlideComponent(slideIdentifier: 0)
-    }
-    var metadata = try TSP_PackageMetadata(
-      serializedBytes: members[location.memberIndex]
-        .records[location.recordIndex].payloads[location.payloadIndex],
-      partial: true
+    let minted = try authorSlide(
+      spec,
+      at: location,
+      slideIndex: slideIndex,
+      nextIdentifier: &nextIdentifier,
+      using: &generator
     )
-    try mutate(&metadata)
-    members[location.memberIndex].records[location.recordIndex]
-      .payloads[location.payloadIndex] = try metadata.serializedBytes(partial: true)
-    metadataPathHint = members[location.memberIndex].path
+    dirtyPaths.formUnion(minted.dirtyPaths)
+    mintedMaximum = max(mintedMaximum, minted.maximumIdentifier)
+    if !minted.uuidEntries.isEmpty {
+      try registerUUIDEntries(minted.uuidEntries, slideIdentifier: location.slideIdentifier)
+      dirtyPaths.insert(metadataPathHint ?? "")
+    }
+    for entry in minted.dataEntries {
+      bundle.upsertEntry(body: entry.body, at: entry.path)
+    }
+    if !minted.dataInfos.isEmpty || !minted.componentDataReferences.isEmpty {
+      try registerData(
+        infos: minted.dataInfos,
+        componentReferences: minted.componentDataReferences,
+        slideIdentifier: location.slideIdentifier
+      )
+      dirtyPaths.insert(metadataPathHint ?? "")
+    }
   }
 
   /// The highest object identifier referenced anywhere in the document —

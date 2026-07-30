@@ -27,10 +27,10 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// One slide: text items in declaration order, plus an optional transition.
+/// One slide: drawables in declaration order, plus an optional transition.
 public struct Slide: SlideContent, Sendable {
-  /// The slide's text items, in declaration order.
-  internal var items: [Text]
+  /// The slide's drawables, in declaration order (before z-index sort).
+  internal var items: [SlideDrawable]
 
   /// The slide's transition, when set.
   internal var slideTransition: SlideTransition?
@@ -40,8 +40,8 @@ public struct Slide: SlideContent, Sendable {
     SlideGroup(slides: [self])
   }
 
-  /// Creates a slide from its text items.
-  public init(@SlideItemsBuilder content: () -> [Text]) {
+  /// Creates a slide from its drawables.
+  public init(@SlideItemsBuilder content: () -> [SlideDrawable]) {
     self.items = content()
     self.slideTransition = nil
   }

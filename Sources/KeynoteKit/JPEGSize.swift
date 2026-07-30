@@ -1,5 +1,5 @@
 //
-//  SlideItemsBuilder.swift
+//  JPEGSize.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,26 +27,34 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
-@resultBuilder
-public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
-    [.text(text)]
-  }
-
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
-  }
-
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
-
-  /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
-    items.flatMap { $0 }
+/// Minimal JPEG SOF dimension reader (no ImageIO — keeps Linux clean).
+internal enum JPEGSize {
+  /// Pixel size from a JPEG SOF marker, when present.
+  internal static func dimensions(of data: [UInt8]) -> (width: Double, height: Double)? {
+    guard data.count > 4, data[0] == 0xFF, data[1] == 0xD8 else {
+      return nil
+    }
+    var index = 2
+    while index + 9 < data.count {
+      guard data[index] == 0xFF else {
+        return nil
+      }
+      let marker = data[index + 1]
+      if marker == 0xD9 || marker == 0xDA {
+        return nil
+      }
+      let length = Int(data[index + 2]) << 8 | Int(data[index + 3])
+      guard length >= 2, index + 2 + length <= data.count else {
+        return nil
+      }
+      // SOF0–SOF3, SOF5–SOF7, SOF9–SOF11, SOF13–SOF15
+      if marker >= 0xC0 && marker <= 0xCF, marker != 0xC4, marker != 0xC8, marker != 0xCC {
+        let height = Int(data[index + 5]) << 8 | Int(data[index + 6])
+        let width = Int(data[index + 7]) << 8 | Int(data[index + 8])
+        return (Double(width), Double(height))
+      }
+      index += 2 + length
+    }
+    return nil
   }
 }

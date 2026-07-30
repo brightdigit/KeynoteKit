@@ -75,7 +75,7 @@ extension KeynoteArchiveSurgeon {
 
   /// Clones the body-placeholder subtree of `slide`, returning the clone's
   /// placeholder identifier and splicing its records after the originals.
-  private mutating func cloneBodyPlaceholder(
+  internal mutating func cloneBodyPlaceholder(
     of slide: KN_SlideArchive,
     at location: SlideCatalog.Slide,
     nextIdentifier: inout UInt64
@@ -114,7 +114,7 @@ extension KeynoteArchiveSurgeon {
   /// The records reachable from `root` through its header references,
   /// restricted to `records`' member (external references drop out) and
   /// never crossing into `excluding` (the owning slide).
-  private func subtreeRecords(
+  internal func subtreeRecords(
     from root: TSPArchiveRecord,
     in records: [TSPArchiveRecord],
     excluding: Set<UInt64>
@@ -139,67 +139,12 @@ extension KeynoteArchiveSurgeon {
   }
 
   /// Appends `identifiers` to the slide record's first `MessageInfo`.
-  private mutating func appendHeaderReferences(
+  internal mutating func appendHeaderReferences(
     _ identifiers: [UInt64],
     toRecordAt location: SlideCatalog.Slide
   ) {
     var info = members[location.memberIndex].records[location.recordIndex].info
     info.messageInfos[0].objectReferences.append(contentsOf: identifiers)
     members[location.memberIndex].records[location.recordIndex].info = info
-  }
-
-  /// Writes each item's string and position into the slide's drawables,
-  /// in `drawablesZOrder` order.
-  internal mutating func applyTextItems(
-    _ items: [AuthoredSlide.TextItem],
-    to slideArchive: inout KN_SlideArchive,
-    slideIndex: Int
-  ) throws {
-    let catalog = SlideCatalog(members: members)
-    for (index, item) in items.enumerated() {
-      guard slideArchive.drawablesZOrder.indices.contains(index) else {
-        throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
-      }
-      let drawableIdentifier = slideArchive.drawablesZOrder[index].identifier
-      guard
-        let location = try catalog.locate(
-          recordIdentifier: drawableIdentifier,
-          named: "KN.PlaceholderArchive"
-        )
-      else {
-        throw ArchiveSurgeryError.missingSlideRecord(identifier: drawableIdentifier)
-      }
-      var placeholder = try KN_PlaceholderArchive(
-        serializedBytes: members[location.memberIndex]
-          .records[location.recordIndex].payloads[location.payloadIndex],
-        partial: true
-      )
-      placeholder.super.super.super.geometry.position.x = Float(item.x)
-      placeholder.super.super.super.geometry.position.y = Float(item.y)
-      members[location.memberIndex].records[location.recordIndex]
-        .payloads[location.payloadIndex] = try placeholder.serializedBytes(partial: true)
-      try applyText(item.text, toStorage: placeholder.super.ownedStorage.identifier)
-    }
-  }
-
-  /// Writes `text` into a placeholder's owned storage.
-  private mutating func applyText(_ text: String, toStorage identifier: UInt64) throws {
-    let catalog = SlideCatalog(members: members)
-    guard
-      let location = try catalog.locate(
-        recordIdentifier: identifier,
-        named: "TSWP.StorageArchive"
-      )
-    else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: identifier)
-    }
-    var storage = try TSWP_StorageArchive(
-      serializedBytes: members[location.memberIndex]
-        .records[location.recordIndex].payloads[location.payloadIndex],
-      partial: true
-    )
-    storage.text = [text]
-    members[location.memberIndex].records[location.recordIndex]
-      .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
   }
 }

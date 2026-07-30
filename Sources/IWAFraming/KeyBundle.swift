@@ -92,4 +92,31 @@ public struct KeyBundle: Equatable, Sendable {
     }
     entries[index].body = body
   }
+
+  /// Inserts or replaces an entry at `path`, preserving archive order.
+  ///
+  /// New `Data/` members are inserted after existing `Data/` entries (and
+  /// before `Index/`), matching Keynote's usual zip layout.
+  ///
+  /// - Parameters:
+  ///   - body: The uncompressed entry bytes.
+  ///   - path: The entry path within the bundle.
+  public mutating func upsertEntry(body: [UInt8], at path: String) {
+    if let index = entries.firstIndex(where: { $0.path == path }) {
+      entries[index].body = body
+      return
+    }
+    let entry = KeyBundleEntry(path: path, body: body)
+    if path.hasPrefix("Data/") {
+      if let lastData = entries.lastIndex(where: { $0.path.hasPrefix("Data/") }) {
+        entries.insert(entry, at: lastData + 1)
+      } else if let firstIndex = entries.firstIndex(where: { $0.path.hasPrefix("Index/") }) {
+        entries.insert(entry, at: firstIndex)
+      } else {
+        entries.insert(entry, at: 0)
+      }
+    } else {
+      entries.append(entry)
+    }
+  }
 }
