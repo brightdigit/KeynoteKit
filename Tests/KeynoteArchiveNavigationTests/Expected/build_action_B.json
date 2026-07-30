@@ -1,0 +1,18 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_action_B.key",
+  "builds": [
+    {
+      "kind": "Action",
+      "effect": "apple:action-motion-path",
+      "duration": 1.0,
+      "delay": 0.0,
+      "direction": null,
+      "drawable": "2652614",
+      "options": {
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}

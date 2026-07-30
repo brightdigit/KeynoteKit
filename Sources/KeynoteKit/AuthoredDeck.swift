@@ -1,5 +1,5 @@
 //
-//  IWAFraming.swift
+//  AuthoredDeck.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,10 +27,14 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Namespace for Apple's `.iwa` chunk layout over the Snappy block codec.
-///
-/// Framing and the `.key` zip round-trip land in issue #17.
-public enum IWAFraming {
-  /// Placeholder version, replaced when framing lands.
-  public static let version = "0.1.0"
+/// A deck of authored slides, applied to a base document by
+/// ``KeynoteArchiveSurgeon``. Slides match the base's presentation order.
+package struct AuthoredDeck: Equatable, Sendable {
+  /// The slides, in presentation order.
+  package var slides: [AuthoredSlide]
+
+  /// Creates a deck.
+  package init(slides: [AuthoredSlide]) {
+    self.slides = slides
+  }
 }

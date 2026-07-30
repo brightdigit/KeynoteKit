@@ -116,6 +116,10 @@ identifier_name:
   excluded:
     - id
     - no
+    # PLAN Goal-sketch API names: .position(x:y:) and .build(.in).
+    - x
+    - y
+    - "in"
 excluded:
   - DerivedData
   - .build

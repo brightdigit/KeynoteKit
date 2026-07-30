@@ -62,9 +62,28 @@ let package = Package(
     .target(name: "KeynoteKitScripting"),
 
     .testTarget(name: "SnappyTests", dependencies: ["Snappy"]),
-    .testTarget(name: "IWAFramingTests", dependencies: ["IWAFraming"]),
+    // Internal archive navigation (#18): package-ACL only, deliberately not a
+    // product — reading is test infrastructure and writer plumbing, not API (#6).
+    .target(
+      name: "KeynoteArchiveNavigation",
+      dependencies: ["IWAFraming", "KeynoteKitProtobuf"]
+    ),
+
+    // The semantic round-trip gate decodes real fixtures down to protobuf,
+    // so these tests need both the container and the schema layers.
+    .testTarget(name: "IWAFramingTests", dependencies: ["IWAFraming", "KeynoteKitProtobuf"]),
+    .testTarget(
+      name: "KeynoteArchiveNavigationTests",
+      dependencies: ["KeynoteArchiveNavigation", "IWAFraming", "KeynoteKitProtobuf"],
+      exclude: ["Expected"]
+    ),
     .testTarget(name: "KeynoteKitProtobufTests", dependencies: ["KeynoteKitProtobuf"]),
-    .testTarget(name: "KeynoteKitTests", dependencies: ["KeynoteKit"]),
+    // The golden differential decodes goldens down to protobuf and drives
+    // the surgeon directly, so these tests need the container layers too.
+    .testTarget(
+      name: "KeynoteKitTests",
+      dependencies: ["KeynoteKit", "IWAFraming", "KeynoteKitProtobuf"]
+    ),
     .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"])
   ]
 )

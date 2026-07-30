@@ -1,0 +1,34 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_order_A.key",
+  "builds": [
+    {
+      "kind": "In",
+      "effect": "apple:dissolve character",
+      "duration": 1.0,
+      "delay": 0.0,
+      "direction": null,
+      "drawable": "2652601",
+      "options": {
+        "customTextDelivery": "kTextDeliveryByObject",
+        "customDeliveryOption": "kDeliveryOptionForward",
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    },
+    {
+      "kind": "In",
+      "effect": "apple:dissolve character",
+      "duration": 1.0,
+      "delay": 0.0,
+      "direction": null,
+      "drawable": "2652626",
+      "options": {
+        "customTextDelivery": "kTextDeliveryByObject",
+        "customDeliveryOption": "kDeliveryOptionForward",
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}

@@ -15,13 +15,13 @@ import Testing
 internal struct AppleCorpusTests {
   @Test("decodes blocks produced by Keynote", arguments: AppleBlockFixtures.all)
   internal func decodesAppleBlock(sample: AppleBlock) throws {
-    let decoded = try Snappy.decompress(sample.block)
+    let decoded = try Snappy.default.decompress(sample.block)
     #expect(decoded.count == sample.uncompressedCount, "wrong length for \(sample.origin)")
   }
 
   @Test("agrees with Apple's declared length before decoding", arguments: AppleBlockFixtures.all)
   internal func readsAppleLength(sample: AppleBlock) throws {
-    #expect(try Snappy.uncompressedLength(of: sample.block) == sample.uncompressedCount)
+    #expect(try Snappy.default.uncompressedLength(of: sample.block) == sample.uncompressedCount)
   }
 
   @Test("re-encodes Apple's payloads losslessly", arguments: AppleBlockFixtures.all)
@@ -29,9 +29,10 @@ internal struct AppleCorpusTests {
     // Byte-identity with Apple is explicitly *not* required — the format leaves
     // encoders wide latitude. What must hold is that our re-encoding decodes
     // back to exactly the same payload.
-    let original = try Snappy.decompress(sample.block)
-    let recompressed = Snappy.compress(original)
-    #expect(try Snappy.decompress(recompressed) == original, "lost data for \(sample.origin)")
+    let original = try Snappy.default.decompress(sample.block)
+    let recompressed = Snappy.default.compress(original)
+    #expect(
+      try Snappy.default.decompress(recompressed) == original, "lost data for \(sample.origin)")
   }
 
   @Test("stays within reach of Apple's compression ratio")
@@ -39,9 +40,9 @@ internal struct AppleCorpusTests {
     var appleTotal = 0
     var oursTotal = 0
     for sample in AppleBlockFixtures.all {
-      let original = try Snappy.decompress(sample.block)
+      let original = try Snappy.default.decompress(sample.block)
       appleTotal += sample.block.count
-      oursTotal += Snappy.compress(original).count
+      oursTotal += Snappy.default.compress(original).count
     }
 
     // Apple's encoder is closed-source and may not be stock Snappy, so this is

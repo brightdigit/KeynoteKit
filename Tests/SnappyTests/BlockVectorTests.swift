@@ -15,12 +15,12 @@ internal struct BlockVectorTests {
   internal func decodesInlineLiteral() throws {
     // preamble 5; tag (5-1)<<2 = 0x10; "hello"
     let block: [UInt8] = [0x05, 0x10, 0x68, 0x65, 0x6C, 0x6C, 0x6F]
-    #expect(try Snappy.decompress(block) == Array("hello".utf8))
+    #expect(try Snappy.default.decompress(block) == Array("hello".utf8))
   }
 
   @Test("decodes an empty block")
   internal func decodesEmptyBlock() throws {
-    #expect(try Snappy.decompress([0x00]).isEmpty)
+    #expect(try Snappy.default.decompress([0x00]).isEmpty)
   }
 
   @Test("decodes a literal whose length is stored in one extra byte")
@@ -29,7 +29,7 @@ internal struct BlockVectorTests {
     let payload = [UInt8](repeating: 0x7A, count: 100)
     var block: [UInt8] = [100, 0xF0, 99]
     block.append(contentsOf: payload)
-    #expect(try Snappy.decompress(block) == payload)
+    #expect(try Snappy.default.decompress(block) == payload)
   }
 
   // MARK: - Copies
@@ -39,7 +39,7 @@ internal struct BlockVectorTests {
     // "ab" then a 4-byte copy from offset 2 => "ababab" (6 bytes total).
     // tag: (4-4)<<2 | (2>>8)<<5 | 0x01 = 0x01, operand 0x02.
     let block: [UInt8] = [0x06, 0x04, 0x61, 0x62, 0x01, 0x02]
-    #expect(try Snappy.decompress(block) == Array("ababab".utf8))
+    #expect(try Snappy.default.decompress(block) == Array("ababab".utf8))
   }
 
   @Test("decodes a two-byte-offset copy")
@@ -52,7 +52,7 @@ internal struct BlockVectorTests {
     block.append(contentsOf: [UInt8((10 - 1) << 2) | 0x02, 0x2C, 0x01])
 
     let expected = literal + literal.prefix(10)
-    #expect(try Snappy.decompress(block) == expected)
+    #expect(try Snappy.default.decompress(block) == expected)
   }
 
   /// The `.iwa` corpus never exercises the four-byte-offset copy form — Apple
@@ -68,7 +68,7 @@ internal struct BlockVectorTests {
     block.append(contentsOf: [UInt8((10 - 1) << 2) | 0x03, 0x2C, 0x01, 0x00, 0x00])
 
     let expected = literal + literal.prefix(10)
-    #expect(try Snappy.decompress(block) == expected)
+    #expect(try Snappy.default.decompress(block) == expected)
   }
 
   @Test("replays overlapping copies byte by byte")
@@ -76,7 +76,7 @@ internal struct BlockVectorTests {
     // One "a", then a 10-byte copy at offset 1: the classic run-length case,
     // where the source advances into bytes the copy itself writes.
     let block: [UInt8] = [0x0B, 0x00, 0x61, UInt8((10 - 1) << 2) | 0x02, 0x01, 0x00]
-    #expect(try Snappy.decompress(block) == Array(repeating: UInt8(0x61), count: 11))
+    #expect(try Snappy.default.decompress(block) == Array(repeating: UInt8(0x61), count: 11))
   }
 
   // MARK: - Cross-checks
@@ -84,16 +84,16 @@ internal struct BlockVectorTests {
   @Test("our encoder's output decodes to the original")
   internal func encoderOutputDecodes() throws {
     let bytes = Array("banana banana banana banana".utf8)
-    let compressed = Snappy.compress(bytes)
+    let compressed = Snappy.default.compress(bytes)
     #expect(compressed.count < bytes.count)
-    #expect(try Snappy.decompress(compressed) == bytes)
+    #expect(try Snappy.default.decompress(compressed) == bytes)
   }
 
   @Test("emits copies rather than pure literals for repeated input")
   internal func emitsCopies() {
     // A literal-only encoding of 4 KiB could not fit in 200 bytes, so this
     // pins that the match finder actually runs.
-    let compressed = Snappy.compress([UInt8](repeating: 0x42, count: 4_096))
+    let compressed = Snappy.default.compress([UInt8](repeating: 0x42, count: 4_096))
     #expect(compressed.count < 200)
   }
 }

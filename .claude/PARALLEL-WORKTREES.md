@@ -130,9 +130,10 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-29): phases 0 and 1 are complete.** All six of
-> #13, #15, #19, #14, #16, #21 are merged to `v0.1.x` and their worktrees have
-> been removed. **Phase 2 (#17 → #18) is the frontier and has not started.**
+> **Current position (2026-07-29): phases 0–2 are complete once this branch
+> merges.** #13, #15, #19, #14, #16, #21 are merged to `v0.1.x`; #17 and #18
+> land together from `wt-iwa` (branch `17-iwa-framing`, one grouped PR).
+> **Phase 3 (#20 → #22 → #23) is the frontier**; #24 stays human-in-the-loop.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
 

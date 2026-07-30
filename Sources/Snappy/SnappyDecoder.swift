@@ -32,13 +32,18 @@
 /// The block body is a stream of elements, each introduced by a tag byte whose
 /// low two bits select literal, or a copy with a one-, two-, or four-byte
 /// offset. Every bounds check throws rather than trapping.
-internal enum SnappyDecoder {
+internal struct SnappyDecoder: Sendable {
+  /// The shared default decoder.
+  internal static let `default` = SnappyDecoder()
+
+  private init() {}
+
   /// Decodes a complete block.
   ///
   /// - Parameter input: The compressed block, including its length preamble.
   /// - Returns: The uncompressed bytes.
   /// - Throws: A ``SnappyError`` if the block is malformed.
-  internal static func decode(_ input: UnsafeBufferPointer<UInt8>) throws -> [UInt8] {
+  internal func decode(_ input: UnsafeBufferPointer<UInt8>) throws -> [UInt8] {
     var index = 0
     let expectedCount = try Varint.decode(from: input, at: &index)
     guard expectedCount <= Snappy.maximumBlockSize else {
@@ -64,7 +69,7 @@ internal enum SnappyDecoder {
   }
 
   /// Reads a little-endian integer of `width` bytes.
-  private static func readInteger(
+  private func readInteger(
     from input: UnsafeBufferPointer<UInt8>,
     at index: inout Int,
     width: Int
@@ -81,7 +86,7 @@ internal enum SnappyDecoder {
   }
 
   /// Appends a literal element's bytes to `output`.
-  private static func appendLiteral(
+  private func appendLiteral(
     tag: UInt8,
     input: UnsafeBufferPointer<UInt8>,
     index: inout Int,
@@ -108,7 +113,7 @@ internal enum SnappyDecoder {
   }
 
   /// Appends a copy element by replaying earlier output.
-  private static func appendCopy(
+  private func appendCopy(
     tag: UInt8,
     input: UnsafeBufferPointer<UInt8>,
     index: inout Int,
@@ -130,7 +135,7 @@ internal enum SnappyDecoder {
   }
 
   /// Decodes the length and offset of a copy element.
-  private static func readCopyOperands(
+  private func readCopyOperands(
     tag: UInt8,
     input: UnsafeBufferPointer<UInt8>,
     index: inout Int

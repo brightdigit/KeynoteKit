@@ -1,0 +1,18 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_cat_movein.key",
+  "builds": [
+    {
+      "kind": "In",
+      "effect": "apple:sidezoom",
+      "duration": 0.5,
+      "delay": 0.0,
+      "direction": 21,
+      "drawable": "2652614",
+      "options": {
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}

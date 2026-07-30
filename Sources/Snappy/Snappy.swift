@@ -42,15 +42,20 @@
 /// package later without touching callers.
 ///
 /// ```swift
-/// let compressed = Snappy.compress(Array("hello".utf8))
-/// let original = try Snappy.decompress(compressed)
+/// let compressed = Snappy.default.compress(Array("hello".utf8))
+/// let original = try Snappy.default.decompress(compressed)
 /// ```
-public enum Snappy {
+public struct Snappy: Sendable {
+  /// The shared default block codec.
+  public static let `default` = Snappy()
+
   /// Largest block this codec will encode or decode, in bytes.
   ///
   /// The format bounds a block's uncompressed length to 32 bits. Producers
   /// typically chunk well below that; Apple's `.iwa` writer uses 64 KiB.
   public static let maximumBlockSize = Int(UInt32.max)
+
+  private init() {}
 
   /// The worst-case encoded size for `count` bytes.
   ///
@@ -71,8 +76,8 @@ public enum Snappy {
   ///
   /// - Parameter input: The bytes to compress.
   /// - Returns: A block including its length preamble.
-  public static func compress(_ input: [UInt8]) -> [UInt8] {
-    input.withUnsafeBufferPointer(SnappyEncoder.encode)
+  public func compress(_ input: [UInt8]) -> [UInt8] {
+    input.withUnsafeBufferPointer(SnappyEncoder.default.encode)
   }
 
   /// Decompresses a Snappy block.
@@ -81,8 +86,8 @@ public enum Snappy {
   /// - Returns: The original bytes.
   /// - Throws: A ``SnappyError`` if `input` is malformed. Malformed input never
   ///   traps, so this is safe to call on bytes read from a file.
-  public static func decompress(_ input: [UInt8]) throws -> [UInt8] {
-    try input.withUnsafeBufferPointer(SnappyDecoder.decode)
+  public func decompress(_ input: [UInt8]) throws -> [UInt8] {
+    try input.withUnsafeBufferPointer(SnappyDecoder.default.decode)
   }
 
   /// Reads the uncompressed length recorded in a block's preamble.
@@ -94,7 +99,7 @@ public enum Snappy {
   /// - Returns: The length the block claims to decode to.
   /// - Throws: ``SnappyError/invalidLengthPreamble`` if the preamble is
   ///   truncated or wider than 32 bits.
-  public static func uncompressedLength(of input: [UInt8]) throws -> Int {
+  public func uncompressedLength(of input: [UInt8]) throws -> Int {
     try input.withUnsafeBufferPointer { buffer in
       var index = 0
       return try Varint.decode(from: buffer, at: &index)
