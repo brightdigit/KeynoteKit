@@ -42,6 +42,22 @@ package struct AuthoredBuild: Equatable, Sendable {
     case action = "Action"
   }
 
+  /// The build's start trigger.
+  ///
+  /// `onClick` (eventTrigger 1, chunk `automatic: false`) is the value every
+  /// fixture and golden carries; the two automatic lowerings are verified
+  /// only by #24 human acceptance.
+  package enum Trigger: Equatable, Sendable {
+    /// Start on click.
+    case onClick
+
+    /// Start after the previous build.
+    case afterPrevious
+
+    /// Start with the previous build.
+    case withPrevious
+  }
+
   /// The build kind.
   package var kind: Kind
 
@@ -66,6 +82,9 @@ package struct AuthoredBuild: Equatable, Sendable {
   /// The Action motion path; required when `kind == .action`.
   package var motionPath: AuthoredMotionPath?
 
+  /// The start trigger.
+  package var trigger: Trigger
+
   /// Creates a build.
   package init(
     kind: Kind,
@@ -75,7 +94,8 @@ package struct AuthoredBuild: Equatable, Sendable {
     targetIndex: Int,
     direction: UInt32? = nil,
     delivery: String? = nil,
-    motionPath: AuthoredMotionPath? = nil
+    motionPath: AuthoredMotionPath? = nil,
+    trigger: Trigger = .onClick
   ) {
     self.kind = kind
     self.effect = effect
@@ -85,5 +105,6 @@ package struct AuthoredBuild: Equatable, Sendable {
     self.direction = direction
     self.delivery = delivery
     self.motionPath = motionPath
+    self.trigger = trigger
   }
 }

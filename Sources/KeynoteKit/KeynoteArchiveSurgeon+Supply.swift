@@ -147,4 +147,59 @@ extension KeynoteArchiveSurgeon {
     info.messageInfos[0].objectReferences.append(contentsOf: identifiers)
     members[location.memberIndex].records[location.recordIndex].info = info
   }
+
+  /// Writes each item's string and position into the slide's drawables,
+  /// in `drawablesZOrder` order.
+  internal mutating func applyTextItems(
+    _ items: [AuthoredSlide.TextItem],
+    to slideArchive: inout KN_SlideArchive,
+    slideIndex: Int
+  ) throws {
+    let catalog = SlideCatalog(members: members)
+    for (index, item) in items.enumerated() {
+      guard slideArchive.drawablesZOrder.indices.contains(index) else {
+        throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
+      }
+      let drawableIdentifier = slideArchive.drawablesZOrder[index].identifier
+      guard
+        let location = try catalog.locate(
+          recordIdentifier: drawableIdentifier,
+          named: "KN.PlaceholderArchive"
+        )
+      else {
+        throw ArchiveSurgeryError.missingSlideRecord(identifier: drawableIdentifier)
+      }
+      var placeholder = try KN_PlaceholderArchive(
+        serializedBytes: members[location.memberIndex]
+          .records[location.recordIndex].payloads[location.payloadIndex],
+        partial: true
+      )
+      placeholder.super.super.super.geometry.position.x = Float(item.x)
+      placeholder.super.super.super.geometry.position.y = Float(item.y)
+      members[location.memberIndex].records[location.recordIndex]
+        .payloads[location.payloadIndex] = try placeholder.serializedBytes(partial: true)
+      try applyText(item.text, toStorage: placeholder.super.ownedStorage.identifier)
+    }
+  }
+
+  /// Writes `text` into a placeholder's owned storage.
+  private mutating func applyText(_ text: String, toStorage identifier: UInt64) throws {
+    let catalog = SlideCatalog(members: members)
+    guard
+      let location = try catalog.locate(
+        recordIdentifier: identifier,
+        named: "TSWP.StorageArchive"
+      )
+    else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: identifier)
+    }
+    var storage = try TSWP_StorageArchive(
+      serializedBytes: members[location.memberIndex]
+        .records[location.recordIndex].payloads[location.payloadIndex],
+      partial: true
+    )
+    storage.text = [text]
+    members[location.memberIndex].records[location.recordIndex]
+      .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
+  }
 }

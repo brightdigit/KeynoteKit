@@ -131,7 +131,9 @@ package enum BuildRecordFactory {
       attributes.customTextDelivery = .kTextDeliveryByObject
     }
     attributes.animationAttributes = animation
-    attributes.eventTrigger = 1
+    // eventTrigger 1 (On Click) is fixture-proven; 2/3 are the automatic
+    // lowerings pending #24 acceptance.
+    attributes.eventTrigger = eventTrigger(for: build.trigger)
 
     var archive = KN_BuildArchive()
     archive.attributes = attributes
@@ -149,7 +151,7 @@ package enum BuildRecordFactory {
     uuid: TSP_UUID
   ) -> KN_BuildChunkArchive {
     var chunk = KN_BuildChunkArchive()
-    chunk.automatic = false
+    chunk.automatic = build.trigger != .onClick
     chunk.build.identifier = buildIdentifier
     chunk.buildChunkIdentifier.buildChunkID = 1
     chunk.buildChunkIdentifier.buildID = uuid
@@ -158,6 +160,15 @@ package enum BuildRecordFactory {
     chunk.duration = build.duration
     chunk.referent = true
     return chunk
+  }
+
+  /// The archive ordinal for a trigger.
+  private static func eventTrigger(for trigger: AuthoredBuild.Trigger) -> UInt32 {
+    switch trigger {
+    case .onClick: 1
+    case .afterPrevious: 2
+    case .withPrevious: 3
+    }
   }
 
   /// The Action motion-path source.

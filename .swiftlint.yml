@@ -116,10 +116,10 @@ identifier_name:
   excluded:
     - id
     - no
-    # Coordinate names: the PLAN Goal sketch's public API is .position(x:y:)
-    # and the motion-path model mirrors TSP.Point.
+    # PLAN Goal-sketch API names: .position(x:y:) and .build(.in).
     - x
     - y
+    - "in"
 excluded:
   - DerivedData
   - .build

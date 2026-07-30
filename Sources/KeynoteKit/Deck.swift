@@ -28,6 +28,7 @@
 //
 
 import Foundation
+private import IWAFraming
 
 /// A Keynote presentation to be written to disk.
 ///
@@ -46,27 +47,47 @@ import Foundation
 /// `basedOn:` parameter, which must exist from day one so the primary API does
 /// not change shape once content lands.
 public struct Deck: Sendable {
-  /// Creates an empty deck.
-  public init() {}
+  /// The deck's slides, in presentation order.
+  internal var slides: [Slide]
+
+  /// Creates an empty deck (writes the template verbatim).
+  public init() {
+    self.slides = []
+  }
+
+  /// Creates a deck from composed ``SlideContent``.
+  public init(@SlideBuilder content: () -> SlideGroup) {
+    self.slides = content().slides
+  }
 
   /// Writes the deck to disk, authored from a base template.
   ///
-  /// The deck is produced by copying `template` and applying this deck's
-  /// content to it. With no content modelled yet, the result is the template
-  /// document verbatim.
+  /// Authoring is template surgery and never requires a running Keynote:
+  /// the template is unpacked, slides and text items are supplied by
+  /// cloning template subtrees, builds and transitions are minted as
+  /// archives, and the two SIGTRAP invariants are verified before the
+  /// container is repacked. An empty deck writes the template verbatim.
   ///
   /// - Parameters:
   ///   - url: Destination for the `.key` document. Any existing file at this
   ///     location is replaced.
   ///   - template: Base document to author from. Defaults to
   ///     ``KeynoteTemplate/bundled``.
-  /// - Throws: ``TemplateError/bundledResourceMissing`` if the default template
-  ///   cannot be located, or a `CocoaError` if the template cannot be read or
-  ///   the destination cannot be written.
+  /// - Throws: ``TemplateError`` for a missing template, an
+  ///   `ArchiveSurgeryError` for a base-document mismatch or invariant
+  ///   violation, or a `CocoaError` for filesystem failures.
   public func write(
     to url: URL,
     basedOn template: KeynoteTemplate = .bundled
   ) throws {
-    try template.data().write(to: url, options: .atomic)
+    guard !slides.isEmpty else {
+      try template.data().write(to: url, options: .atomic)
+      return
+    }
+    var bundle = try KeyBundle(contentsOfZip: Array(template.data()))
+    var surgeon = try KeynoteArchiveSurgeon(bundle: bundle)
+    var generator = SystemRandomNumberGenerator()
+    try surgeon.author(authoredDeck(), into: &bundle, using: &generator)
+    try Data(bundle.serializedZip()).write(to: url, options: .atomic)
   }
 }

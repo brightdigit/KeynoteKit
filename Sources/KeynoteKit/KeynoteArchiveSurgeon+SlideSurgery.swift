@@ -67,11 +67,11 @@ extension KeynoteArchiveSurgeon {
         drawables: drawables.count
       )
     }
-    if let direction = spec.transitionDirection {
-      guard slideArchive.hasTransition, slideArchive.transition.hasAttributes else {
-        throw ArchiveSurgeryError.missingTransitionPath(slideIndex: slideIndex)
-      }
-      slideArchive.transition.attributes.animationAttributes.direction = direction
+    if try applyTransition(spec, to: &slideArchive, slideIndex: slideIndex) {
+      minted.dirtyPaths.insert(members[location.memberIndex].path)
+    }
+    if !spec.items.isEmpty {
+      try applyTextItems(spec.items, to: &slideArchive, slideIndex: slideIndex)
       minted.dirtyPaths.insert(members[location.memberIndex].path)
     }
     let batch = try mintBuilds(
@@ -191,5 +191,32 @@ extension KeynoteArchiveSurgeon {
     var reference = TSP_Reference()
     reference.identifier = identifier
     return reference
+  }
+
+  /// Applies the spec's transition fields; true when anything changed.
+  private func applyTransition(
+    _ spec: AuthoredSlide,
+    to slideArchive: inout KN_SlideArchive,
+    slideIndex: Int
+  ) throws -> Bool {
+    guard spec.transition != nil || spec.transitionDirection != nil else {
+      return false
+    }
+    guard slideArchive.hasTransition, slideArchive.transition.hasAttributes else {
+      throw ArchiveSurgeryError.missingTransitionPath(slideIndex: slideIndex)
+    }
+    if let transition = spec.transition {
+      var animation = slideArchive.transition.attributes.animationAttributes
+      animation.animationType = "Transition"
+      animation.effect = transition.effect
+      animation.duration = transition.duration
+      animation.delay = transition.delay
+      animation.isAutomatic = transition.autoAdvance
+      slideArchive.transition.attributes.animationAttributes = animation
+    }
+    if let direction = spec.transitionDirection {
+      slideArchive.transition.attributes.animationAttributes.direction = direction
+    }
+    return true
   }
 }
