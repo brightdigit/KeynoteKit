@@ -130,14 +130,26 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-30): phases 0–3 are complete through #23.**
-> PR #32 (squash `48e2bab`) landed the whole #17 → #18 → #20 → #22 → #23 chain
-> on `v0.1.x`; #7 and #9 closed as delivered along the way. **The frontier is
-> #24**: deck generation is scripted (`swift run AcceptanceDecks [dir]` writes
-> the five decks and self-checks them); the Keynote 15.3 open pass and the
-> `v0.1.0` tag stay human-in-the-loop. Post-v0.1.0 lanes running in parallel
-> under the same rules: #5 (survey, `wt-snappy-dep`) and #10 (ScriptingBridge,
-> `wt-scripting`) — both touch products lane W never edits.
+> **Current position (2026-07-30): phases 0–3 are complete through #23; the
+> frontier is #24's human pass.** Handoff for the next session:
+>
+> - PR #32 (squash `48e2bab`) landed the #17 → #18 → #20 → #22 → #23 chain on
+>   `v0.1.x`; those issues plus #7 and #9 are closed as delivered.
+> - **#24** (this PR, #34, branch `24-acceptance-decks` in `wt-authoring`):
+>   generation is scripted — `swift run AcceptanceDecks [dir]` writes the five
+>   decks and self-checks them; `AcceptanceDeckTests` gate the DSL against the
+>   committed specs and goldens. Once merged, only the Keynote 15.3 open pass
+>   and the `v0.1.0` tag remain (checklist and command are commented on #24).
+>   One Keynote-bound session at a time still applies.
+> - Post-v0.1.0 lanes run under the same one-PR-per-lane rules: **#5** survey
+>   merged via PR #33 (verdict: stay vendored; exit conditions in
+>   `research/findings/snappy_dependency_survey.md` §6; issue open for the
+>   eventual swap). **#10** delivered via PR #35 (branch `10-scripting-bridge`
+>   in `wt-scripting`, awaiting review); live-Keynote verification of the
+>   ScriptingBridge surface stays open, so #10 stays open.
+> - Remove `wt-authoring` / `wt-scripting` and their branches once #34 / #35
+>   land (squash merges: verify per-file, then `git branch -D` — see
+>   agent-notes). Cross-check open state with `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
 
