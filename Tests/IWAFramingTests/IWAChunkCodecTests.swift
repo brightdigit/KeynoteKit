@@ -14,25 +14,25 @@ internal struct IWAChunkCodecTests {
 
   @Test("round-trips an empty payload as empty framing")
   internal func roundTripsEmptyPayload() throws {
-    let framed = IWAChunkCodec.encode([])
+    let framed = IWAChunkCodec.default.encode([])
     #expect(framed.isEmpty)
-    #expect(try IWAChunkCodec.decode(framed).isEmpty)
+    #expect(try IWAChunkCodec.default.decode(framed).isEmpty)
   }
 
   @Test("round-trips a small payload in a single chunk")
   internal func roundTripsSmallPayload() throws {
     let payload = Array("the quick brown fox jumps over the lazy dog".utf8)
-    let framed = IWAChunkCodec.encode(payload)
+    let framed = IWAChunkCodec.default.encode(payload)
     #expect(framed[0] == 0x00)
     #expect(chunkSizes(of: framed).count == 1)
-    #expect(try IWAChunkCodec.decode(framed) == payload)
+    #expect(try IWAChunkCodec.default.decode(framed) == payload)
   }
 
   @Test("round-trips a multi-chunk payload")
   internal func roundTripsMultiChunkPayload() throws {
     let payload = pseudoRandom(count: 200_000)
-    let framed = IWAChunkCodec.encode(payload)
-    #expect(try IWAChunkCodec.decode(framed) == payload)
+    let framed = IWAChunkCodec.default.encode(payload)
+    #expect(try IWAChunkCodec.default.decode(framed) == payload)
   }
 
   // MARK: - Chunk splitting
@@ -40,19 +40,19 @@ internal struct IWAChunkCodecTests {
   @Test("keeps a payload of exactly 64 KiB in one chunk")
   internal func keepsBoundaryPayloadInOneChunk() throws {
     let payload = pseudoRandom(count: 65_536)
-    let framed = IWAChunkCodec.encode(payload)
+    let framed = IWAChunkCodec.default.encode(payload)
     #expect(chunkSizes(of: framed).count == 1)
-    #expect(try IWAChunkCodec.decode(framed) == payload)
+    #expect(try IWAChunkCodec.default.decode(framed) == payload)
   }
 
   @Test("splits one byte past 64 KiB into two chunks")
   internal func splitsPastBoundaryIntoTwoChunks() throws {
     let payload = pseudoRandom(count: 65_537)
-    let framed = IWAChunkCodec.encode(payload)
+    let framed = IWAChunkCodec.default.encode(payload)
     let sizes = chunkSizes(of: framed)
     #expect(sizes.count == 2)
-    #expect(try Snappy.uncompressedLength(of: firstChunkBody(of: framed)) == 65_536)
-    #expect(try IWAChunkCodec.decode(framed) == payload)
+    #expect(try Snappy.default.uncompressedLength(of: firstChunkBody(of: framed)) == 65_536)
+    #expect(try IWAChunkCodec.default.decode(framed) == payload)
   }
 
   // MARK: - Malformed framing
@@ -60,21 +60,21 @@ internal struct IWAChunkCodecTests {
   @Test("rejects a truncated chunk header")
   internal func rejectsTruncatedHeader() {
     #expect(throws: IWAChunkError.truncatedHeader(offset: 0)) {
-      _ = try IWAChunkCodec.decode([0x00, 0x01])
+      _ = try IWAChunkCodec.default.decode([0x00, 0x01])
     }
   }
 
   @Test("rejects an unsupported chunk type byte")
   internal func rejectsUnsupportedChunkType() {
     #expect(throws: IWAChunkError.unsupportedChunkType(0x01, offset: 0)) {
-      _ = try IWAChunkCodec.decode([0x01, 0x00, 0x00, 0x00])
+      _ = try IWAChunkCodec.default.decode([0x01, 0x00, 0x00, 0x00])
     }
   }
 
   @Test("rejects a declared length running past the input")
   internal func rejectsTruncatedChunk() {
     #expect(throws: IWAChunkError.truncatedChunk(expected: 9, available: 1)) {
-      _ = try IWAChunkCodec.decode([0x00, 0x09, 0x00, 0x00, 0x01])
+      _ = try IWAChunkCodec.default.decode([0x00, 0x09, 0x00, 0x00, 0x01])
     }
   }
 
@@ -82,7 +82,7 @@ internal struct IWAChunkCodecTests {
   internal func rethrowsSnappyErrors() {
     // A one-byte payload of 0x80 is a truncated varint preamble.
     #expect(throws: SnappyError.invalidLengthPreamble) {
-      _ = try IWAChunkCodec.decode([0x00, 0x01, 0x00, 0x00, 0x80])
+      _ = try IWAChunkCodec.default.decode([0x00, 0x01, 0x00, 0x00, 0x80])
     }
   }
 

@@ -40,15 +40,20 @@ import Snappy
 /// This layer speaks only `Snappy`'s public block API. The decompressed
 /// archive stream it produces is decoded by `TSPArchiveStream` in
 /// `KeynoteKitProtobuf`.
-public enum IWAChunkCodec {
+public struct IWAChunkCodec: Sendable {
+  /// The shared default chunk codec.
+  public static let `default` = IWAChunkCodec()
+
   /// The exact uncompressed size at which Apple's writer splits chunks.
   ///
   /// Measured, not assumed: five fixture chunks sit exactly on this boundary
   /// and none exceed it.
-  public static let maximumUncompressedChunkCount = 65_536
+  public var maximumUncompressedChunkCount = 65_536
 
   /// The number of bytes in a chunk header.
-  private static let headerByteCount = 4
+  private let headerByteCount = 4
+
+  private init() {}
 
   /// Decodes a framed `.iwa` file into its archive stream.
   ///
@@ -56,12 +61,12 @@ public enum IWAChunkCodec {
   /// - Returns: The concatenated decompressed payloads of every chunk.
   /// - Throws: ``IWAChunkError`` if the framing is malformed, or `SnappyError`
   ///   if a chunk's Snappy payload is.
-  public static func decode(_ framed: [UInt8]) throws -> [UInt8] {
+  public func decode(_ framed: [UInt8]) throws -> [UInt8] {
     var payload: [UInt8] = []
     var index = 0
     while index < framed.count {
       let chunk = try nextChunk(in: framed, at: &index)
-      let block = try Snappy.decompress(chunk)
+      let block = try Snappy.default.decompress(chunk)
       payload.append(contentsOf: block)
     }
     return payload
@@ -77,12 +82,12 @@ public enum IWAChunkCodec {
   ///
   /// - Parameter payload: The archive stream to frame.
   /// - Returns: The framed `.iwa` bytes; empty input produces empty output.
-  public static func encode(_ payload: [UInt8]) -> [UInt8] {
+  public func encode(_ payload: [UInt8]) -> [UInt8] {
     var framed: [UInt8] = []
     var start = 0
     while start < payload.count {
       let end = min(start + maximumUncompressedChunkCount, payload.count)
-      let block = Snappy.compress(Array(payload[start..<end]))
+      let block = Snappy.default.compress(Array(payload[start..<end]))
       framed.append(0x00)
       framed.append(UInt8(block.count & 0xFF))
       framed.append(UInt8((block.count >> 8) & 0xFF))
@@ -95,7 +100,7 @@ public enum IWAChunkCodec {
 
   /// Reads one chunk header at `index` and returns its compressed payload,
   /// advancing `index` past the chunk.
-  private static func nextChunk(in framed: [UInt8], at index: inout Int) throws -> [UInt8] {
+  private func nextChunk(in framed: [UInt8], at index: inout Int) throws -> [UInt8] {
     guard framed.count - index >= headerByteCount else {
       throw IWAChunkError.truncatedHeader(offset: index)
     }

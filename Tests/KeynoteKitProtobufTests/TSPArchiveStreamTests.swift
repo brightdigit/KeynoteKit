@@ -12,16 +12,16 @@ internal struct TSPArchiveStreamTests {
 
   @Test("parses an empty stream as no records")
   internal func parsesEmptyStream() throws {
-    #expect(try TSPArchiveStream.records(from: []).isEmpty)
+    #expect(try TSPArchiveStream.default.records(from: []).isEmpty)
   }
 
   @Test("round-trips a single-record stream")
   internal func roundTripsSingleRecord() throws {
     let record = try makeRecord(identifier: 7, payloads: [Array("payload".utf8)])
-    let stream = try TSPArchiveStream.serialize([record])
-    let parsed = try TSPArchiveStream.records(from: stream)
+    let stream = try TSPArchiveStream.default.serialize([record])
+    let parsed = try TSPArchiveStream.default.records(from: stream)
     #expect(parsed == [record])
-    #expect(try TSPArchiveStream.serialize(parsed) == stream)
+    #expect(try TSPArchiveStream.default.serialize(parsed) == stream)
   }
 
   @Test("round-trips multiple records in stream order")
@@ -30,8 +30,8 @@ internal struct TSPArchiveStreamTests {
       try makeRecord(identifier: 1, payloads: [Array("first".utf8)]),
       try makeRecord(identifier: 2, payloads: [Array("second".utf8), Array("third".utf8)]),
     ]
-    let stream = try TSPArchiveStream.serialize(records)
-    #expect(try TSPArchiveStream.records(from: stream) == records)
+    let stream = try TSPArchiveStream.default.serialize(records)
+    #expect(try TSPArchiveStream.default.records(from: stream) == records)
   }
 
   @Test("slices multi-message payloads by each MessageInfo length")
@@ -39,7 +39,9 @@ internal struct TSPArchiveStreamTests {
     let first = Array(repeating: UInt8(0xAA), count: 3)
     let second = Array(repeating: UInt8(0xBB), count: 5)
     let record = try makeRecord(identifier: 9, payloads: [first, second])
-    let parsed = try TSPArchiveStream.records(from: try TSPArchiveStream.serialize([record]))
+    let parsed = try TSPArchiveStream.default.records(
+      from: try TSPArchiveStream.default.serialize([record])
+    )
     #expect(parsed.count == 1)
     #expect(parsed[0].payloads == [first, second])
   }
@@ -48,7 +50,9 @@ internal struct TSPArchiveStreamTests {
   internal func recomputesStaleLength() throws {
     var record = try makeRecord(identifier: 3, payloads: [Array("abc".utf8)])
     record.payloads[0] = Array("longer payload".utf8)
-    let parsed = try TSPArchiveStream.records(from: try TSPArchiveStream.serialize([record]))
+    let parsed = try TSPArchiveStream.default.records(
+      from: try TSPArchiveStream.default.serialize([record])
+    )
     #expect(parsed[0].payloads[0] == Array("longer payload".utf8))
     #expect(parsed[0].info.messageInfos[0].length == 14)
   }
@@ -71,21 +75,21 @@ internal struct TSPArchiveStreamTests {
   @Test("rejects a stream ending inside the length varint")
   internal func rejectsTruncatedVarint() {
     #expect(throws: TSPArchiveStreamError.truncatedVarint(offset: 0)) {
-      _ = try TSPArchiveStream.records(from: [0x80])
+      _ = try TSPArchiveStream.default.records(from: [0x80])
     }
   }
 
   @Test("rejects a header length running past the stream")
   internal func rejectsTruncatedArchiveInfo() {
     #expect(throws: TSPArchiveStreamError.truncatedArchiveInfo(offset: 0, expected: 5)) {
-      _ = try TSPArchiveStream.records(from: [0x05, 0x08])
+      _ = try TSPArchiveStream.default.records(from: [0x05, 0x08])
     }
   }
 
   @Test("rejects a payload running past the stream")
   internal func rejectsTruncatedPayload() throws {
     let record = try makeRecord(identifier: 6, payloads: [Array("payload".utf8)])
-    var stream = try TSPArchiveStream.serialize([record])
+    var stream = try TSPArchiveStream.default.serialize([record])
     stream.removeLast(3)
     #expect(
       throws: TSPArchiveStreamError.truncatedPayload(
@@ -94,7 +98,7 @@ internal struct TSPArchiveStreamTests {
         available: 4
       )
     ) {
-      _ = try TSPArchiveStream.records(from: stream)
+      _ = try TSPArchiveStream.default.records(from: stream)
     }
   }
 

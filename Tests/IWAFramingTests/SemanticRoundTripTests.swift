@@ -33,8 +33,8 @@ internal struct SemanticRoundTripTests {
     var repacked = bundle
     for path in bundle.indexEntryPaths {
       guard let entry = bundle.entry(at: path) else { continue }
-      let stream = try IWAChunkCodec.decode(entry.body)
-      repacked.setBody(IWAChunkCodec.encode(stream), at: path)
+      let stream = try IWAChunkCodec.default.decode(entry.body)
+      repacked.setBody(IWAChunkCodec.default.encode(stream), at: path)
     }
     return try repacked.serializedZip()
   }
@@ -47,14 +47,14 @@ internal struct SemanticRoundTripTests {
     _ repacked: KeyBundleEntry,
     fixture: KeyFixture
   ) throws {
-    let originalStream = try IWAChunkCodec.decode(original.body)
-    let repackedStream = try IWAChunkCodec.decode(repacked.body)
+    let originalStream = try IWAChunkCodec.default.decode(original.body)
+    let repackedStream = try IWAChunkCodec.default.decode(repacked.body)
     #expect(
       repackedStream == originalStream,
       "\(fixture): \(original.path) decompressed stream changed"
     )
-    let records = try TSPArchiveStream.records(from: originalStream)
-    let repackedRecords = try TSPArchiveStream.records(from: repackedStream)
+    let records = try TSPArchiveStream.default.records(from: originalStream)
+    let repackedRecords = try TSPArchiveStream.default.records(from: repackedStream)
     #expect(repackedRecords == records, "\(fixture): \(original.path) archive graph changed")
     for record in records {
       _ = try record.decodedMessages()

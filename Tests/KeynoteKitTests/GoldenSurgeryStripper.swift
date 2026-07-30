@@ -18,7 +18,9 @@ internal enum GoldenSurgeryStripper {
 
     for path in bundle.indexEntryPaths {
       guard let entry = bundle.entry(at: path) else { continue }
-      var records = try TSPArchiveStream.records(from: IWAChunkCodec.decode(entry.body))
+      var records = try TSPArchiveStream.default.records(
+        from: IWAChunkCodec.default.decode(entry.body)
+      )
       records.removeAll { record in
         let names = record.resolvedTypes.compactMap(TSPRegistryMapping.messageName(for:))
         guard names.contains("KN.BuildArchive") || names.contains("KN.BuildChunkArchive") else {
@@ -37,7 +39,10 @@ internal enum GoldenSurgeryStripper {
           strippedSlides: &strippedSlideIdentifiers
         )
       }
-      stripped.setBody(IWAChunkCodec.encode(try TSPArchiveStream.serialize(records)), at: path)
+      stripped.setBody(
+        IWAChunkCodec.default.encode(try TSPArchiveStream.default.serialize(records)),
+        at: path
+      )
     }
     try stripNodesAndMetadata(
       in: &stripped,
@@ -90,14 +95,19 @@ internal enum GoldenSurgeryStripper {
     }
     for path in bundle.indexEntryPaths {
       guard let entry = bundle.entry(at: path) else { continue }
-      var records = try TSPArchiveStream.records(from: IWAChunkCodec.decode(entry.body))
+      var records = try TSPArchiveStream.default.records(
+        from: IWAChunkCodec.default.decode(entry.body)
+      )
       let dirty = try stripMember(
         records: &records,
         buildIdentifiers: buildIdentifiers,
         strippedSlides: strippedSlides
       )
       if dirty {
-        bundle.setBody(IWAChunkCodec.encode(try TSPArchiveStream.serialize(records)), at: path)
+        bundle.setBody(
+          IWAChunkCodec.default.encode(try TSPArchiveStream.default.serialize(records)),
+          at: path
+        )
       }
     }
   }

@@ -32,16 +32,21 @@
 /// Matching uses a single-probe hash table over four-byte sequences — the
 /// scheme the reference encoder uses. Output only has to be *valid*, so an
 /// unprofitable match is simply emitted as literals.
-internal enum SnappyEncoder {
+internal struct SnappyEncoder: Sendable {
+  /// The shared default encoder.
+  internal static let `default` = SnappyEncoder()
+
   /// Number of slots in the match hash table. A power of two so the hash can
   /// mask instead of dividing.
-  private static let tableSize = 1 << 14
+  private let tableSize = 1 << 14
+
+  private init() {}
 
   /// Encodes `input` as a complete block.
   ///
   /// - Parameter input: The bytes to compress.
   /// - Returns: A Snappy block including its length preamble.
-  internal static func encode(_ input: UnsafeBufferPointer<UInt8>) -> [UInt8] {
+  internal func encode(_ input: UnsafeBufferPointer<UInt8>) -> [UInt8] {
     var output = [UInt8]()
     output.reserveCapacity(Snappy.maximumCompressedLength(for: input.count))
     Varint.encode(input.count, into: &output)
@@ -76,7 +81,7 @@ internal enum SnappyEncoder {
 
   /// Looks up — and records — the four bytes at `index`, returning a usable
   /// earlier position if one is stored.
-  private static func probe(
+  private func probe(
     input: UnsafeBufferPointer<UInt8>,
     index: Int,
     table: inout [Int32]
@@ -95,7 +100,7 @@ internal enum SnappyEncoder {
   ///
   /// - Returns: The match length, or `nil` if it is too short to be worth a
   ///   copy element.
-  private static func extend(
+  private func extend(
     input: UnsafeBufferPointer<UInt8>,
     index: Int,
     candidate: Int
@@ -117,12 +122,12 @@ internal enum SnappyEncoder {
   }
 
   /// Hashes the four bytes starting at `index` into a table slot.
-  private static func hash(input: UnsafeBufferPointer<UInt8>, index: Int) -> Int {
+  private func hash(input: UnsafeBufferPointer<UInt8>, index: Int) -> Int {
     let word =
       UInt32(input[index])
       | UInt32(input[index + 1]) << 8
       | UInt32(input[index + 2]) << 16
       | UInt32(input[index + 3]) << 24
-    return Int((word &* 0x1E35_A7BD) >> (32 - 14))
+    return Int((word &* 0x1E35_A7BD) >> (32 - tableSize.trailingZeroBitCount))
   }
 }

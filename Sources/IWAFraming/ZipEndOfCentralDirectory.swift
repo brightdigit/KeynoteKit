@@ -46,12 +46,12 @@ internal struct ZipEndOfCentralDirectory {
   /// The scan tolerates a trailing archive comment (up to 64 KiB, per the
   /// format's 16-bit comment length). Keynote never writes one, but a
   /// backward scan is the only correct way to find the record regardless.
-  internal static func locate(in bytes: [UInt8]) throws -> ZipEndOfCentralDirectory {
-    let earliest = max(0, bytes.count - fixedByteCount - 65_535)
-    var offset = bytes.count - fixedByteCount
+  internal static func locate(in buffer: ZipBytes) throws -> ZipEndOfCentralDirectory {
+    let earliest = max(0, buffer.bytes.count - fixedByteCount - 65_535)
+    var offset = buffer.bytes.count - fixedByteCount
     while offset >= earliest {
-      if ZipBytes.readUInt32(bytes, offset) == signature {
-        return try parse(from: bytes, at: offset)
+      if buffer.readUInt32(at: offset) == signature {
+        return try parse(from: buffer, at: offset)
       }
       offset -= 1
     }
@@ -59,11 +59,12 @@ internal struct ZipEndOfCentralDirectory {
   }
 
   /// Parses the record at `offset`, rejecting multi-disk and zip64 markers.
-  private static func parse(from bytes: [UInt8], at offset: Int) throws -> ZipEndOfCentralDirectory
+  private static func parse(from buffer: ZipBytes, at offset: Int) throws
+    -> ZipEndOfCentralDirectory
   {
-    let diskNumber = ZipBytes.readUInt16(bytes, offset + 4)
-    let entryCount = ZipBytes.readUInt16(bytes, offset + 10)
-    let directoryOffset = ZipBytes.readUInt32(bytes, offset + 16)
+    let diskNumber = buffer.readUInt16(at: offset + 4)
+    let entryCount = buffer.readUInt16(at: offset + 10)
+    let directoryOffset = buffer.readUInt32(at: offset + 16)
     guard diskNumber == 0 else {
       throw KeyBundleError.truncatedArchive(context: "multi-disk archive")
     }
@@ -78,18 +79,18 @@ internal struct ZipEndOfCentralDirectory {
 
   /// Appends the record to `output`.
   internal static func append(
-    to output: inout [UInt8],
+    to output: inout ZipBytes,
     entryCount: Int,
     centralDirectoryOffset: Int,
     centralDirectoryByteCount: Int
   ) {
-    ZipBytes.appendUInt32(&output, signature)
-    ZipBytes.appendUInt16(&output, 0)  // this disk number
-    ZipBytes.appendUInt16(&output, 0)  // central directory start disk
-    ZipBytes.appendUInt16(&output, entryCount)  // entries on this disk
-    ZipBytes.appendUInt16(&output, entryCount)  // entries total
-    ZipBytes.appendUInt32(&output, UInt32(centralDirectoryByteCount))
-    ZipBytes.appendUInt32(&output, UInt32(centralDirectoryOffset))
-    ZipBytes.appendUInt16(&output, 0)  // comment length
+    output.appendUInt32(signature)
+    output.appendUInt16(0)  // this disk number
+    output.appendUInt16(0)  // central directory start disk
+    output.appendUInt16(entryCount)  // entries on this disk
+    output.appendUInt16(entryCount)  // entries total
+    output.appendUInt32(UInt32(centralDirectoryByteCount))
+    output.appendUInt32(UInt32(centralDirectoryOffset))
+    output.appendUInt16(0)  // comment length
   }
 }

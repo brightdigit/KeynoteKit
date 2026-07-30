@@ -32,17 +32,23 @@
 /// Scope is exactly what Keynote's own writer produces: every entry `STORED`,
 /// single disk, no zip64, no directory entries. Anything outside that throws
 /// a ``KeyBundleError`` rather than being tolerated.
-internal enum ZipArchive {
+internal struct ZipArchive: Sendable {
+  /// The shared default archive codec.
+  internal static let `default` = ZipArchive()
+
+  private init() {}
+
   /// Parses `bytes` into entries, in central directory order.
-  internal static func entries(from bytes: [UInt8]) throws -> [KeyBundleEntry] {
-    let directoryEnd = try ZipEndOfCentralDirectory.locate(in: bytes)
+  internal func entries(from bytes: [UInt8]) throws -> [KeyBundleEntry] {
+    let buffer = ZipBytes(bytes)
+    let directoryEnd = try ZipEndOfCentralDirectory.locate(in: buffer)
     var entries: [KeyBundleEntry] = []
     var seenPaths = Set<String>()
     entries.reserveCapacity(directoryEnd.entryCount)
     var offset = directoryEnd.centralDirectoryOffset
     for _ in 0..<directoryEnd.entryCount {
-      let record = try ZipCentralDirectoryRecord.parse(from: bytes, at: offset)
-      entries.append(try entry(for: record, in: bytes))
+      let record = try ZipCentralDirectoryRecord.parse(from: buffer, at: offset)
+      entries.append(try entry(for: record, in: buffer))
       guard seenPaths.insert(record.path).inserted else {
         throw KeyBundleError.duplicateEntryPath(record.path)
       }
@@ -52,7 +58,7 @@ internal enum ZipArchive {
   }
 
   /// Serializes `entries` as a `STORED`-only zip, preserving order verbatim.
-  internal static func serialize(_ entries: [KeyBundleEntry]) throws -> [UInt8] {
+  internal func serialize(_ entries: [KeyBundleEntry]) throws -> [UInt8] {
     var seenPaths = Set<String>()
     for entry in entries {
       guard seenPaths.insert(entry.path).inserted else {
@@ -65,17 +71,17 @@ internal enum ZipArchive {
     guard entries.count < 0xFFFF else {
       throw KeyBundleError.zip64Unsupported
     }
-    var output: [UInt8] = []
+    var output = ZipBytes()
     var offsets: [Int] = []
     var checksums: [UInt32] = []
     for entry in entries {
-      offsets.append(output.count)
+      offsets.append(output.bytes.count)
       let crc = CRC32.checksum(entry.body[...])
       checksums.append(crc)
       ZipLocalFileHeader.append(to: &output, entry: entry, crc: crc)
       output.append(contentsOf: entry.body)
     }
-    let directoryOffset = output.count
+    let directoryOffset = output.bytes.count
     for (index, entry) in entries.enumerated() {
       ZipCentralDirectoryRecord.append(
         to: &output,
@@ -88,15 +94,15 @@ internal enum ZipArchive {
       to: &output,
       entryCount: entries.count,
       centralDirectoryOffset: directoryOffset,
-      centralDirectoryByteCount: output.count - directoryOffset
+      centralDirectoryByteCount: output.bytes.count - directoryOffset
     )
-    return output
+    return output.bytes
   }
 
   /// Extracts and verifies one entry's body via its central directory record.
-  private static func entry(
+  private func entry(
     for record: ZipCentralDirectoryRecord,
-    in bytes: [UInt8]
+    in buffer: ZipBytes
   ) throws -> KeyBundleEntry {
     guard record.method == 0 else {
       throw KeyBundleError.unsupportedCompressionMethod(record.method, path: record.path)
@@ -104,13 +110,13 @@ internal enum ZipArchive {
     guard record.compressedByteCount == record.uncompressedByteCount else {
       throw KeyBundleError.truncatedArchive(context: "STORED size mismatch at \(record.path)")
     }
-    let header = try ZipLocalFileHeader.parse(from: bytes, at: record.localHeaderOffset)
+    let header = try ZipLocalFileHeader.parse(from: buffer, at: record.localHeaderOffset)
     let bodyStart = header.bodyOffset(fromHeaderAt: record.localHeaderOffset)
     let bodyEnd = bodyStart + record.compressedByteCount
-    guard bodyEnd <= bytes.count else {
+    guard bodyEnd <= buffer.bytes.count else {
       throw KeyBundleError.truncatedArchive(context: "entry body at \(record.path)")
     }
-    let body = bytes[bodyStart..<bodyEnd]
+    let body = buffer.bytes[bodyStart..<bodyEnd]
     guard CRC32.checksum(body) == record.crc else {
       throw KeyBundleError.checksumMismatch(path: record.path)
     }

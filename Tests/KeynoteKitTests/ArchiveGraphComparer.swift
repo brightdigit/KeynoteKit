@@ -22,11 +22,11 @@ internal enum ArchiveGraphComparer {
       else {
         return "\(path): missing member"
       }
-      let authoredRecords = try TSPArchiveStream.records(
-        from: IWAChunkCodec.decode(authoredEntry.body)
+      let authoredRecords = try TSPArchiveStream.default.records(
+        from: IWAChunkCodec.default.decode(authoredEntry.body)
       )
-      let goldenRecords = try TSPArchiveStream.records(
-        from: IWAChunkCodec.decode(goldenEntry.body)
+      let goldenRecords = try TSPArchiveStream.default.records(
+        from: IWAChunkCodec.default.decode(goldenEntry.body)
       )
       guard authoredRecords.count == goldenRecords.count else {
         return "\(path): record count \(authoredRecords.count) != \(goldenRecords.count)"

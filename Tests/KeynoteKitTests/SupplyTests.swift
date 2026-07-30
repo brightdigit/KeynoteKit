@@ -58,7 +58,9 @@ internal struct SupplyTests {
     let reparsed = try KeyBundle(contentsOfZip: authored.serializedZip())
     for path in reparsed.indexEntryPaths {
       let entry = try #require(reparsed.entry(at: path))
-      let records = try TSPArchiveStream.records(from: IWAChunkCodec.decode(entry.body))
+      let records = try TSPArchiveStream.default.records(
+        from: IWAChunkCodec.default.decode(entry.body)
+      )
       for record in records {
         _ = try record.decodedMessages()
       }

@@ -35,7 +35,12 @@
 /// 1. a base-128 varint holding the byte length of an `ArchiveInfo` message,
 /// 2. that many bytes of `ArchiveInfo`,
 /// 3. for each of its `messageInfos`, `length` bytes of serialized payload.
-public enum TSPArchiveStream {
+public struct TSPArchiveStream: Sendable {
+  /// The shared default archive-stream codec.
+  public static let `default` = TSPArchiveStream()
+
+  private init() {}
+
   /// Splits a decompressed `.iwa` stream into records.
   ///
   /// Payload bytes are carried verbatim; nothing inside them is re-encoded.
@@ -44,7 +49,7 @@ public enum TSPArchiveStream {
   /// - Returns: The records, in stream order.
   /// - Throws: ``TSPArchiveStreamError`` if the delimiting is malformed, or
   ///   a SwiftProtobuf error if an `ArchiveInfo` header is undecodable.
-  public static func records(from bytes: [UInt8]) throws -> [TSPArchiveRecord] {
+  public func records(from bytes: [UInt8]) throws -> [TSPArchiveRecord] {
     var records: [TSPArchiveRecord] = []
     var index = 0
     while index < bytes.count {
@@ -63,7 +68,7 @@ public enum TSPArchiveStream {
   /// - Parameter records: The records to serialize, in order.
   /// - Returns: A delimited stream ready for ``records(from:)`` or framing.
   /// - Throws: A SwiftProtobuf error if a header fails to serialize.
-  public static func serialize(_ records: [TSPArchiveRecord]) throws -> [UInt8] {
+  public func serialize(_ records: [TSPArchiveRecord]) throws -> [UInt8] {
     var output: [UInt8] = []
     for record in records {
       var info = record.info
@@ -82,7 +87,7 @@ public enum TSPArchiveStream {
   }
 
   /// Reads one record at `index`, advancing `index` past it.
-  private static func nextRecord(
+  private func nextRecord(
     in bytes: [UInt8],
     at index: inout Int
   ) throws -> TSPArchiveRecord {

@@ -27,18 +27,28 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Little-endian integer reads and writes over `[UInt8]`.
+/// Little-endian integer reads and writes over a byte buffer.
 ///
 /// The zip format is little-endian throughout; keeping these in one place
 /// keeps the header types free of shift arithmetic.
-internal enum ZipBytes {
+internal struct ZipBytes: Equatable, Sendable {
+  /// The underlying bytes.
+  internal var bytes: [UInt8]
+
+  /// Creates a buffer from existing bytes.
+  ///
+  /// - Parameter bytes: The initial contents; defaults to empty.
+  internal init(_ bytes: [UInt8] = []) {
+    self.bytes = bytes
+  }
+
   /// Reads a 16-bit little-endian value at `offset` as an `Int`.
-  internal static func readUInt16(_ bytes: [UInt8], _ offset: Int) -> Int {
+  internal func readUInt16(at offset: Int) -> Int {
     Int(bytes[offset]) | (Int(bytes[offset + 1]) << 8)
   }
 
   /// Reads a 32-bit little-endian value at `offset`.
-  internal static func readUInt32(_ bytes: [UInt8], _ offset: Int) -> UInt32 {
+  internal func readUInt32(at offset: Int) -> UInt32 {
     UInt32(bytes[offset])
       | (UInt32(bytes[offset + 1]) << 8)
       | (UInt32(bytes[offset + 2]) << 16)
@@ -46,16 +56,21 @@ internal enum ZipBytes {
   }
 
   /// Appends a 16-bit little-endian value.
-  internal static func appendUInt16(_ output: inout [UInt8], _ value: Int) {
-    output.append(UInt8(value & 0xFF))
-    output.append(UInt8((value >> 8) & 0xFF))
+  internal mutating func appendUInt16(_ value: Int) {
+    bytes.append(UInt8(value & 0xFF))
+    bytes.append(UInt8((value >> 8) & 0xFF))
   }
 
   /// Appends a 32-bit little-endian value.
-  internal static func appendUInt32(_ output: inout [UInt8], _ value: UInt32) {
-    output.append(UInt8(value & 0xFF))
-    output.append(UInt8((value >> 8) & 0xFF))
-    output.append(UInt8((value >> 16) & 0xFF))
-    output.append(UInt8((value >> 24) & 0xFF))
+  internal mutating func appendUInt32(_ value: UInt32) {
+    bytes.append(UInt8(value & 0xFF))
+    bytes.append(UInt8((value >> 8) & 0xFF))
+    bytes.append(UInt8((value >> 16) & 0xFF))
+    bytes.append(UInt8((value >> 24) & 0xFF))
+  }
+
+  /// Appends raw bytes.
+  internal mutating func append(contentsOf other: [UInt8]) {
+    bytes.append(contentsOf: other)
   }
 }

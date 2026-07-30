@@ -61,57 +61,60 @@ internal struct ZipCentralDirectoryRecord {
 
   /// Parses the record at `offset`.
   internal static func parse(
-    from bytes: [UInt8],
+    from buffer: ZipBytes,
     at offset: Int
   ) throws -> ZipCentralDirectoryRecord {
     guard
-      offset + fixedByteCount <= bytes.count,
-      ZipBytes.readUInt32(bytes, offset) == signature
+      offset + fixedByteCount <= buffer.bytes.count,
+      buffer.readUInt32(at: offset) == signature
     else {
       throw KeyBundleError.truncatedArchive(context: "central directory record")
     }
-    let nameByteCount = ZipBytes.readUInt16(bytes, offset + 28)
-    let extraByteCount = ZipBytes.readUInt16(bytes, offset + 30)
-    let commentByteCount = ZipBytes.readUInt16(bytes, offset + 32)
+    let nameByteCount = buffer.readUInt16(at: offset + 28)
+    let extraByteCount = buffer.readUInt16(at: offset + 30)
+    let commentByteCount = buffer.readUInt16(at: offset + 32)
     let nameStart = offset + fixedByteCount
-    guard nameStart + nameByteCount <= bytes.count else {
+    guard nameStart + nameByteCount <= buffer.bytes.count else {
       throw KeyBundleError.truncatedArchive(context: "central directory entry name")
     }
     return ZipCentralDirectoryRecord(
-      path: String(decoding: bytes[nameStart..<(nameStart + nameByteCount)], as: UTF8.self),
-      method: UInt16(ZipBytes.readUInt16(bytes, offset + 10)),
-      crc: ZipBytes.readUInt32(bytes, offset + 16),
-      compressedByteCount: Int(ZipBytes.readUInt32(bytes, offset + 20)),
-      uncompressedByteCount: Int(ZipBytes.readUInt32(bytes, offset + 24)),
-      localHeaderOffset: Int(ZipBytes.readUInt32(bytes, offset + 42)),
+      path: String(
+        decoding: buffer.bytes[nameStart..<(nameStart + nameByteCount)],
+        as: UTF8.self
+      ),
+      method: UInt16(buffer.readUInt16(at: offset + 10)),
+      crc: buffer.readUInt32(at: offset + 16),
+      compressedByteCount: Int(buffer.readUInt32(at: offset + 20)),
+      uncompressedByteCount: Int(buffer.readUInt32(at: offset + 24)),
+      localHeaderOffset: Int(buffer.readUInt32(at: offset + 42)),
       recordByteCount: fixedByteCount + nameByteCount + extraByteCount + commentByteCount
     )
   }
 
   /// Appends a `STORED` central directory record for `entry` to `output`.
   internal static func append(
-    to output: inout [UInt8],
+    to output: inout ZipBytes,
     entry: KeyBundleEntry,
     crc: UInt32,
     localHeaderOffset: Int
   ) {
-    ZipBytes.appendUInt32(&output, signature)
-    ZipBytes.appendUInt16(&output, 20)  // version made by
-    ZipBytes.appendUInt16(&output, 20)  // version needed: 2.0
-    ZipBytes.appendUInt16(&output, 0)  // general-purpose flags
-    ZipBytes.appendUInt16(&output, 0)  // method: STORED
-    ZipBytes.appendUInt16(&output, 0)  // modification time
-    ZipBytes.appendUInt16(&output, 0)  // modification date
-    ZipBytes.appendUInt32(&output, crc)
-    ZipBytes.appendUInt32(&output, UInt32(entry.body.count))  // compressed size
-    ZipBytes.appendUInt32(&output, UInt32(entry.body.count))  // uncompressed size
-    ZipBytes.appendUInt16(&output, Array(entry.path.utf8).count)
-    ZipBytes.appendUInt16(&output, 0)  // extra field length
-    ZipBytes.appendUInt16(&output, 0)  // comment length
-    ZipBytes.appendUInt16(&output, 0)  // disk number start
-    ZipBytes.appendUInt16(&output, 0)  // internal attributes
-    ZipBytes.appendUInt32(&output, 0)  // external attributes
-    ZipBytes.appendUInt32(&output, UInt32(localHeaderOffset))
+    output.appendUInt32(signature)
+    output.appendUInt16(20)  // version made by
+    output.appendUInt16(20)  // version needed: 2.0
+    output.appendUInt16(0)  // general-purpose flags
+    output.appendUInt16(0)  // method: STORED
+    output.appendUInt16(0)  // modification time
+    output.appendUInt16(0)  // modification date
+    output.appendUInt32(crc)
+    output.appendUInt32(UInt32(entry.body.count))  // compressed size
+    output.appendUInt32(UInt32(entry.body.count))  // uncompressed size
+    output.appendUInt16(Array(entry.path.utf8).count)
+    output.appendUInt16(0)  // extra field length
+    output.appendUInt16(0)  // comment length
+    output.appendUInt16(0)  // disk number start
+    output.appendUInt16(0)  // internal attributes
+    output.appendUInt32(0)  // external attributes
+    output.appendUInt32(UInt32(localHeaderOffset))
     output.append(contentsOf: Array(entry.path.utf8))
   }
 }

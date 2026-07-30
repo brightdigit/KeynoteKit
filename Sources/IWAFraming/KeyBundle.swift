@@ -60,7 +60,7 @@ public struct KeyBundle: Equatable, Sendable {
   /// - Throws: ``KeyBundleError`` if the input is not a single-disk,
   ///   `STORED`-only zip with intact checksums.
   public init(contentsOfZip bytes: [UInt8]) throws {
-    self.entries = try ZipArchive.entries(from: bytes)
+    self.entries = try ZipArchive.default.entries(from: bytes)
   }
 
   /// Serializes the bundle as a `STORED`-only zip archive.
@@ -68,7 +68,7 @@ public struct KeyBundle: Equatable, Sendable {
   /// - Returns: Bytes suitable for writing as a `.key` file.
   /// - Throws: ``KeyBundleError`` for duplicate paths or zip64-scale content.
   public func serializedZip() throws -> [UInt8] {
-    try ZipArchive.serialize(entries)
+    try ZipArchive.default.serialize(entries)
   }
 
   /// The entry at `path`, if present.

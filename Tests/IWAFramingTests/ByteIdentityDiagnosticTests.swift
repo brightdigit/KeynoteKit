@@ -32,7 +32,7 @@ internal struct ByteIdentityDiagnosticTests {
       var repacked = bundle
       for path in bundle.indexEntryPaths {
         guard let entry = bundle.entry(at: path) else { continue }
-        let reframed = IWAChunkCodec.encode(try IWAChunkCodec.decode(entry.body))
+        let reframed = IWAChunkCodec.default.encode(try IWAChunkCodec.default.decode(entry.body))
         if reframed == entry.body { sameEntries += 1 }
         appleByteCount += entry.body.count
         ourByteCount += reframed.count

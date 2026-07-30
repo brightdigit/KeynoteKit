@@ -51,8 +51,8 @@ package struct KeyArchiveIndex {
     var recordsByPath: [String: [TSPArchiveRecord]] = [:]
     for path in paths {
       guard let entry = bundle.entry(at: path) else { continue }
-      let stream = try IWAChunkCodec.decode(entry.body)
-      recordsByPath[path] = try TSPArchiveStream.records(from: stream)
+      let stream = try IWAChunkCodec.default.decode(entry.body)
+      recordsByPath[path] = try TSPArchiveStream.default.records(from: stream)
     }
     self.entryPaths = paths
     self.recordsByPath = recordsByPath

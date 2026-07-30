@@ -53,7 +53,10 @@ package struct KeynoteArchiveSurgeon {
         return (path: path, records: [])
       }
       return (
-        path: path, records: try TSPArchiveStream.records(from: IWAChunkCodec.decode(entry.body))
+        path: path,
+        records: try TSPArchiveStream.default.records(
+          from: IWAChunkCodec.default.decode(entry.body)
+        )
       )
     }
   }
@@ -103,7 +106,9 @@ package struct KeynoteArchiveSurgeon {
     try UUIDMapVerifier.verify(members: members, expectedBuildCount: buildCount)
     for member in members
     where dirtyPaths.contains(member.path) || nextIdentifier > firstIdentifier {
-      let body = IWAChunkCodec.encode(try TSPArchiveStream.serialize(member.records))
+      let body = IWAChunkCodec.default.encode(
+        try TSPArchiveStream.default.serialize(member.records)
+      )
       bundle.setBody(body, at: member.path)
     }
   }

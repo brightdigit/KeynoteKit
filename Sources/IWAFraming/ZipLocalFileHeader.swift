@@ -49,33 +49,33 @@ internal struct ZipLocalFileHeader {
   ///
   /// - Throws: ``KeyBundleError/truncatedArchive(context:)`` if the header
   ///   does not fit or its signature is wrong.
-  internal static func parse(from bytes: [UInt8], at offset: Int) throws -> ZipLocalFileHeader {
+  internal static func parse(from buffer: ZipBytes, at offset: Int) throws -> ZipLocalFileHeader {
     guard
       offset >= 0,
-      offset + fixedByteCount <= bytes.count,
-      ZipBytes.readUInt32(bytes, offset) == signature
+      offset + fixedByteCount <= buffer.bytes.count,
+      buffer.readUInt32(at: offset) == signature
     else {
       throw KeyBundleError.truncatedArchive(context: "local file header")
     }
     return ZipLocalFileHeader(
-      nameByteCount: ZipBytes.readUInt16(bytes, offset + 26),
-      extraByteCount: ZipBytes.readUInt16(bytes, offset + 28)
+      nameByteCount: buffer.readUInt16(at: offset + 26),
+      extraByteCount: buffer.readUInt16(at: offset + 28)
     )
   }
 
   /// Appends a `STORED` local header for `entry` to `output`.
-  internal static func append(to output: inout [UInt8], entry: KeyBundleEntry, crc: UInt32) {
-    ZipBytes.appendUInt32(&output, signature)
-    ZipBytes.appendUInt16(&output, 20)  // version needed: 2.0
-    ZipBytes.appendUInt16(&output, 0)  // general-purpose flags
-    ZipBytes.appendUInt16(&output, 0)  // method: STORED
-    ZipBytes.appendUInt16(&output, 0)  // modification time
-    ZipBytes.appendUInt16(&output, 0)  // modification date
-    ZipBytes.appendUInt32(&output, crc)
-    ZipBytes.appendUInt32(&output, UInt32(entry.body.count))  // compressed size
-    ZipBytes.appendUInt32(&output, UInt32(entry.body.count))  // uncompressed size
-    ZipBytes.appendUInt16(&output, Array(entry.path.utf8).count)
-    ZipBytes.appendUInt16(&output, 0)  // extra field length
+  internal static func append(to output: inout ZipBytes, entry: KeyBundleEntry, crc: UInt32) {
+    output.appendUInt32(signature)
+    output.appendUInt16(20)  // version needed: 2.0
+    output.appendUInt16(0)  // general-purpose flags
+    output.appendUInt16(0)  // method: STORED
+    output.appendUInt16(0)  // modification time
+    output.appendUInt16(0)  // modification date
+    output.appendUInt32(crc)
+    output.appendUInt32(UInt32(entry.body.count))  // compressed size
+    output.appendUInt32(UInt32(entry.body.count))  // uncompressed size
+    output.appendUInt16(Array(entry.path.utf8).count)
+    output.appendUInt16(0)  // extra field length
     output.append(contentsOf: Array(entry.path.utf8))
   }
 
