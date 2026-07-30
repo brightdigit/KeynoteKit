@@ -62,7 +62,9 @@ let package = Package(
     .target(name: "KeynoteKitScripting"),
 
     .testTarget(name: "SnappyTests", dependencies: ["Snappy"]),
-    .testTarget(name: "IWAFramingTests", dependencies: ["IWAFraming"]),
+    // The semantic round-trip gate decodes real fixtures down to protobuf,
+    // so these tests need both the container and the schema layers.
+    .testTarget(name: "IWAFramingTests", dependencies: ["IWAFraming", "KeynoteKitProtobuf"]),
     .testTarget(name: "KeynoteKitProtobufTests", dependencies: ["KeynoteKitProtobuf"]),
     .testTarget(name: "KeynoteKitTests", dependencies: ["KeynoteKit"]),
     .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"])
