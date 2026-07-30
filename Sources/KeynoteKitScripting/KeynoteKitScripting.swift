@@ -27,14 +27,41 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Namespace for the ScriptingBridge escape hatch.
+/// Namespace for the ScriptingBridge escape hatch (issue #10).
 ///
-/// Reserved here and intentionally empty; the body is issue #10. That body will
-/// be gated on `#if canImport(ScriptingBridge)` rather than a linked framework,
-/// so this module keeps compiling — to an empty module — off Apple platforms.
+/// This module is a typed wrapper over Keynote's AppleScript dictionary for
+/// developers who need direct control of a **running** Keynote — it is an
+/// escape hatch, never an authoring backend. `Deck.write(to:)` in the
+/// `KeynoteKit` product must never require Keynote, and `KeynoteKit` neither
+/// imports nor links this product.
 ///
-/// This module depends on Apple frameworks only, never on the write path.
+/// ## What is scriptable here
+///
+/// - Document lifecycle: create, open, save, export, close.
+/// - `make new slide` and `make new text item`.
+/// - `transition properties`, limited to the four knobs Keynote exposes:
+///   transition effect, transition duration, transition delay, and
+///   automatic transition.
+///
+/// ## What is NOT scriptable (established in the Phase 1–2 research)
+///
+/// - **Object builds** — absent from Keynote's scripting dictionary entirely;
+///   authoring builds is byte-surgery only, via `KeynoteKit`.
+/// - **Transition direction** — the `transition settings` record exposes only
+///   effect, duration, delay, and automatic transition.
+/// - **Per-effect `custom*` options** (`customBounce`,
+///   `customTravelDistance`, …) — inspector-only, never in the dictionary.
+///
+/// The pure value types in this module (`TransitionEffect`,
+/// `TransitionSettings`, `ExportFormat`, …) compile on every platform; the
+/// types that talk to Keynote are gated on `#if canImport(ScriptingBridge)`
+/// and exist only on macOS.
 public enum KeynoteKitScripting {
-  /// Placeholder version, replaced when the escape hatch lands.
-  public static let version = "0.1.0"
+  /// The bundle identifier Keynote registers regardless of how the app
+  /// bundle is named on disk.
+  ///
+  /// The application bundle can be renamed (for example
+  /// `Keynote Creator Studio.app`); the bundle identifier still resolves, so
+  /// never hard-code a filesystem path to Keynote.
+  public static let keynoteBundleIdentifier = "com.apple.iWork.Keynote"
 }

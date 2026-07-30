@@ -4,10 +4,10 @@ import Testing
 
 @Suite("KeynoteKitScripting")
 internal struct KeynoteKitScriptingTests {
-  // MARK: - Initialization Tests
+  // MARK: - Namespace Tests
 
-  @Test("module is linkable")
-  internal func moduleIsLinkable() {
-    #expect(KeynoteKitScripting.version == "0.1.0")
+  @Test("Keynote bundle identifier is stable")
+  internal func keynoteBundleIdentifier() {
+    #expect(KeynoteKitScripting.keynoteBundleIdentifier == "com.apple.iWork.Keynote")
   }
 }
