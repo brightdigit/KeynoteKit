@@ -35,9 +35,9 @@ public struct Slide: SlideContent, Sendable {
   /// The slide's transition, when set.
   internal var slideTransition: SlideTransition?
 
-  /// `Slide` is primitive content.
-  public var body: Never {
-    fatalError("Slide is primitive content")
+  /// `Slide` is primitive content: it composes to itself.
+  public var body: SlideGroup {
+    SlideGroup(slides: [self])
   }
 
   /// Creates a slide from its text items.

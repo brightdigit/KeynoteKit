@@ -34,7 +34,7 @@ import KeynoteKit
 /// text item; slide two carries the directed Move In transition. Delivery
 /// order is encounter order, matching the spec's build list.
 package struct BuildAcceptanceContent: SlideContent {
-  @SlideBuilder package var body: some SlideContent {
+  package var body: some SlideContent {
     Slide {
       Text("Build In")
         .position(x: 200, y: 180)

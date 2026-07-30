@@ -35,15 +35,15 @@ public protocol SlideContent {
   /// The composed content type.
   associatedtype Body: SlideContent
 
-  /// The content this value composes to. Apply `@SlideBuilder` in
-  /// conformances that compose multiple pieces.
-  var body: Body { get }
+  /// The content this value composes to. The builder is inferred in
+  /// conformances, as with SwiftUI's `View.body`.
+  @SlideBuilder var body: Body { get }
 }
 
 extension Never: SlideContent {
-  /// `Never` is the terminal body of primitive content.
-  public var body: Never {
-    fatalError("Never has no body")
+  /// `Never` is uninhabited, so this is never reached.
+  public var body: SlideGroup {
+    SlideGroup(slides: [])
   }
 }
 
