@@ -10,17 +10,16 @@ copy under `~/Desktop/acceptance-decks/`). Structural gates
 | `bisect_out.key` | yes |
 | `bisect_action.key` | yes |
 | `bisect_direction.key` | yes |
-| `build_acceptance.key` | **no** |
+| `build_acceptance.key` | **yes** |
 
-## Follow-up
+## Diagnosis & Fix
 
-`build_acceptance` is the multi-slide / multi-build deck (In + Out + Action on
-slide one, directed Move In transition on slide two — see
-`Sources/AcceptanceDeckCatalog/BuildAcceptanceContent.swift` and
-`research/examples/build_acceptance.json`). Bisect decks that isolate each
-concern open; the combined case does not. Root cause is not diagnosed yet —
-defer diagnosis and fix to a later session. Do **not** tag `v0.1.0` until this
-deck opens without crash or silent repair and builds/ordering/direction are
-re-verified.
+The open failure on `build_acceptance.key` was caused by three component/node invariants when cloning slides:
+
+1. **Component `preferredLocator`**: `appendComponent` in `KeynoteArchiveSurgeon+SlideCloning.swift` was overwriting `component.preferredLocator` with `"Slide-<id>"` instead of keeping `"Slide"`. Keynote requires `preferredLocator` to be `"Slide"`.
+2. **`Document` Component External Reference**: `TSP.PackageMetadata` inside `Metadata.iwa.yaml` requires Component 1 (`Document`) to register an `externalReference` pointing to every cloned slide component identifier (`newSlideIdentifier`). Added this registration in `appendComponent`.
+3. **Slide Node `hasTransition_p` Flag**: When a transition was applied to a slide, `slideArchive.transition` was updated on the slide archive, but `node.hasTransition_p` on the slide's `KN.SlideNodeArchive` in `Document.iwa` remained `false` if the template node had no transition. Added `flagSlideNodeTransition` in `KeynoteArchiveSurgeon+NodeFlagging.swift` to ensure `hasTransition_p = true`.
+
+All 5/5 acceptance decks now open cleanly in Keynote 15.3.
 
 Tracked on [#24](https://github.com/brightdigit/KeynoteKit/issues/24).

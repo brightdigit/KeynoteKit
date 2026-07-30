@@ -69,6 +69,7 @@ extension KeynoteArchiveSurgeon {
     }
     if try applyTransition(spec, to: &slideArchive, slideIndex: slideIndex) {
       minted.dirtyPaths.insert(members[location.memberIndex].path)
+      try flagSlideNodeTransition(at: location, dirtyPaths: &minted.dirtyPaths)
     }
     if !spec.items.isEmpty {
       try applyTextItems(spec.items, to: &slideArchive, slideIndex: slideIndex)
@@ -158,32 +159,6 @@ extension KeynoteArchiveSurgeon {
     references.insert(contentsOf: newIdentifiers, at: min(1, references.count))
     info.messageInfos[0].objectReferences = references
     members[location.memberIndex].records[location.recordIndex].info = info
-  }
-
-  /// Sets the slide node's build-count flags (`hasBuilds` stays untouched).
-  private mutating func flagSlideNode(
-    at location: SlideCatalog.Slide,
-    buildCount: Int,
-    dirtyPaths: inout Set<String>
-  ) throws {
-    guard
-      let nodeLocation = try SlideCatalog(members: members)
-        .locate(recordIdentifier: location.nodeIdentifier, named: "KN.SlideNodeArchive")
-    else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: location.nodeIdentifier)
-    }
-    var node = try KN_SlideNodeArchive(
-      serializedBytes: members[nodeLocation.memberIndex]
-        .records[nodeLocation.recordIndex].payloads[nodeLocation.payloadIndex],
-      partial: true
-    )
-    node.buildEventCount = UInt32(buildCount)
-    node.buildEventCountCacheVersion = 2
-    node.hasExplicitBuilds_p = true
-    node.hasExplicitBuildsCacheVersion_p = 2
-    members[nodeLocation.memberIndex].records[nodeLocation.recordIndex]
-      .payloads[nodeLocation.payloadIndex] = try node.serializedBytes(partial: true)
-    dirtyPaths.insert(members[nodeLocation.memberIndex].path)
   }
 
   /// A `TSP.Reference` to `identifier`.

@@ -136,11 +136,15 @@ extension KeynoteArchiveSurgeon {
       if component.hasLocator {
         component.locator = "Slide-\(newSlideIdentifier)"
       }
-      if component.hasPreferredLocator {
-        component.preferredLocator = "Slide-\(newSlideIdentifier)"
-      }
       component.objectUuidMapEntries = []
       metadata.components.append(component)
+      if let docIndex = metadata.components.firstIndex(where: {
+        $0.preferredLocator == "Document" || $0.identifier == 1
+      }) {
+        var ref = TSP_ComponentExternalReference()
+        ref.componentIdentifier = newSlideIdentifier
+        metadata.components[docIndex].externalReferences.append(ref)
+      }
     }
   }
 }
