@@ -71,15 +71,17 @@ package struct KeynoteArchiveSurgeon {
     into bundle: inout KeyBundle,
     using generator: inout some RandomNumberGenerator
   ) throws {
+    var nextIdentifier = maximumIdentifier() + 1
+    let firstIdentifier = nextIdentifier
+    try expandSlides(to: deck.slides.count, in: &bundle, nextIdentifier: &nextIdentifier)
     let slides = try SlideCatalog(members: members).orderedSlides()
     guard slides.count == deck.slides.count else {
       throw ArchiveSurgeryError.slideCountMismatch(expected: deck.slides.count, found: slides.count)
     }
-    var nextIdentifier = maximumIdentifier() + 1
-    let firstIdentifier = nextIdentifier
     var mintedMaximum: UInt64 = 0
     var dirtyPaths = Set<String>()
     for (slideIndex, pair) in zip(slides, deck.slides).enumerated() {
+      try expandTextItems(to: pair.1.itemCount, at: pair.0, nextIdentifier: &nextIdentifier)
       let minted = try authorSlide(
         pair.1,
         at: pair.0,
@@ -139,7 +141,7 @@ package struct KeynoteArchiveSurgeon {
   }
 
   /// Decodes, mutates, and re-serializes the single `TSP.PackageMetadata`.
-  private mutating func withPackageMetadata(
+  internal mutating func withPackageMetadata(
     _ mutate: (inout TSP_PackageMetadata) throws -> Void
   ) throws {
     guard
