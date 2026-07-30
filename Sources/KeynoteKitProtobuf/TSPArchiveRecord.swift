@@ -41,6 +41,12 @@ public struct TSPArchiveRecord: Equatable, Sendable {
   /// One serialized payload per `info.messageInfos` entry, in order.
   public var payloads: [[UInt8]]
 
+  /// The effective registry identifier of each message, in order, with the
+  /// `0` patch marker resolved through `baseMessageIndex`.
+  public var resolvedTypes: [UInt32] {
+    info.messageInfos.map(resolvedType(of:))
+  }
+
   /// Creates a record.
   ///
   /// - Parameters:

@@ -1,0 +1,20 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_cat_blur.key",
+  "builds": [
+    {
+      "kind": "In",
+      "effect": "apple:blur character",
+      "duration": 2.0,
+      "delay": 0.0,
+      "direction": null,
+      "drawable": "2652614",
+      "options": {
+        "customTextDelivery": "kTextDeliveryByObject",
+        "customDeliveryOption": "kDeliveryOptionForward",
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}

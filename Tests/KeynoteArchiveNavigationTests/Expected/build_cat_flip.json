@@ -1,0 +1,21 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_cat_flip.key",
+  "builds": [
+    {
+      "kind": "In",
+      "effect": "apple:bc-flip",
+      "duration": 2.75,
+      "delay": 0.0,
+      "direction": null,
+      "drawable": "2652614",
+      "options": {
+        "customBounce": true,
+        "customTextDelivery": "kTextDeliveryByObject",
+        "customDeliveryOption": "kDeliveryOptionForward",
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}
