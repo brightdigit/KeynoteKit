@@ -1,5 +1,5 @@
 //
-//  SlideContent.swift
+//  BisectActionContent.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,38 +27,23 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// A composable piece of a deck, mirroring SwiftUI at the slide level.
-///
-/// Conform custom types and compose them inside ``Deck``; the primitive
-/// content is ``Slide``.
-public protocol SlideContent {
-  /// The composed content type.
-  associatedtype Body: SlideContent
+import KeynoteKit
 
-  /// The content this value composes to. The builder is inferred in
-  /// conformances, as with SwiftUI's `View.body`.
-  @SlideBuilder var body: Body { get }
-}
-
-extension Never: SlideContent {
-  /// `Never` is uninhabited, so this is never reached.
-  public var body: SlideGroup {
-    SlideGroup(slides: [])
+/// `research/examples/bisect_action.json`: one text item carrying one Action
+/// build over the proven 50 pt two-node horizontal motion path —
+/// ``MotionPath``'s default.
+package struct BisectActionContent: SlideContent {
+  package var body: some SlideContent {
+    Slide {
+      Text("Move Action")
+        .position(x: 200, y: 250)
+        .action {
+          MotionPath()
+            .duration(1)
+        }
+    }
   }
-}
 
-extension SlideContent {
-  /// The flattened slides this content resolves to.
-  internal var resolvedSlides: [Slide] {
-    if let slide = self as? Slide {
-      return [slide]
-    }
-    if let group = self as? SlideGroup {
-      return group.slides
-    }
-    if Body.self == Never.self {
-      return []
-    }
-    return body.resolvedSlides
-  }
+  /// Creates the content.
+  package init() {}
 }

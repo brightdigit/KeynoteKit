@@ -32,8 +32,8 @@ public struct SlideGroup: SlideContent, Sendable {
   /// The flattened slides.
   internal var slides: [Slide]
 
-  /// `SlideGroup` is primitive content.
-  public var body: Never {
-    fatalError("SlideGroup is primitive content")
+  /// `SlideGroup` is primitive content: it composes to itself.
+  public var body: SlideGroup {
+    self
   }
 }

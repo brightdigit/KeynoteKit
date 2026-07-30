@@ -63,6 +63,19 @@ let package = Package(
     // module still compiles (to its pure value types) on non-Apple platforms.
     .target(name: "KeynoteKitScripting"),
 
+    // The five #24 acceptance decks expressed in the public DSL, shared by
+    // the acceptance executable and the differential tests. Deliberately not
+    // a product: acceptance tooling, not API.
+    .target(name: "AcceptanceDeckCatalog", dependencies: ["KeynoteKit"]),
+
+    // `swift run AcceptanceDecks [dir]` writes the five decks for the #24
+    // human pass, self-checking each (every record decodes, both SIGTRAP
+    // invariants hold) before printing the PLAN Step 6 checklist.
+    .executableTarget(
+      name: "AcceptanceDecks",
+      dependencies: ["AcceptanceDeckCatalog", "IWAFraming", "KeynoteKit", "KeynoteKitProtobuf"]
+    ),
+
     .testTarget(name: "SnappyTests", dependencies: ["Snappy"]),
     // Internal archive navigation (#18): package-ACL only, deliberately not a
     // product — reading is test infrastructure and writer plumbing, not API (#6).
@@ -84,7 +97,7 @@ let package = Package(
     // the surgeon directly, so these tests need the container layers too.
     .testTarget(
       name: "KeynoteKitTests",
-      dependencies: ["KeynoteKit", "IWAFraming", "KeynoteKitProtobuf"]
+      dependencies: ["KeynoteKit", "IWAFraming", "KeynoteKitProtobuf", "AcceptanceDeckCatalog"]
     ),
     .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"])
   ]

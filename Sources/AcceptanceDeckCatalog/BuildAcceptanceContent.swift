@@ -1,5 +1,5 @@
 //
-//  SlideContent.swift
+//  BuildAcceptanceContent.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,38 +27,46 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// A composable piece of a deck, mirroring SwiftUI at the slide level.
-///
-/// Conform custom types and compose them inside ``Deck``; the primitive
-/// content is ``Slide``.
-public protocol SlideContent {
-  /// The composed content type.
-  associatedtype Body: SlideContent
+import KeynoteKit
 
-  /// The content this value composes to. The builder is inferred in
-  /// conformances, as with SwiftUI's `View.body`.
-  @SlideBuilder var body: Body { get }
-}
-
-extension Never: SlideContent {
-  /// `Never` is uninhabited, so this is never reached.
-  public var body: SlideGroup {
-    SlideGroup(slides: [])
+/// `research/examples/build_acceptance.json`: slide one carries three ordered
+/// builds — In Dissolve, Out Dissolve, then an Action motion path — one per
+/// text item; slide two carries the directed Move In transition. Delivery
+/// order is encounter order, matching the spec's build list.
+package struct BuildAcceptanceContent: SlideContent {
+  package var body: some SlideContent {
+    Slide {
+      Text("Build In")
+        .position(x: 200, y: 180)
+        .build(.in) {
+          Dissolve()
+            .duration(1)
+        }
+      Text("Build Out")
+        .position(x: 200, y: 360)
+        .build(.out) {
+          Dissolve()
+            .duration(1)
+        }
+      Text("Move Action")
+        .position(x: 200, y: 540)
+        .action {
+          MotionPath()
+            .duration(1)
+        }
+    }
+    Slide {
+      Text("Directed Move In")
+        .position(x: 200, y: 250)
+    }
+    .transition(
+      .moveIn
+        .duration(1)
+        .delay(0.5)
+        .direction(.moveInNonDefault)
+    )
   }
-}
 
-extension SlideContent {
-  /// The flattened slides this content resolves to.
-  internal var resolvedSlides: [Slide] {
-    if let slide = self as? Slide {
-      return [slide]
-    }
-    if let group = self as? SlideGroup {
-      return group.slides
-    }
-    if Body.self == Never.self {
-      return []
-    }
-    return body.resolvedSlides
-  }
+  /// Creates the content.
+  package init() {}
 }

@@ -1,48 +1,50 @@
 ---
 name: keynotekit-v010-progress
-description: v0.1.0 container stack (#13-#16, #19, #21) is merged on v0.1.x; #17 IWAFraming is the frontier
+description: v0.1.0 tracer stack #13–#23 merged; #34 landed scripted acceptance decks; frontier is Keynote 15.3 open pass + v0.1.0 tag
 metadata:
   node_type: memory
   type: project
 ---
 
-As of **2026-07-29**, the v0.1.0 container stack is built and merged on
-`v0.1.x` (head `3ec7c77`, builds clean):
+As of **2026-07-30**, the v0.1.0 tracer stack through authoring is on
+`v0.1.x`. PR #32 landed #17 → #18 → #20 → #22 → #23; PR #34 landed the
+scripted #24 generation path (`AcceptanceDecks` + `AcceptanceDeckTests`).
 
-| Ticket | Commit | What landed |
+| Ticket | Status | What landed |
 |---|---|---|
-| #13 | `d17ae91` | Package skeleton, five product stubs, CI |
-| #15 | `d5bb1ef` | Snappy survey — decision: **vendor a pure-Swift block codec** |
-| #19 | `c06313d` | Five goldens in `research/goldens/` (NOT `research/samples/`, which is gitignored) |
-| #14 | `9733e93` | 34 protos generated + committed; `TSPRegistryMapping` (631 ids → 624 types) |
-| #16 | `b8c37c6` | `Snappy` block codec — 873/873 blocks round-trip, ratio 0.2734 vs Apple's 0.2647 |
-| #21 | `3ec7c77` | 98 KB `blank.key` resource via `.copy`, `write(to:basedOn:)` |
+| #13 | done | Package skeleton, five product stubs, CI |
+| #15 | done | Snappy survey — decision: **vendor a pure-Swift block codec** |
+| #19 | done | Five goldens in `research/goldens/` |
+| #14 | done | 34 protos generated + committed; `TSPRegistryMapping` |
+| #16 | done | `Snappy` block codec |
+| #21 | done | Bundled `blank.key` via `.copy`, `write(to:basedOn:)` |
+| #17 | done | `IWAFraming` + `.key` zip semantic round-trip |
+| #18 | done | Archive navigation (extract_builds parity) |
+| #20 | done | Writer builds match goldens + invariants |
+| #22 | done | Slide + text-item supply |
+| #23 | done | Authoring API (`SlideContent` surface) |
+| #24 | **open** | Generation scripted (PR #34); **human Keynote 15.3 open pass** + `v0.1.0` tag remain |
 
-**The frontier is #17** (`IWAFraming`: Apple chunk framing + the `.key` zip
-layer), then #18. Both its gates (#14, #16) have landed. After #18, the writer
-lane #20 → #22 → #23 → #24 opens (it also needs #19 and #21, both done).
+**The frontier is the #24 human pass:** open
+`bisect_in.key`, `bisect_out.key`, `bisect_action.key`,
+`bisect_direction.key`, and `build_acceptance.key` in Keynote 15.3 — no crash,
+no silent repair, In/Out/Action builds and transition direction survive — then
+tag `v0.1.0`. Do not open Keynote from agent sessions; that pass is HITL.
 
-Three constraints already measured and recorded in PLAN's decision log — do not
-re-derive them:
+Generate decks without Keynote:
 
-- **Archive decoding must be `partial: true`.** The 15.3 protos mark 1,497
-  fields `required` (proto2) but Keynote does not populate them all; strict
-  decoding throws `.missingRequiredFields` on documents Keynote itself
-  round-trips.
-- **`.key` zip members are always `STORED`, never `DEFLATED`** — 1,604/1,604
-  entries across all 30 committed `.key` files. Most zip libraries default to
-  deflate; getting this wrong would only fail at #24 acceptance.
-- **`TSPRegistryMapping` values are not injective** (ids 5 and 6 both name
-  `KN.SlideArchive`). Never invert the table with
+```bash
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
+  xcrun swift run AcceptanceDecks ~/Desktop/acceptance-decks
+```
+
+Constraints already measured (do not re-derive):
+
+- **Archive decoding must be `partial: true`.**
+- **`.key` zip members are always `STORED`, never `DEFLATED`.**
+- **`TSPRegistryMapping` values are not injective** — never invert with
   `Dictionary(uniqueKeysWithValues:)`.
 
-The zip-library depend-vs-vendor call is still open and belongs to #17;
-groundwork is in a comment on that issue. `ZIPFoundation` is the lead candidate
-but its `libz` dependency is the same class of problem that disqualified the
-C/C++ route in #15 — verify the Android leg specifically. Hand-rolling is
-unusually cheap here: everything is `STORED`, so there is no compression codec
-to write, only headers, central directory, and CRC-32.
-
-**How to apply:** start a session by checking `v0.1.x` and issue #12's
-checklist, then open a lane for #17 per [[keynotekit-integration-branch]]. See
-also [[keynotekit-v010-scope]] and [[keynotekit-ci-conventions]].
+**How to apply:** check `v0.1.x` and issue #12's checklist, then run the
+Keynote open pass for #24. See [[keynotekit-integration-branch]],
+[[keynotekit-v010-scope]], and [[keynotekit-ci-conventions]].

@@ -130,10 +130,29 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-29): phases 0–2 are complete once this branch
-> merges.** #13, #15, #19, #14, #16, #21 are merged to `v0.1.x`; #17 and #18
-> land together from `wt-iwa` (branch `17-iwa-framing`, one grouped PR).
-> **Phase 3 (#20 → #22 → #23) is the frontier**; #24 stays human-in-the-loop.
+> **Current position (2026-07-30): #34 landed; frontier = human Keynote 15.3
+> open pass + `v0.1.0` tag.** Handoff for the next session:
+>
+> - PR #32 (squash `48e2bab`) landed the #17 → #18 → #20 → #22 → #23 chain on
+>   `v0.1.x`; those issues plus #7 and #9 are closed as delivered.
+> - **PR #34** (`24-acceptance-decks`) landed the scripted #24 generation path —
+>   `swift run AcceptanceDecks [dir]` writes the five decks and self-checks
+>   them; `AcceptanceDeckTests` gate the DSL against committed specs and
+>   goldens. Decks were written to `~/Desktop/acceptance-decks/` (no Keynote
+>   open). **Still open:** open each of the five `.key` files in Keynote 15.3
+>   (no crash, no silent repair, builds/ordering/direction survive), then tag
+>   `v0.1.0`. One Keynote-bound session at a time still applies. Issue #24
+>   stays open until that human pass.
+> - Post-v0.1.0 lanes run under the same one-PR-per-lane rules: **#5** survey
+>   merged via PR #33 (verdict: stay vendored; exit conditions in
+>   `research/findings/snappy_dependency_survey.md` §6; issue open for the
+>   eventual swap). **#10** delivered via PR #35 (branch `10-scripting-bridge`
+>   in `wt-scripting`); live-Keynote verification of the ScriptingBridge
+>   surface stays open, so #10 stays open.
+> - Remove `wt-authoring` after the human Keynote pass (or when parent cleans
+>   up); remove `wt-scripting` once #35 lands (squash merges: verify per-file,
+>   then `git branch -D` — see agent-notes). Cross-check with
+>   `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
 
@@ -159,7 +178,7 @@ Keynote, not alongside it.
 Conflict risk: #21 vs later authoring on `KeynoteKit` — keep #21 minimal (resource
 + default path only). Leave DSL to lane W.
 
-### Phase 2 — after #14 and #16
+### ~~Phase 2 — after #14 and #16~~ (complete)
 
 | Worktree | Tickets | Touches |
 |---|---|---|
@@ -168,7 +187,7 @@ Conflict risk: #21 vs later authoring on `KeynoteKit` — keep #21 minimal (reso
 Serialize #17 then #18 on the **same** branch/worktree — #18 is not parallelizable
 with #17.
 
-### Phase 3 — after #18, #19, and #21
+### ~~Phase 3 — after #18, #19, and #21~~ (complete through #23)
 
 | Worktree | Tickets | Touches |
 |---|---|---|
