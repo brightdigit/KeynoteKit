@@ -130,28 +130,22 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-30): #34 landed; frontier = human Keynote 15.3
-> open pass + `v0.1.0` tag.** Handoff for the next session:
+> **Current position (2026-07-30): #34/#35 landed; Keynote open pass is
+> 4/5 green — `build_acceptance` fails; follow-up later before `v0.1.0`.**
 >
 > - PR #32 (squash `48e2bab`) landed the #17 → #18 → #20 → #22 → #23 chain on
 >   `v0.1.x`; those issues plus #7 and #9 are closed as delivered.
-> - **PR #34** (`24-acceptance-decks`) landed the scripted #24 generation path —
->   `swift run AcceptanceDecks [dir]` writes the five decks and self-checks
->   them; `AcceptanceDeckTests` gate the DSL against committed specs and
->   goldens. Decks were written to `~/Desktop/acceptance-decks/` (no Keynote
->   open). **Still open:** open each of the five `.key` files in Keynote 15.3
->   (no crash, no silent repair, builds/ordering/direction survive), then tag
->   `v0.1.0`. One Keynote-bound session at a time still applies. Issue #24
->   stays open until that human pass.
-> - Post-v0.1.0 lanes run under the same one-PR-per-lane rules: **#5** survey
->   merged via PR #33 (verdict: stay vendored; exit conditions in
->   `research/findings/snappy_dependency_survey.md` §6; issue open for the
->   eventual swap). **#10** delivered via PR #35 (branch `10-scripting-bridge`
->   in `wt-scripting`); live-Keynote verification of the ScriptingBridge
->   surface stays open, so #10 stays open.
-> - Remove `wt-authoring` after the human Keynote pass (or when parent cleans
->   up); remove `wt-scripting` once #35 lands (squash merges: verify per-file,
->   then `git branch -D` — see agent-notes). Cross-check with
+> - **PR #34** landed scripted #24 generation; **PR #35** landed the #10
+>   ScriptingBridge AFK surface. Lane worktrees/branches were removed after
+>   merge.
+> - **Human Keynote 15.3 open pass (partial):** from
+>   `~/Desktop/acceptance-decks/`, `bisect_in`, `bisect_out`, `bisect_action`,
+>   and `bisect_direction` open cleanly. **`build_acceptance.key` does not
+>   open** (recorded in `research/findings/acceptance_keynote_open.md`). Do
+>   not tag `v0.1.0` until that deck is fixed and re-checked. Issue #24 stays
+>   open. One Keynote-bound session at a time still applies.
+> - Post-v0.1.0 lanes: **#5** stay-vendored (PR #33); **#10** live
+>   `KEYNOTEKIT_LIVE_KEYNOTE=1` verify still open. Cross-check with
 >   `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
