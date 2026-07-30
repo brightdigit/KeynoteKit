@@ -78,7 +78,12 @@ let package = Package(
       exclude: ["Expected"]
     ),
     .testTarget(name: "KeynoteKitProtobufTests", dependencies: ["KeynoteKitProtobuf"]),
-    .testTarget(name: "KeynoteKitTests", dependencies: ["KeynoteKit"]),
+    // The golden differential decodes goldens down to protobuf and drives
+    // the surgeon directly, so these tests need the container layers too.
+    .testTarget(
+      name: "KeynoteKitTests",
+      dependencies: ["KeynoteKit", "IWAFraming", "KeynoteKitProtobuf"]
+    ),
     .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"])
   ]
 )
