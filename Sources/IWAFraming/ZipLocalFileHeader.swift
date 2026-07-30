@@ -45,11 +45,6 @@ internal struct ZipLocalFileHeader {
   /// The length of the extra field in bytes.
   internal var extraByteCount: Int
 
-  /// The offset of the entry body: header start + fixed fields + name + extra.
-  internal func bodyOffset(fromHeaderAt offset: Int) -> Int {
-    offset + Self.fixedByteCount + nameByteCount + extraByteCount
-  }
-
   /// Parses the local header at `offset`.
   ///
   /// - Throws: ``KeyBundleError/truncatedArchive(context:)`` if the header
@@ -82,5 +77,10 @@ internal struct ZipLocalFileHeader {
     ZipBytes.appendUInt16(&output, Array(entry.path.utf8).count)
     ZipBytes.appendUInt16(&output, 0)  // extra field length
     output.append(contentsOf: Array(entry.path.utf8))
+  }
+
+  /// The offset of the entry body: header start + fixed fields + name + extra.
+  internal func bodyOffset(fromHeaderAt offset: Int) -> Int {
+    offset + Self.fixedByteCount + nameByteCount + extraByteCount
   }
 }

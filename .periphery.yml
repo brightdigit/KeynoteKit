@@ -1,7 +1,1 @@
 retain_public: true
-targets:
-- Snappy
-- IWAFraming
-- KeynoteKitProtobuf
-- KeynoteKit
-- KeynoteKitScripting

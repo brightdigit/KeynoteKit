@@ -59,7 +59,8 @@ internal struct ZipEndOfCentralDirectory {
   }
 
   /// Parses the record at `offset`, rejecting multi-disk and zip64 markers.
-  private static func parse(from bytes: [UInt8], at offset: Int) throws -> ZipEndOfCentralDirectory {
+  private static func parse(from bytes: [UInt8], at offset: Int) throws -> ZipEndOfCentralDirectory
+  {
     let diskNumber = ZipBytes.readUInt16(bytes, offset + 4)
     let entryCount = ZipBytes.readUInt16(bytes, offset + 10)
     let directoryOffset = ZipBytes.readUInt32(bytes, offset + 16)

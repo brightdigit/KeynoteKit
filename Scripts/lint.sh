@@ -98,11 +98,14 @@ if [ -z "$CI" ]; then
 	$PACKAGE_DIR/Scripts/header.sh -d $PACKAGE_DIR/Sources -c "Leo Dion" -o "BrightDigit" -p "KeynoteKit"
 fi
 
-# Periphery is disabled while every target is a stub namespace: with no real
-# call graph it reports the whole package as unused, and `retain_public` alone
-# is not enough. Re-enable once #16/#17 land actual implementations.
-if [ -z "$CI" ] && [ -n "$PERIPHERY" ]; then
-	run_command $TOOL_CMD periphery scan $PERIPHERY_OPTIONS --disable-update-check
+# Periphery runs locally now that #16/#17 landed real implementations (CI's
+# lint leg still skips it; SKIP_PERIPHERY=1 opts out for quick local runs).
+if [ -z "$CI" ] && [ -z "$SKIP_PERIPHERY" ]; then
+	# SwiftPM writes the index store under .build/index-build/ these days;
+	# periphery still defaults to .build/debug/index/store.
+	run_command env DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode-beta.app/Contents/Developer}" \
+		$TOOL_CMD periphery scan $PERIPHERY_OPTIONS --disable-update-check \
+		--index-store-path .build/index-build/debug/index/store
 fi
 
 popd
