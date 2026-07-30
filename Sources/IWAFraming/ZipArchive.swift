@@ -1,0 +1,119 @@
+//
+//  ZipArchive.swift
+//  KeynoteKit
+//
+//  Created by Leo Dion.
+//  Copyright © 2026 BrightDigit.
+//
+//  Permission is hereby granted, free of charge, to any person
+//  obtaining a copy of this software and associated documentation
+//  files (the "Software"), to deal in the Software without
+//  restriction, including without limitation the rights to use,
+//  copy, modify, merge, publish, distribute, sublicense, and/or
+//  sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following
+//  conditions:
+//
+//  The above copyright notice and this permission notice shall be
+//  included in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+//  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+//  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
+//
+
+/// The `STORED`-only zip reader and writer behind ``KeyBundle``.
+///
+/// Scope is exactly what Keynote's own writer produces: every entry `STORED`,
+/// single disk, no zip64, no directory entries. Anything outside that throws
+/// a ``KeyBundleError`` rather than being tolerated.
+internal enum ZipArchive {
+  /// Parses `bytes` into entries, in central directory order.
+  internal static func entries(from bytes: [UInt8]) throws -> [KeyBundleEntry] {
+    let directoryEnd = try ZipEndOfCentralDirectory.locate(in: bytes)
+    var entries: [KeyBundleEntry] = []
+    var seenPaths = Set<String>()
+    entries.reserveCapacity(directoryEnd.entryCount)
+    var offset = directoryEnd.centralDirectoryOffset
+    for _ in 0..<directoryEnd.entryCount {
+      let record = try ZipCentralDirectoryRecord.parse(from: bytes, at: offset)
+      entries.append(try entry(for: record, in: bytes))
+      guard seenPaths.insert(record.path).inserted else {
+        throw KeyBundleError.duplicateEntryPath(record.path)
+      }
+      offset += record.recordByteCount
+    }
+    return entries
+  }
+
+  /// Serializes `entries` as a `STORED`-only zip, preserving order verbatim.
+  internal static func serialize(_ entries: [KeyBundleEntry]) throws -> [UInt8] {
+    var seenPaths = Set<String>()
+    for entry in entries {
+      guard seenPaths.insert(entry.path).inserted else {
+        throw KeyBundleError.duplicateEntryPath(entry.path)
+      }
+      guard entry.body.count < 0xFFFF_FFFF else {
+        throw KeyBundleError.zip64Unsupported
+      }
+    }
+    guard entries.count < 0xFFFF else {
+      throw KeyBundleError.zip64Unsupported
+    }
+    var output: [UInt8] = []
+    var offsets: [Int] = []
+    var checksums: [UInt32] = []
+    for entry in entries {
+      offsets.append(output.count)
+      let crc = CRC32.checksum(entry.body[...])
+      checksums.append(crc)
+      ZipLocalFileHeader.append(to: &output, entry: entry, crc: crc)
+      output.append(contentsOf: entry.body)
+    }
+    let directoryOffset = output.count
+    for (index, entry) in entries.enumerated() {
+      ZipCentralDirectoryRecord.append(
+        to: &output,
+        entry: entry,
+        crc: checksums[index],
+        localHeaderOffset: offsets[index]
+      )
+    }
+    ZipEndOfCentralDirectory.append(
+      to: &output,
+      entryCount: entries.count,
+      centralDirectoryOffset: directoryOffset,
+      centralDirectoryByteCount: output.count - directoryOffset
+    )
+    return output
+  }
+
+  /// Extracts and verifies one entry's body via its central directory record.
+  private static func entry(
+    for record: ZipCentralDirectoryRecord,
+    in bytes: [UInt8]
+  ) throws -> KeyBundleEntry {
+    guard record.method == 0 else {
+      throw KeyBundleError.unsupportedCompressionMethod(record.method, path: record.path)
+    }
+    guard record.compressedByteCount == record.uncompressedByteCount else {
+      throw KeyBundleError.truncatedArchive(context: "STORED size mismatch at \(record.path)")
+    }
+    let header = try ZipLocalFileHeader.parse(from: bytes, at: record.localHeaderOffset)
+    let bodyStart = header.bodyOffset(fromHeaderAt: record.localHeaderOffset)
+    let bodyEnd = bodyStart + record.compressedByteCount
+    guard bodyEnd <= bytes.count else {
+      throw KeyBundleError.truncatedArchive(context: "entry body at \(record.path)")
+    }
+    let body = bytes[bodyStart..<bodyEnd]
+    guard CRC32.checksum(body) == record.crc else {
+      throw KeyBundleError.checksumMismatch(path: record.path)
+    }
+    return KeyBundleEntry(path: record.path, body: Array(body))
+  }
+}

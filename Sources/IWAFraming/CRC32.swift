@@ -1,5 +1,5 @@
 //
-//  IWAFraming.swift
+//  CRC32.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,10 +27,26 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Namespace for Apple's `.iwa` chunk layout over the Snappy block codec.
+/// The reflected CRC-32 used by the zip format (polynomial `0xEDB8_8320`).
 ///
-/// Framing and the `.key` zip round-trip land in issue #17.
-public enum IWAFraming {
-  /// Placeholder version, replaced when framing lands.
-  public static let version = "0.1.0"
+/// Vendored in ~40 lines because the alternative — a zlib dependency — is the
+/// exact host-library coupling the CI matrix exists to catch.
+internal enum CRC32 {
+  /// The 256-entry lookup table for byte-at-a-time computation.
+  private static let table: [UInt32] = (0..<256).map { index in
+    var value = UInt32(index)
+    for _ in 0..<8 {
+      value = (value & 1) == 1 ? (value >> 1) ^ 0xEDB8_8320 : value >> 1
+    }
+    return value
+  }
+
+  /// Computes the zip CRC-32 of `bytes`.
+  internal static func checksum(_ bytes: ArraySlice<UInt8>) -> UInt32 {
+    var crc: UInt32 = 0xFFFF_FFFF
+    for byte in bytes {
+      crc = table[Int((crc ^ UInt32(byte)) & 0xFF)] ^ (crc >> 8)
+    }
+    return crc ^ 0xFFFF_FFFF
+  }
 }
