@@ -56,9 +56,11 @@ let package = Package(
       resources: [.copy("Resources/blank.key")]
     ),
 
-    // ScriptingBridge escape hatch (#10). Reserved here, empty until then.
-    // The body is gated on `canImport(ScriptingBridge)` rather than a linked
-    // framework, so this module still compiles on non-Apple platforms.
+    // ScriptingBridge escape hatch (#10): typed control of a running
+    // Keynote. Never an authoring backend — KeynoteKit must not depend on
+    // this. The ScriptingBridge surface is gated on
+    // `canImport(ScriptingBridge)` rather than a linked framework, so this
+    // module still compiles (to its pure value types) on non-Apple platforms.
     .target(name: "KeynoteKitScripting"),
 
     .testTarget(name: "SnappyTests", dependencies: ["Snappy"]),
