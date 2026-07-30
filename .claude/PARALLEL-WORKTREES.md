@@ -130,10 +130,14 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-29): phases 0–2 are complete once this branch
-> merges.** #13, #15, #19, #14, #16, #21 are merged to `v0.1.x`; #17 and #18
-> land together from `wt-iwa` (branch `17-iwa-framing`, one grouped PR).
-> **Phase 3 (#20 → #22 → #23) is the frontier**; #24 stays human-in-the-loop.
+> **Current position (2026-07-30): phases 0–3 are complete through #23.**
+> PR #32 (squash `48e2bab`) landed the whole #17 → #18 → #20 → #22 → #23 chain
+> on `v0.1.x`; #7 and #9 closed as delivered along the way. **The frontier is
+> #24**: deck generation is scripted (`swift run AcceptanceDecks [dir]` writes
+> the five decks and self-checks them); the Keynote 15.3 open pass and the
+> `v0.1.0` tag stay human-in-the-loop. Post-v0.1.0 lanes running in parallel
+> under the same rules: #5 (survey, `wt-snappy-dep`) and #10 (ScriptingBridge,
+> `wt-scripting`) — both touch products lane W never edits.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
 
@@ -159,7 +163,7 @@ Keynote, not alongside it.
 Conflict risk: #21 vs later authoring on `KeynoteKit` — keep #21 minimal (resource
 + default path only). Leave DSL to lane W.
 
-### Phase 2 — after #14 and #16
+### ~~Phase 2 — after #14 and #16~~ (complete)
 
 | Worktree | Tickets | Touches |
 |---|---|---|
@@ -168,7 +172,7 @@ Conflict risk: #21 vs later authoring on `KeynoteKit` — keep #21 minimal (reso
 Serialize #17 then #18 on the **same** branch/worktree — #18 is not parallelizable
 with #17.
 
-### Phase 3 — after #18, #19, and #21
+### ~~Phase 3 — after #18, #19, and #21~~ (complete through #23)
 
 | Worktree | Tickets | Touches |
 |---|---|---|
