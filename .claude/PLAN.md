@@ -146,10 +146,9 @@ Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.m
 | 6 Acceptance (Keynote 15.3) | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) |
 
 **Done and merged on `v0.1.x`:** #13 (`d17ae91`), #15 (`d5bb1ef`),
-#19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`).
+#19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`), #17, #18, #20, #22, #23 (`48e2bab` / PR #32), #24 (PR #36).
 
-**Frontier (unblocked now): #17** — its gates #14 and #16 have both landed.
-#17 → #18 run serially in one lane; #20 → #22 → #23 → #24 then need #18.
+**v0.1.0 Done:** All 12 tracer bullets (#13–#24) are complete. Human Keynote 15.3 open pass is **5/5 green** (`bisect_in`, `bisect_out`, `bisect_action`, `bisect_direction`, `build_acceptance`). Ready for `v0.1.0` release tag.
 
 ## Plan
 
