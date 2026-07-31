@@ -9,32 +9,42 @@ It does keep theme `Data/` + `TSP.DataInfo` rows (e.g. data id `9058` →
 `image-0-imageStyle` (`2651170`); the first `MediaStyleArchive` may be
 `equation-0-imageStyle` (`2652442`) and must not be used for photos.
 
-Keynote-inserted images (after opening blank and saving) often look like:
+Keynote-inserted images (verified against a script-driven insert + save on the
+same blank, 2026-07-30) look like:
 
-- registry type **3005**, `flags = 0`, **no mask**
-- `data` + separate `thumbnailData` data ids
+- registry type **3005**, `flags = 0`, **no mask**, **no `thumbnailData`**
+- single `data` id; `MessageInfo.dataReferences = [dataId]`
 - `super.title` / `super.caption` → empty `StandinCaptionArchive` (3097)
 - `MessageInfo.objectReferences` = `[title, caption, mediaStyle]` (no parent)
-- exterior text wrap + `aspectRatioLocked`
+- exterior text wrap (`type 4 / direction 2 / fitType 1`) + `aspectRatioLocked`
+- `originalSize = naturalSize` = pixel dims; rectangle `tracedPath`;
+  `interpretsUntaggedImageDataAsGeneric: false`
 
 Theme fixtures (e.g. `research/fixtures/build_shape_B.key`) also show older
 images with masks and `flags = 3`; those are not required for a simple insert.
 
-## Write approach (current; **still crashes Keynote on open**)
+## Write approach (current; **opens cleanly in Keynote 15.3**)
 
-See `drawable_open_crash.md` — transplant of a good ImageArchive into a
-blank-derived deck still SIGTRAPs, so blank **integration** is the blocker.
+Root causes of the earlier open crashes are in `drawable_open_crash.md`. For
+each authored ``Image`` (`KeynoteArchiveSurgeon+ImageSupply.swift` /
+`+ImageRecords.swift`):
 
-For each authored ``Image`` today:
-
-1. Allocate object ids for image + two standin captions; data ids for full-size
-   and thumbnail (`max(DataInfo.identifier)+1` and `+2`).
-2. Upsert `Data/kn-…` and `Data/kn-…-small-…` (**STORED**).
-3. Append two `TSP.DataInfo` rows (full-size gets empty `attributes`).
+1. Allocate object ids for image + two standin captions; one data id
+   (`max(DataInfo.identifier)+1`). No thumbnail.
+2. Upsert `Data/kn-…-<dataId>.<ext>` (**STORED**).
+3. Append one `TSP.DataInfo` row with `digest` (SHA-1),
+   **`materializedLength`**, and `attributes` carrying the
+   `TSD.ImageDataAttributes` extension (`pixelSize`,
+   `shouldBeInterpretedAsGenericIfUntagged: false`).
 4. Mint `TSD.ImageArchive` (`flags = 0`, geometry flags 3, photo media style,
-   title/caption standins, wrap); no mask.
-5. Append to `drawablesZOrder`; register slide-component data refs (count 1
-   each for thumb and full-size).
+   title/caption standins, wrap type 4, `originalSize = naturalSize`,
+   rectangle `tracedPath`); no mask.
+5. Append to `drawablesZOrder` **and `ownedDrawables`**; slide header
+   `objectReferences` gains only the image id; register the slide-component
+   data ref (count 1).
+6. **Register the media style as a slide-component `externalReferences` entry**
+   pointing into the DocumentStylesheet component — missing this edge crashes
+   Keynote during layout (`registerExternalReferences`).
 
 Builds target images like text (Exp 8: same effect strings).
 

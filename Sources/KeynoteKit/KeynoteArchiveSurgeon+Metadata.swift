@@ -29,6 +29,23 @@
 
 package import KeynoteKitProtobuf
 
+extension TSP_ComponentDataReference {
+  /// One data blob referenced `count` times by a single object.
+  internal static func singleUse(
+    dataIdentifier: UInt64,
+    objectIdentifier: UInt64,
+    count: UInt32 = 1
+  ) -> TSP_ComponentDataReference {
+    var dataReference = TSP_ComponentDataReference()
+    dataReference.dataIdentifier = dataIdentifier
+    var objectReference = TSP_ComponentDataReference.ObjectReference()
+    objectReference.objectIdentifier = objectIdentifier
+    objectReference.count = count
+    dataReference.objectReferenceList = [objectReference]
+    return dataReference
+  }
+}
+
 extension KeynoteArchiveSurgeon {
   /// Appends uuid-map entries to the slide's component.
   internal mutating func registerUUIDEntries(
@@ -54,7 +71,7 @@ extension KeynoteArchiveSurgeon {
   /// Registers new `DataInfo` rows and slide-component data references.
   internal mutating func registerData(
     infos: [TSP_DataInfo],
-    componentReferences: [(dataIdentifier: UInt64, objectIdentifier: UInt64, count: UInt32)],
+    componentReferences: [TSP_ComponentDataReference],
     slideIdentifier: UInt64
   ) throws {
     try withPackageMetadata { metadata in
@@ -66,14 +83,48 @@ extension KeynoteArchiveSurgeon {
       else {
         throw ArchiveSurgeryError.missingSlideComponent(slideIdentifier: slideIdentifier)
       }
-      for reference in componentReferences {
-        var dataReference = TSP_ComponentDataReference()
-        dataReference.dataIdentifier = reference.dataIdentifier
-        var objectReference = TSP_ComponentDataReference.ObjectReference()
-        objectReference.objectIdentifier = reference.objectIdentifier
-        objectReference.count = reference.count
-        dataReference.objectReferenceList = [objectReference]
-        metadata.components[componentIndex].dataReferences.append(dataReference)
+      metadata.components[componentIndex].dataReferences.append(
+        contentsOf: componentReferences
+      )
+    }
+  }
+
+  /// Registers cross-component external references on the slide's component.
+  ///
+  /// A slide object may reference an object owned by another component (e.g.
+  /// an image pointing at a `DocumentStylesheet` media style) only when the
+  /// slide component declares that edge — Keynote throws during layout when
+  /// the declaration is missing.
+  internal mutating func registerExternalReferences(
+    _ references: [(ownerStem: String, objectIdentifier: UInt64)],
+    slideIdentifier: UInt64
+  ) throws {
+    guard !references.isEmpty else {
+      return
+    }
+    try withPackageMetadata { metadata in
+      guard
+        let componentIndex = metadata.components.firstIndex(where: {
+          $0.identifier == slideIdentifier
+        })
+      else {
+        throw ArchiveSurgeryError.missingSlideComponent(slideIdentifier: slideIdentifier)
+      }
+      for reference in references {
+        guard
+          let owner = metadata.components.first(where: {
+            $0.preferredLocator == reference.ownerStem || $0.locator == reference.ownerStem
+          })
+        else { continue }
+        let alreadyListed = metadata.components[componentIndex].externalReferences.contains {
+          $0.componentIdentifier == owner.identifier
+            && $0.objectIdentifier == reference.objectIdentifier
+        }
+        if alreadyListed { continue }
+        var external = TSP_ComponentExternalReference()
+        external.componentIdentifier = owner.identifier
+        external.objectIdentifier = reference.objectIdentifier
+        metadata.components[componentIndex].externalReferences.append(external)
       }
     }
   }

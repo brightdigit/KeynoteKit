@@ -31,6 +31,16 @@ import Foundation
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
+  /// Locator stem for a member path: `Index/DocumentStylesheet.iwa` →
+  /// `DocumentStylesheet`.
+  internal static func locatorStem(of path: String) -> String {
+    let base = path.split(separator: "/").last.map(String.init) ?? path
+    guard base.hasSuffix(".iwa") else {
+      return base
+    }
+    return String(base.dropLast(4))
+  }
+
   /// Next unused `TSP.DataInfo.identifier`.
   internal func nextDataIdentifier() throws -> UInt64 {
     let catalog = SlideCatalog(members: members)
@@ -47,12 +57,15 @@ extension KeynoteArchiveSurgeon {
     return maximum + 1
   }
 
-  /// A document stylesheet `TSD.MediaStyleArchive` suitable for photos.
+  /// A document stylesheet `TSD.MediaStyleArchive` suitable for photos, plus
+  /// the locator stem of the member owning it (e.g. `DocumentStylesheet`).
   ///
   /// Prefer `image-*-imageStyle` over `equation-*-imageStyle` — attaching the
-  /// equation style to a regular image crashes Keynote on open.
-  internal func mediaStyleIdentifier() throws -> UInt64? {
-    var fallback: UInt64?
+  /// equation style to a regular image crashes Keynote on open. The owner stem
+  /// lets callers register the cross-component external reference the slide
+  /// needs before it may point at the style.
+  internal func mediaStyle() throws -> (identifier: UInt64, ownerStem: String)? {
+    var fallback: (identifier: UInt64, ownerStem: String)?
     for member in members {
       for record in member.records {
         let names = record.resolvedTypes.compactMap { TSPRegistryMapping.messageName(for: $0) }
@@ -61,17 +74,19 @@ extension KeynoteArchiveSurgeon {
           serializedBytes: record.payloads[0],
           partial: true
         )
-        let styleId = style.hasSuper && style.super.hasStyleIdentifier
+        let styleId =
+          style.hasSuper && style.super.hasStyleIdentifier
           ? style.super.styleIdentifier
           : ""
         if styleId.contains("equation") {
           continue
         }
+        let located = (record.info.identifier, Self.locatorStem(of: member.path))
         if styleId.contains("image") {
-          return record.info.identifier
+          return located
         }
         if fallback == nil {
-          fallback = record.info.identifier
+          fallback = located
         }
       }
     }

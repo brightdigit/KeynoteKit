@@ -1,98 +1,94 @@
-# Drawable open-crash triage (#3 / #37 / #38)
+# Drawable open-crash triage (#3 / #37 / #38) — RESOLVED
 
-Status as of 2026-07-30 (branch `3-37-38-drawable-depth`, PR #39).
+Status as of 2026-07-30 (branch `3-37-38-drawable-depth`, PR #39): **all
+resolved**. All 8 acceptance decks (5 original + 3 drawable-depth) open cleanly
+in Keynote 15.3 with no crash and no new `.ips`.
 
-## Bisect (Keynote 15.x open)
+## Root causes (in the order they were found)
 
-Generate with local `BisectCrash` against the worktree package, open via
-`open -a Keynote`, settle ~8s, treat process-gone / new `.ips` as crash.
-
-| Deck | Opens? |
-|---|---|
-| A text only | OK |
-| B frame only | OK |
-| C format only | OK after CharacterStyle `super` fix |
-| D format + frame | OK after same fix |
-| E two-slide Magic Move, no frame | OK |
-| F Magic Move + frame | OK |
-| G image only | **CRASH** |
-| H image + build | **CRASH** |
-
-Geometry alone is fine. Desktop “geometry” acceptance decks were false alarms
-relative to formatting/images.
-
-Crash signature: `EXC_BREAKPOINT` / `SIGTRAP` via `+[NSApplication
-_crashOnException:]`, worker `TSUAssertCat` — message not extracted from `.ips`.
-
-## Fixed: text formatting (#37)
+### #37 text formatting — fixed earlier this branch
 
 Minted `TSWP.CharacterStyleArchive` lacked `TSS.StyleArchive` `super` with
 `stylesheet` → document stylesheet, and was not listed in
-`TSS.StylesheetArchive.styles`. Theme styles always have `hasSuper=true`.
+`TSS.StylesheetArchive.styles`. Fix: mint `super.stylesheet`, append the style
+record to `DocumentStylesheet.iwa`, register on `styles`, put the stylesheet id
+on `MessageInfo.objectReferences`.
 
-**Fix (in tree):** mint `super.stylesheet`, append style record to
-`DocumentStylesheet.iwa`, register on `styles`, put stylesheet id on
-`MessageInfo.objectReferences`. Confirmed open-safe in bisect C/D.
+### #38 images, crash 1 — TSPersistence `abort()` (SIGABRT)
 
-## Open: images (#38)
+`.ips` fault thread sat in `TSPersistence` → `abort()`. Our image `DataInfo`
+and data wiring did not match what Keynote itself writes when inserting a photo
+into the same blank. Fixed by matching Keynote's shape exactly
+(`KeynoteArchiveSurgeon+ImageSupply.swift` / `+ImageRecords.swift`):
 
-### Ruled out / low confidence
+- `TSP.DataInfo` must carry `materializedLength` (byte count) and an
+  `attributes` bag with the `TSD.ImageDataAttributes.image_data_attributes`
+  extension: `pixelSize` (image pixel dims) and
+  `shouldBeInterpretedAsGenericIfUntagged: false`. Ours had an *empty*
+  `TSP_DataAttributes` and no length.
+- **No thumbnail**: Keynote's insert writes a single full-size `Data/` member;
+  `MessageInfo.dataReferences = [dataId]`, one component data reference
+  (count 1). Ours minted a second `-small-` data + `DataInfo` + reference.
+- Slide record additions Keynote also writes: `ownedDrawables` gains the image
+  reference (alongside `drawablesZOrder`); the slide record's header
+  `objectReferences` gains **only** the image id (standins are referenced from
+  the image's own `MessageInfo.objectReferences = [title, caption, style]`).
+- `ImageArchive`: `originalSize = naturalSize`, `tracedPath` rectangle in pixel
+  space (moveTo 0,0 → lineTo w,0 → w,h → 0,h → closeSubpath → moveTo 0,0),
+  `interpretsUntaggedImageDataAsGeneric: false`, exterior wrap
+  `type 4 / direction 2 / fitType 1 / isHtmlWrap false / margin 12 /
+  alphaThreshold 0.5`, no mask, `flags = 0`, geometry `flags = 3`.
 
-- `bodyPlaceholder ∉ drawablesZOrder` — same on known-good text decks.
-- Missing mask alone — Keynote-inserted images on a saved blank often have
-  **`mask=nil`**, `flags=0`.
-- Tiny 1×1 JPEG alone — theme JPEG bytes also crash when minted our way.
-- Equation media style — first `MediaStyleArchive` in blank is
-  `equation-0-imageStyle` (`2652442`). Must prefer `image-0-imageStyle`
-  (`2651170`). Fixed in `mediaStyleIdentifier()`; images still crash.
+### #38 images, crash 2 — NSViewLayout uncaught exception (the real killer)
 
-### Current mint (still crashes)
+After crash 1 was fixed the signature changed to `+[NSApplication
+_crashOnException:]` inside view layout. Cause: the image references the photo
+media style (`image-0-imageStyle`, id `2651170`) which is **owned by the
+DocumentStylesheet component**, but the Slide component's
+`TSP.PackageMetadata … externalReferences` never declared that cross-component
+edge. Keynote's own insert appends
+`{componentIdentifier: <DocumentStylesheet component>, objectIdentifier:
+<style id>}` to the slide component's `externalReferences`.
 
-Aligned toward Keynote-inserted shape:
+Fix: `registerExternalReferences(_:slideIdentifier:)`
+(`KeynoteArchiveSurgeon+Metadata.swift`) — the owning component is resolved by
+matching the style's member locator stem (`DocumentStylesheet`) against
+component `preferredLocator`/`locator`. `mediaStyle()`
+(`+DataIdentifiers.swift`) returns the style id plus that stem.
 
-- No mask; `ImageArchive.flags = 0`; geometry `flags = 3`
-- Photo media style `image-*-imageStyle`
-- Standin title + caption; `titleHidden`/`captionHidden` = false
-- Exterior text wrap + `aspectRatioLocked`
-- Separate full-size + thumbnail `Data/` + `DataInfo` (thumb may reuse bytes)
-- `MessageInfo.objectReferences` = `[title, caption, style]` (no parent)
-- `dataReferences` = `[dataId, thumbId]`; slide component data refs count 1 each
-- Empty `TSP.DataAttributes` on full-size `DataInfo`
+This is the same *class* of bug as the earlier #24 build crash (uuid-map /
+`lastObjectIdentifier`): cross-component metadata invariants that TSP enforces
+at load, invisible in the record bytes themselves.
 
-### Strong finding: blank integration, not ImageArchive shape
+## Notes for future surgery
 
-Transplanting a **known-good** Keynote `ImageArchive` (id `2652482` from
-`/tmp/blank-with-image.key`: no mask, flags 0, title/caption/style, data 9058 +
-thumb) into a blank-derived `Deck { Text }` host **still crashes**.
+- **No uuid-map entry is needed for images** — Keynote's own insert adds none
+  for the image, standins, or data.
+- The earlier "transplant a known-good ImageArchive still crashes" finding is
+  explained: both crashes lived *outside* the ImageArchive record (DataInfo
+  fields + component externalReferences).
+- Keynote **autosaves in place** when driven via AppleScript — opening a
+  template copy and inserting an image silently rewrites that file on disk.
+  Copy the template before letting Keynote touch it, and treat any file Keynote
+  opened as dirty.
+- AppleScript `save … in` on a freshly script-modified blank produces a
+  ~102 KB minimally-changed package (unlike the interactive Save's ~460 KB
+  theme rewrite reported earlier). That near-noise-free reference is what made
+  this diff tractable: `blank.key` vs Keynote-saved `blank+image` differed in
+  ~270 raw lines total.
 
-So the failure is likely **how the blank template hosts a new image**
-(metadata / component / z-order / theme wiring), not the protobuf field bag of
-the image record itself.
+## Repro / verification harness (scratchpad, not committed)
 
-Opening `blank.key` in Keynote and inserting an image, then saving, produces a
-~460 KB package (vs ~98 KB blank) with many more components, datas, and theme
-images — Keynote rewrites heavily on save. That rewritten file opens cleanly;
-our surgical add onto the slim blank does not.
-
-### Reference artifacts (local, not in repo)
-
-- `/tmp/blank-with-image.key` — blank opened in Keynote + image insert + save
-- `/tmp/keynote-authored-image.key` — AppleScript new doc + image
-- `/tmp/bisect-crash/*.key` — A–H bisect decks
-- `/tmp/authored-probe.txt`, `/tmp/blank-image-delta.txt` — dumps
-
-### Next session ideas
-
-1. Diff PackageMetadata / Document / slide component graph: slim blank text
-   deck vs Keynote-saved blank+image (focus on what Keynote adds when the first
-   slide image appears — not the whole theme rewrite).
-2. Try authoring Image onto a **Keynote-saved** blank base (upgrade template)
-   instead of the slim bundled blank.
-3. Check whether slide `objectUuidMapEntries` or Document `externalReferences`
-   need entries for image / caption / data objects.
-4. Keep template placeholders in `drawablesZOrder` when appending images
-   (Keynote keeps title/subtitle/body + image).
+- `crashcheck.sh <deck.key>`: quit Keynote, `open -a`, settle ~10 s, crash =
+  process gone OR new `Keynote*.ips` in `~/Library/Logs/DiagnosticReports`.
+  Note: Keynote 15.3 is installed at `/Applications/Keynote Creator
+  Studio.app` on this machine (bundle id `com.apple.Keynote`).
+- Reference: copy blank.key to scratch, `open -a` it, AppleScript
+  `make new image … {file: …}` + `save … in blank-with-image.key`.
+- Dump/diff: worktree `.venv` (`keynote-parser==1.14.4.0`) `unpack`, then raw
+  `diff` of `Index/*.iwa.yaml` (skip `normalize.py` when hunting identifier
+  wiring — the id-normalization hides exactly what matters).
 
 ## Geometry (#3)
 
-No open crash in bisect for frame / Magic Move + frame. Leave as-is.
+No open crash in bisect for frame / Magic Move + frame. Unchanged.

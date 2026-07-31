@@ -32,25 +32,34 @@ package import IWAFraming
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
-  /// Registry type for `TSD.ImageArchive`.
-  private static let imageArchiveType: UInt32 = 3_005
-
-  /// Registry type for `TSD.StandinCaptionArchive`.
-  private static let standinCaptionArchiveType: UInt32 = 3_097
+  /// Object / data identifiers wired into one image drawable.
+  internal struct ImageDrawableIdentifiers {
+    internal var object: UInt64
+    internal var titleCaption: UInt64
+    internal var caption: UInt64
+    internal var data: UInt64
+    internal var parentSlide: UInt64
+    internal var style: UInt64?
+  }
 
   /// One minted image drawable plus its zip / metadata bookkeeping.
   private struct MintedImage {
     var record: TSPArchiveRecord
     var titleCaptionRecord: TSPArchiveRecord
     var captionRecord: TSPArchiveRecord
-    var objectIdentifier: UInt64
-    var titleCaptionIdentifier: UInt64
-    var captionIdentifier: UInt64
+    var identifiers: ImageDrawableIdentifiers
     var dataPath: String
-    var thumbnailPath: String
     var body: [UInt8]
     var dataInfo: TSP_DataInfo
-    var thumbnailInfo: TSP_DataInfo
+    var styleReference: (ownerStem: String, objectIdentifier: UInt64)?
+  }
+
+  /// Zip / metadata registrations accumulated while expanding drawables.
+  private struct PendingRegistrations {
+    var data: [(path: String, body: [UInt8])] = []
+    var infos: [TSP_DataInfo] = []
+    var componentReferences: [TSP_ComponentDataReference] = []
+    var externalReferences: [(ownerStem: String, objectIdentifier: UInt64)] = []
   }
 
   /// Ensures `drawablesZOrder` matches `items`: text slots clone the body
@@ -67,34 +76,33 @@ extension KeynoteArchiveSurgeon {
       partial: true
     )
     slide.drawablesZOrder.removeAll()
-    var pendingData: [(path: String, body: [UInt8])] = []
-    var pendingInfos: [TSP_DataInfo] = []
-    var pendingComponentRefs: [(dataIdentifier: UInt64, objectIdentifier: UInt64, count: UInt32)] =
-      []
+    var pending = PendingRegistrations()
     for item in items {
       try appendDrawable(
         item,
         to: &slide,
         at: location,
         nextIdentifier: &nextIdentifier,
-        pendingData: &pendingData,
-        pendingInfos: &pendingInfos,
-        pendingComponentRefs: &pendingComponentRefs,
+        pending: &pending,
         using: &generator
       )
     }
     members[location.memberIndex].records[location.recordIndex].payloads[0] =
       try slide.serializedBytes(partial: true)
-    for entry in pendingData {
+    for entry in pending.data {
       bundle.upsertEntry(body: entry.body, at: entry.path)
     }
-    if !pendingInfos.isEmpty {
+    if !pending.infos.isEmpty {
       try registerData(
-        infos: pendingInfos,
-        componentReferences: pendingComponentRefs,
+        infos: pending.infos,
+        componentReferences: pending.componentReferences,
         slideIdentifier: location.slideIdentifier
       )
     }
+    try registerExternalReferences(
+      pending.externalReferences,
+      slideIdentifier: location.slideIdentifier
+    )
   }
 
   /// Appends one authored drawable into `slide`'s z-order and pending data.
@@ -103,9 +111,7 @@ extension KeynoteArchiveSurgeon {
     to slide: inout KN_SlideArchive,
     at location: SlideCatalog.Slide,
     nextIdentifier: inout UInt64,
-    pendingData: inout [(path: String, body: [UInt8])],
-    pendingInfos: inout [TSP_DataInfo],
-    pendingComponentRefs: inout [(dataIdentifier: UInt64, objectIdentifier: UInt64, count: UInt32)],
+    pending: inout PendingRegistrations,
     using generator: inout some RandomNumberGenerator
   ) throws {
     switch item {
@@ -128,199 +134,82 @@ extension KeynoteArchiveSurgeon {
       members[location.memberIndex].records.append(minted.record)
       members[location.memberIndex].records.append(minted.titleCaptionRecord)
       members[location.memberIndex].records.append(minted.captionRecord)
-      appendHeaderReferences(
-        [
-          minted.objectIdentifier,
-          minted.titleCaptionIdentifier,
-          minted.captionIdentifier,
-        ],
-        toRecordAt: location
-      )
+      appendHeaderReferences([minted.identifiers.object], toRecordAt: location)
       var reference = TSP_Reference()
-      reference.identifier = minted.objectIdentifier
+      reference.identifier = minted.identifiers.object
       slide.drawablesZOrder.append(reference)
-      pendingData.append((minted.dataPath, minted.body))
-      pendingData.append((minted.thumbnailPath, minted.body))
-      pendingInfos.append(minted.dataInfo)
-      pendingInfos.append(minted.thumbnailInfo)
-      pendingComponentRefs.append(
-        (minted.thumbnailInfo.identifier, minted.objectIdentifier, 1)
+      slide.ownedDrawables.append(reference)
+      pending.data.append((minted.dataPath, minted.body))
+      pending.infos.append(minted.dataInfo)
+      pending.componentReferences.append(
+        .singleUse(
+          dataIdentifier: minted.dataInfo.identifier,
+          objectIdentifier: minted.identifiers.object
+        )
       )
-      pendingComponentRefs.append(
-        (minted.dataInfo.identifier, minted.objectIdentifier, 1)
-      )
+      if let styleReference = minted.styleReference {
+        pending.externalReferences.append(styleReference)
+      }
     }
   }
 
-  /// Mints a `TSD.ImageArchive` wired to full-size + thumbnail `Data/` members.
+  /// Mints a `TSD.ImageArchive` wired to a single full-size `Data/` member.
   ///
-  /// Matches Keynote's insert-image shape: no mask, `flags = 0`, separate
-  /// thumbnail data id, standin title/caption, photo media style.
+  /// Matches Keynote's insert-image shape: no mask, `flags = 0`, no thumbnail
+  /// data, standin title/caption, photo media style, and a `DataInfo` carrying
+  /// `materializedLength` plus pixel-size image data attributes.
   private mutating func mintImageDrawable(
     _ item: AuthoredSlide.ImageItem,
     parentSlideIdentifier: UInt64,
     nextIdentifier: inout UInt64,
     using generator: inout some RandomNumberGenerator
   ) throws -> MintedImage {
-    let objectIdentifier = nextIdentifier
-    nextIdentifier += 1
-    let titleCaptionIdentifier = nextIdentifier
-    nextIdentifier += 1
-    let captionIdentifier = nextIdentifier
-    nextIdentifier += 1
-    let dataIdentifier = try nextDataIdentifier()
-    let thumbnailIdentifier = dataIdentifier + 1
+    let style = try mediaStyle()
+    let identifiers = ImageDrawableIdentifiers(
+      object: nextIdentifier,
+      titleCaption: nextIdentifier + 1,
+      caption: nextIdentifier + 2,
+      data: try nextDataIdentifier(),
+      parentSlide: parentSlideIdentifier,
+      style: style?.identifier
+    )
+    nextIdentifier += 3
+
     let uuid = uuidString(using: &generator)
     let ext = item.fileExtension.isEmpty ? "jpg" : item.fileExtension
     let preferredName = "kn-\(uuid).\(ext)"
-    let fileName = "kn-\(uuid)-\(dataIdentifier).\(ext)"
-    let thumbPreferred = "kn-\(uuid)-small.\(ext)"
-    let thumbFileName = "kn-\(uuid)-small-\(thumbnailIdentifier).\(ext)"
+    let fileName = "kn-\(uuid)-\(identifiers.data).\(ext)"
 
-    var dataInfo = TSP_DataInfo()
-    dataInfo.identifier = dataIdentifier
-    dataInfo.digest = Data(SHA1Digest.hash(item.data))
-    dataInfo.preferredFileName = preferredName
-    dataInfo.fileName = fileName
-    dataInfo.attributes = TSP_DataAttributes()
-
-    var thumbnailInfo = TSP_DataInfo()
-    thumbnailInfo.identifier = thumbnailIdentifier
-    thumbnailInfo.digest = Data(SHA1Digest.hash(item.data))
-    thumbnailInfo.preferredFileName = thumbPreferred
-    thumbnailInfo.fileName = thumbFileName
-
-    let frameWidth = Float(item.width ?? item.naturalWidth ?? 200)
-    let frameHeight = Float(item.height ?? item.naturalHeight ?? 200)
-    let naturalWidth = Float(item.naturalWidth ?? item.width ?? 200)
-    let naturalHeight = Float(item.naturalHeight ?? item.height ?? 200)
-
-    let titleCaptionRecord = try standinCaptionRecord(identifier: titleCaptionIdentifier)
-    let captionRecord = try standinCaptionRecord(identifier: captionIdentifier)
-    let image = try buildImageArchive(
-      item,
-      dataIdentifier: dataIdentifier,
-      thumbnailIdentifier: thumbnailIdentifier,
-      parentSlideIdentifier: parentSlideIdentifier,
-      titleCaptionIdentifier: titleCaptionIdentifier,
-      captionIdentifier: captionIdentifier,
-      frameWidth: frameWidth,
-      frameHeight: frameHeight,
-      naturalWidth: naturalWidth,
-      naturalHeight: naturalHeight
+    let frameSize = (
+      width: Float(item.width ?? item.naturalWidth ?? 200),
+      height: Float(item.height ?? item.naturalHeight ?? 200)
     )
-    let record = try imageRecord(
-      image,
-      objectIdentifier: objectIdentifier,
-      dataIdentifier: dataIdentifier,
-      thumbnailIdentifier: thumbnailIdentifier,
-      titleCaptionIdentifier: titleCaptionIdentifier,
-      captionIdentifier: captionIdentifier
+    let naturalSize = (
+      width: Float(item.naturalWidth ?? item.width ?? 200),
+      height: Float(item.naturalHeight ?? item.height ?? 200)
+    )
+
+    let image = buildImageArchive(
+      item,
+      identifiers: identifiers,
+      frameSize: frameSize,
+      naturalSize: naturalSize
     )
     return MintedImage(
-      record: record,
-      titleCaptionRecord: titleCaptionRecord,
-      captionRecord: captionRecord,
-      objectIdentifier: objectIdentifier,
-      titleCaptionIdentifier: titleCaptionIdentifier,
-      captionIdentifier: captionIdentifier,
+      record: try imageRecord(image, identifiers: identifiers),
+      titleCaptionRecord: try standinCaptionRecord(identifier: identifiers.titleCaption),
+      captionRecord: try standinCaptionRecord(identifier: identifiers.caption),
+      identifiers: identifiers,
       dataPath: "Data/\(fileName)",
-      thumbnailPath: "Data/\(thumbFileName)",
       body: item.data,
-      dataInfo: dataInfo,
-      thumbnailInfo: thumbnailInfo
+      dataInfo: imageDataInfo(
+        for: item,
+        dataIdentifier: identifiers.data,
+        fileName: fileName,
+        preferredFileName: preferredName,
+        naturalSize: naturalSize
+      ),
+      styleReference: style.map { (ownerStem: $0.ownerStem, objectIdentifier: $0.identifier) }
     )
-  }
-
-  /// Builds the `TSD.ImageArchive` payload for an authored image item.
-  private func buildImageArchive(
-    _ item: AuthoredSlide.ImageItem,
-    dataIdentifier: UInt64,
-    thumbnailIdentifier: UInt64,
-    parentSlideIdentifier: UInt64,
-    titleCaptionIdentifier: UInt64,
-    captionIdentifier: UInt64,
-    frameWidth: Float,
-    frameHeight: Float,
-    naturalWidth: Float,
-    naturalHeight: Float
-  ) throws -> TSD_ImageArchive {
-    var geometry = TSD_GeometryArchive()
-    geometry.position.x = Float(item.x)
-    geometry.position.y = Float(item.y)
-    geometry.size.width = frameWidth
-    geometry.size.height = frameHeight
-    geometry.flags = 3
-
-    var wrap = TSD_ExteriorTextWrapArchive()
-    wrap.type = 1
-    wrap.direction = 0
-    wrap.fitType = 0
-    wrap.margin = 12
-    wrap.alphaThreshold = 0.5
-
-    var drawable = TSD_DrawableArchive()
-    drawable.geometry = geometry
-    drawable.parent.identifier = parentSlideIdentifier
-    drawable.title.identifier = titleCaptionIdentifier
-    drawable.caption.identifier = captionIdentifier
-    drawable.titleHidden = false
-    drawable.captionHidden = false
-    drawable.aspectRatioLocked = true
-    drawable.accessibilityDescription = ""
-    drawable.exteriorTextWrap = wrap
-
-    var image = TSD_ImageArchive()
-    image.super = drawable
-    image.data.identifier = dataIdentifier
-    image.thumbnailData.identifier = thumbnailIdentifier
-    image.naturalSize.width = naturalWidth
-    image.naturalSize.height = naturalHeight
-    image.originalSize.width = frameWidth
-    image.originalSize.height = frameHeight
-    image.flags = 0
-    image.interpretsUntaggedImageDataAsGeneric = false
-    if let styleIdentifier = try mediaStyleIdentifier() {
-      image.style.identifier = styleIdentifier
-    }
-    return image
-  }
-
-  /// Empty `TSD.StandinCaptionArchive` used for image title/caption slots.
-  private func standinCaptionRecord(identifier: UInt64) throws -> TSPArchiveRecord {
-    var messageInfo = TSP_MessageInfo()
-    messageInfo.type = Self.standinCaptionArchiveType
-    messageInfo.version = BuildRecordFactory.version
-    var info = TSP_ArchiveInfo()
-    info.identifier = identifier
-    info.messageInfos = [messageInfo]
-    return TSPArchiveRecord(
-      info: info,
-      payloads: [try TSD_StandinCaptionArchive().serializedBytes(partial: true)]
-    )
-  }
-
-  /// Wraps an image archive in a TSP record with the right references.
-  private func imageRecord(
-    _ image: TSD_ImageArchive,
-    objectIdentifier: UInt64,
-    dataIdentifier: UInt64,
-    thumbnailIdentifier: UInt64,
-    titleCaptionIdentifier: UInt64,
-    captionIdentifier: UInt64
-  ) throws -> TSPArchiveRecord {
-    var messageInfo = TSP_MessageInfo()
-    messageInfo.type = Self.imageArchiveType
-    messageInfo.version = BuildRecordFactory.version
-    messageInfo.dataReferences = [dataIdentifier, thumbnailIdentifier]
-    var objectReferences = [titleCaptionIdentifier, captionIdentifier]
-    if image.hasStyle {
-      objectReferences.append(image.style.identifier)
-    }
-    messageInfo.objectReferences = objectReferences
-    var info = TSP_ArchiveInfo()
-    info.identifier = objectIdentifier
-    info.messageInfos = [messageInfo]
-    return TSPArchiveRecord(info: info, payloads: [try image.serializedBytes(partial: true)])
   }
 }

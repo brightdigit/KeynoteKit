@@ -45,7 +45,7 @@ extension KeynoteArchiveSurgeon {
     guard let stylesheetIdentifier = try documentStylesheetIdentifier() else {
       throw ArchiveSurgeryError.missingSlideRecord(identifier: 0)
     }
-    var properties = characterStyleProperties(for: item)
+    let properties = characterStyleProperties(for: item)
     var base = TSS_StyleArchive()
     base.stylesheet.identifier = stylesheetIdentifier
     var style = TSWP_CharacterStyleArchive()
@@ -86,7 +86,9 @@ extension KeynoteArchiveSurgeon {
         .payloads[location.payloadIndex],
       partial: true
     )
-    guard !sheet.styles.contains(where: { $0.identifier == styleIdentifier }) else { return }
+    guard !sheet.styles.contains(where: { $0.identifier == styleIdentifier }) else {
+      return
+    }
     var reference = TSP_Reference()
     reference.identifier = styleIdentifier
     sheet.styles.append(reference)

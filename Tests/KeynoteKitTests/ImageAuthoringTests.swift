@@ -49,6 +49,9 @@ internal struct ImageAuthoringTests {
     let info = try expectDataInfo(for: dataPath, in: surgeon, catalog: catalog)
     #expect(info.digest.count == 20)
     #expect(Data(info.digest) == Data(SHA1Digest.hash(Array(tinyJPEG))))
+    #expect(info.materializedLength == UInt64(tinyJPEG.count))
+    #expect(try decodedAttributes(of: info).hasTSD_ImageDataAttributes_imageDataAttributes)
+    try expectStyleExternalReference(in: surgeon, catalog: catalog)
 
     let imageId = try expectImageGeometry(
       in: surgeon,
@@ -65,31 +68,10 @@ internal struct ImageAuthoringTests {
     bundle: KeyBundle
   ) throws -> String {
     let dataPaths = zipPaths(zipBytes).filter { $0.hasPrefix("Data/kn-") }
-    #expect(dataPaths.count == 2)
-    let dataPath = try #require(dataPaths.first { !$0.contains("-small-") })
+    #expect(dataPaths.count == 1)
+    let dataPath = try #require(dataPaths.first)
     #expect(bundle.entry(at: dataPath) != nil)
     return dataPath
-  }
-
-  /// Loads the `TSP.DataInfo` row for `dataPath`.
-  private func expectDataInfo(
-    for dataPath: String,
-    in surgeon: KeynoteArchiveSurgeon,
-    catalog: SlideCatalog
-  ) throws -> TSP_DataInfo {
-    guard let metaLoc = try catalog.locateFirst(named: "TSP.PackageMetadata") else {
-      Issue.record("missing metadata")
-      throw ArchiveSurgeryError.missingSlideComponent(slideIdentifier: 0)
-    }
-    let meta = try TSP_PackageMetadata(
-      serializedBytes: surgeon.members[metaLoc.memberIndex]
-        .records[metaLoc.recordIndex]
-        .payloads[metaLoc.payloadIndex],
-      partial: true
-    )
-    return try #require(
-      meta.datas.first { $0.fileName == dataPath.split(separator: "/").last.map(String.init) }
-    )
   }
 
   /// Asserts slide drawables and image geometry; returns the image drawable id.
@@ -128,9 +110,11 @@ internal struct ImageAuthoringTests {
     #expect(image.super.geometry.size.width == 320)
     #expect(image.super.geometry.size.height == 240)
     #expect(image.data.identifier == dataIdentifier)
-    #expect(image.hasThumbnailData)
+    #expect(!image.hasThumbnailData)
+    #expect(image.hasTracedPath)
     #expect(image.super.hasTitle)
     #expect(image.super.hasCaption)
+    #expect(archive.ownedDrawables.contains { $0.identifier == imageId })
     return imageId
   }
 
@@ -162,24 +146,5 @@ internal struct ImageAuthoringTests {
       partial: true
     )
     #expect(build.drawable.identifier == imageId)
-  }
-
-  /// Central-directory path list from a zip byte array.
-  private func zipPaths(_ bytes: [UInt8]) -> [String] {
-    let temp = FileManager.default.temporaryDirectory
-      .appending(path: "zippaths-\(UUID().uuidString).key")
-    try? Data(bytes).write(to: temp)
-    defer { try? FileManager.default.removeItem(at: temp) }
-    let proc = Process()
-    proc.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
-    proc.arguments = ["-Z1", temp.path]
-    let pipe = Pipe()
-    proc.standardOutput = pipe
-    try? proc.run()
-    proc.waitUntilExit()
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    return String(data: data, encoding: .utf8)?
-      .split(separator: "\n")
-      .map(String.init) ?? []
   }
 }
