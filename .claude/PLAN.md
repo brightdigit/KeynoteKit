@@ -149,10 +149,18 @@ Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.m
 #19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`), #17, #18, #20, #22, #23 (`48e2bab` / PR #32), #24 open pass (`24f7c40` / PR #36).
 
 **Drawable depth (promoted into v0.1.0 on 2026-07-30):** #3 geometry, #37 text
-formatting, #38 images — implemented on branch `3-37-38-drawable-depth`
-(`wt-drawable`). Keynote open: geometry + formatting OK; **images still crash**
-(triage in `research/findings/drawable_open_crash.md`). Tag `v0.1.0` blocked
-until images open cleanly and expanded #24 acceptance covers all three.
+formatting, #38 images — **landed 2026-07-31 via PR #39 (`211b956`)**; all
+three issues closed. Every open/render crash was root-caused and fixed
+(`research/findings/drawable_open_crash.md`); all 8 acceptance decks were
+open+render green pre-merge via scripted slide-image export. Tag `v0.1.0`
+now waits only on the expanded #24 human pass — checklist in
+`research/findings/acceptance_keynote_open.md`.
+
+**Mixed formatting runs (#40):** landed 2026-07-31 via PR #41 (`45b8c4f`),
+merged pre-tag because it also renames the public DSL surface
+(`Text`→`TextBox`, `TextRun`→`Text`; no bare strings in builders). Per-run
+character styles render-verified by human pass (`text_runs.key`). The
+acceptance catalog is now **9** decks.
 
 **Prior open-pass note:** Human Keynote 15.3 open pass is **5/5 green** for the
 original five decks (`bisect_in`, `bisect_out`, `bisect_action`,
