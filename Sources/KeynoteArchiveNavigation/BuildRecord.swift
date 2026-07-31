@@ -49,8 +49,11 @@ package struct BuildRecord: Equatable, Codable, Sendable {
   package var drawable: String?
 
   /// The sparse option bag: `customBounce`, `customTravelDistance`,
-  /// `customTwist`, `customTextDelivery`, `customDeliveryOption`,
-  /// `delivery`, and `eventTrigger`, when present.
+  /// `customTextDelivery`, `customDeliveryOption`, `delivery`, and
+  /// `eventTrigger`, when present. Python's key list also names
+  /// `customTwist`, but the 15.3 schema defines `custom_twist` only on
+  /// `KN.TransitionAttributesArchive` — a build block can never carry it,
+  /// so the key is unreachable on both sides.
   package var options: [String: BuildOptionValue]
 
   /// Creates a record; see the field documentation for semantics.

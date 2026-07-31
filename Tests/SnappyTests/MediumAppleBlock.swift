@@ -5,6 +5,7 @@ internal enum MediumAppleBlock {
   /// The captured block.
   internal static let value = AppleBlock(
     origin: "build_shape_A.key/TemplateSlide-2652002.iwa",
+    decodedSHA256: "7cf7fce0b95b1ec645304d6c9ae49080cba65615999a65fc76bdbfbd280555fb",
     uncompressedCount: 2_924,
     hex: """
       EC16B85408E2EEA101124D0805120301000518960422170A030A012D10031801220CF4EEA101E6EEA101EAEEA1012A28

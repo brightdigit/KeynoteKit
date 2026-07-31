@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import Snappy
@@ -17,6 +18,12 @@ internal struct AppleCorpusTests {
   internal func decodesAppleBlock(sample: AppleBlock) throws {
     let decoded = try Snappy.default.decompress(sample.block)
     #expect(decoded.count == sample.uncompressedCount, "wrong length for \(sample.origin)")
+    // Copy offsets do not affect output length, so the digest is what
+    // actually cross-checks decoding against an independent implementation.
+    #expect(
+      SHA256Digest.hexString(of: Data(decoded)) == sample.decodedSHA256,
+      "wrong payload bytes for \(sample.origin)"
+    )
   }
 
   @Test("agrees with Apple's declared length before decoding", arguments: AppleBlockFixtures.all)

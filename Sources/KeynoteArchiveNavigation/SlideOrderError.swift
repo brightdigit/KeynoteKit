@@ -40,4 +40,8 @@ package enum SlideOrderError: Error, Equatable, Sendable {
 
   /// A slide identifier from the tree has no record in any member.
   case missingSlide(identifier: UInt64)
+
+  /// A visited slide node has children of its own; the one-level walk
+  /// (matching Python `_slide_order`) would silently drop those slides.
+  case nestedSlideNode(identifier: UInt64)
 }

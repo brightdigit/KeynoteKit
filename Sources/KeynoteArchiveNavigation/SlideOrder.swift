@@ -101,6 +101,12 @@ package enum SlideOrder {
       guard let node = try slideNode(withIdentifier: nodeIdentifier, in: index) else {
         throw SlideOrderError.missingSlideNode(identifier: nodeIdentifier)
       }
+      // The walk is one level deep, matching Python `_slide_order`. A node
+      // with its own children (grouped/indented slides) would silently drop
+      // slides from the order the writer consumes — refuse instead.
+      guard node.children.isEmpty else {
+        throw SlideOrderError.nestedSlideNode(identifier: nodeIdentifier)
+      }
       if node.hasSlide {
         identifiers.append(node.slide.identifier)
       }

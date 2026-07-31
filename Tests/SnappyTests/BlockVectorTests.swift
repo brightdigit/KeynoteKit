@@ -42,6 +42,19 @@ internal struct BlockVectorTests {
     #expect(try Snappy.default.decompress(block) == Array("ababab".utf8))
   }
 
+  @Test("decodes a one-byte-offset copy reaching past 255")
+  internal func decodesCopy1LargeOffset() throws {
+    // Copy1 offsets carry bits 8...10 in the tag's high bits; an offset of
+    // 260 exercises them where a single operand byte cannot.
+    let literal = (0..<300).map { UInt8($0 % 251) }
+    // Preamble 304; literal selector 61 (0xF4) with a 2-byte length of 299;
+    // copy1 tag (260>>8)<<5 | (4-4)<<2 | 0x01 = 0x21, operand 260 & 0xFF.
+    var block: [UInt8] = [0xB0, 0x02, 0xF4, 0x2B, 0x01]
+    block.append(contentsOf: literal)
+    block.append(contentsOf: [0x21, 0x04])
+    #expect(try Snappy.default.decompress(block) == literal + literal[40..<44])
+  }
+
   @Test("decodes a two-byte-offset copy")
   internal func decodesCopy2() throws {
     // 300 bytes of literal, then a 10-byte copy reaching back 300.

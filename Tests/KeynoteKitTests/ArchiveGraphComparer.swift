@@ -53,7 +53,9 @@ internal enum ArchiveGraphComparer {
     guard authored.resolvedTypes == golden.resolvedTypes,
       authored.info.messageInfos.map(\.version) == golden.info.messageInfos.map(\.version),
       authored.info.messageInfos.map(\.objectReferences)
-        == golden.info.messageInfos.map(\.objectReferences)
+        == golden.info.messageInfos.map(\.objectReferences),
+      authored.info.messageInfos.map(\.dataReferences)
+        == golden.info.messageInfos.map(\.dataReferences)
     else {
       return "record \(identifier): header differs"
     }

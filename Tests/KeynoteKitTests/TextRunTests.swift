@@ -59,6 +59,31 @@ internal struct TextRunTests {
     #expect(neighbor.tableCharStyle.entries.isEmpty)
   }
 
+  @Test("run-level italic and font lower onto the character style")
+  internal func italicAndFontRuns() throws {
+    let surgeon = try written(
+      Deck {
+        Slide {
+          TextBox {
+            Text("Slanted").italic().font("Helvetica")
+            Text(" upright")
+          }
+          TextBox("Neighbor")
+        }
+      }
+    )
+    let archive = try firstSlideArchive(in: surgeon)
+    let storage = try storage(forDrawable: archive.drawablesZOrder[0].identifier, in: surgeon)
+    try #require(storage.tableCharStyle.entries.count == 2)
+    let slanted = try characterStyle(
+      storage.tableCharStyle.entries[0].object.identifier,
+      in: surgeon
+    )
+    #expect(slanted.charProperties.italic == true)
+    #expect(slanted.charProperties.fontName == "Helvetica")
+    #expect(!slanted.charProperties.hasBold)
+  }
+
   @Test("all-plain runs write no character styles")
   internal func plainRuns() throws {
     let surgeon = try written(

@@ -8,6 +8,7 @@ internal enum ChunkBoundaryAppleBlock {
   /// The captured block.
   internal static let value = AppleBlock(
     origin: "build_action_B.key/DocumentStylesheet.iwa",
+    decodedSHA256: "9a41a68a6ce9b06adfe2e0c23db15c80de0d4f7ef3bb2ddb8f220dbd04d7a9e2",
     uncompressedCount: 65_536,
     hex: """
       80800498140D0101F04115910020421DF400F041250000000012140D315CC63E15262814BF1D6BB537BF250116101DCD

@@ -3,6 +3,10 @@ internal struct AppleBlock: Sendable, CustomStringConvertible {
   /// Which fixture and component the block came from.
   internal let origin: String
 
+  /// SHA-256 of the decoded payload, computed independently with
+  /// python-snappy (cramjam) — length alone cannot see copy-offset bugs.
+  internal let decodedSHA256: String
+
   /// The uncompressed length Apple's preamble declares.
   internal let uncompressedCount: Int
 
