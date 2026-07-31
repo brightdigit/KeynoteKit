@@ -77,6 +77,16 @@ internal struct ZipCentralDirectoryRecord {
     guard nameStart + nameByteCount <= buffer.bytes.count else {
       throw KeyBundleError.truncatedArchive(context: "central directory entry name")
     }
+    // `Int(exactly:)` keeps untrusted 32-bit size/offset fields from
+    // trapping on 32-bit platforms; such values cannot address real data
+    // there, so they are malformed by construction.
+    guard
+      let compressedByteCount = Int(exactly: buffer.readUInt32(at: offset + 20)),
+      let uncompressedByteCount = Int(exactly: buffer.readUInt32(at: offset + 24)),
+      let localHeaderOffset = Int(exactly: buffer.readUInt32(at: offset + 42))
+    else {
+      throw KeyBundleError.truncatedArchive(context: "central directory sizes")
+    }
     return ZipCentralDirectoryRecord(
       path: String(
         decoding: buffer.bytes[nameStart..<(nameStart + nameByteCount)],
@@ -84,9 +94,9 @@ internal struct ZipCentralDirectoryRecord {
       ),
       method: UInt16(buffer.readUInt16(at: offset + 10)),
       crc: buffer.readUInt32(at: offset + 16),
-      compressedByteCount: Int(buffer.readUInt32(at: offset + 20)),
-      uncompressedByteCount: Int(buffer.readUInt32(at: offset + 24)),
-      localHeaderOffset: Int(buffer.readUInt32(at: offset + 42)),
+      compressedByteCount: compressedByteCount,
+      uncompressedByteCount: uncompressedByteCount,
+      localHeaderOffset: localHeaderOffset,
       recordByteCount: fixedByteCount + nameByteCount + extraByteCount + commentByteCount
     )
   }

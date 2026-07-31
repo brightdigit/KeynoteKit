@@ -94,13 +94,15 @@ public struct TSPArchiveStream: Sendable {
     guard let (headerLength, headerStart) = ProtobufVarint.read(from: bytes, at: index) else {
       throw TSPArchiveStreamError.truncatedVarint(offset: index)
     }
-    let headerEnd = headerStart + Int(headerLength)
-    guard headerEnd <= bytes.count else {
+    // Compare in UInt64 space: a crafted varint can exceed Int.max, and
+    // Int(headerLength) on such a value traps instead of throwing.
+    guard headerLength <= UInt64(bytes.count - headerStart) else {
       throw TSPArchiveStreamError.truncatedArchiveInfo(
         offset: index,
-        expected: Int(headerLength)
+        expected: Int(clamping: headerLength)
       )
     }
+    let headerEnd = headerStart + Int(headerLength)
     let info = try TSP_ArchiveInfo(
       serializedBytes: Array(bytes[headerStart..<headerEnd]),
       partial: true
@@ -109,14 +111,16 @@ public struct TSPArchiveStream: Sendable {
     var payloads: [[UInt8]] = []
     payloads.reserveCapacity(info.messageInfos.count)
     for messageInfo in info.messageInfos {
-      let payloadEnd = cursor + Int(messageInfo.length)
-      guard payloadEnd <= bytes.count else {
+      // UInt32 lengths exceed Int.max on 32-bit platforms; bound before
+      // converting so malformed input throws instead of trapping.
+      guard UInt64(messageInfo.length) <= UInt64(bytes.count - cursor) else {
         throw TSPArchiveStreamError.truncatedPayload(
           archiveIdentifier: info.identifier,
-          expected: Int(messageInfo.length),
+          expected: Int(clamping: messageInfo.length),
           available: bytes.count - cursor
         )
       }
+      let payloadEnd = cursor + Int(messageInfo.length)
       payloads.append(Array(bytes[cursor..<payloadEnd]))
       cursor = payloadEnd
     }

@@ -53,7 +53,9 @@ public struct Snappy: Sendable {
   ///
   /// The format bounds a block's uncompressed length to 32 bits. Producers
   /// typically chunk well below that; Apple's `.iwa` writer uses 64 KiB.
-  public static let maximumBlockSize = Int(UInt32.max)
+  /// Clamped so 32-bit platforms (`Int` = `Int32`) cap at what they can
+  /// materialize instead of trapping on first touch.
+  public static let maximumBlockSize = Int(clamping: UInt32.max)
 
   private init() {}
 

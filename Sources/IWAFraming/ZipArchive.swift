@@ -59,6 +59,35 @@ internal struct ZipArchive: Sendable {
 
   /// Serializes `entries` as a `STORED`-only zip, preserving order verbatim.
   internal func serialize(_ entries: [KeyBundleEntry]) throws -> [UInt8] {
+    try validate(entries)
+    var output = ZipBytes()
+    let (offsets, checksums) = try appendLocalEntries(entries, to: &output)
+    let directoryOffset = output.bytes.count
+    guard directoryOffset < 0xFFFF_FFFF else {
+      throw KeyBundleError.zip64Unsupported
+    }
+    for (index, entry) in entries.enumerated() {
+      ZipCentralDirectoryRecord.append(
+        to: &output,
+        entry: entry,
+        crc: checksums[index],
+        localHeaderOffset: offsets[index]
+      )
+    }
+    guard output.bytes.count - directoryOffset < 0xFFFF_FFFF else {
+      throw KeyBundleError.zip64Unsupported
+    }
+    ZipEndOfCentralDirectory.append(
+      to: &output,
+      entryCount: entries.count,
+      centralDirectoryOffset: directoryOffset,
+      centralDirectoryByteCount: output.bytes.count - directoryOffset
+    )
+    return output.bytes
+  }
+
+  /// Rejects duplicate paths and anything needing zip64 before writing.
+  private func validate(_ entries: [KeyBundleEntry]) throws {
     var seenPaths = Set<String>()
     for entry in entries {
       guard seenPaths.insert(entry.path).inserted else {
@@ -71,32 +100,30 @@ internal struct ZipArchive: Sendable {
     guard entries.count < 0xFFFF else {
       throw KeyBundleError.zip64Unsupported
     }
-    var output = ZipBytes()
+  }
+
+  /// Appends each entry's local header and body, returning header offsets
+  /// and checksums for the central directory.
+  private func appendLocalEntries(
+    _ entries: [KeyBundleEntry],
+    to output: inout ZipBytes
+  ) throws -> (offsets: [Int], checksums: [UInt32]) {
     var offsets: [Int] = []
     var checksums: [UInt32] = []
     for entry in entries {
+      // Individually sub-4 GiB bodies can still push later header offsets
+      // past the 32-bit fields; guard the cumulative offset so oversized
+      // archives throw instead of trapping in the UInt32 appends.
+      guard output.bytes.count < 0xFFFF_FFFF else {
+        throw KeyBundleError.zip64Unsupported
+      }
       offsets.append(output.bytes.count)
       let crc = CRC32.checksum(entry.body[...])
       checksums.append(crc)
       ZipLocalFileHeader.append(to: &output, entry: entry, crc: crc)
       output.append(contentsOf: entry.body)
     }
-    let directoryOffset = output.bytes.count
-    for (index, entry) in entries.enumerated() {
-      ZipCentralDirectoryRecord.append(
-        to: &output,
-        entry: entry,
-        crc: checksums[index],
-        localHeaderOffset: offsets[index]
-      )
-    }
-    ZipEndOfCentralDirectory.append(
-      to: &output,
-      entryCount: entries.count,
-      centralDirectoryOffset: directoryOffset,
-      centralDirectoryByteCount: output.bytes.count - directoryOffset
-    )
-    return output.bytes
+    return (offsets, checksums)
   }
 
   /// Extracts and verifies one entry's body via its central directory record.

@@ -62,4 +62,9 @@ internal enum Element {
 
   /// Largest offset a two-byte-offset copy can reach back.
   internal static let maximumCopy2Offset = 65_535
+
+  /// Largest ratio of decoded output to encoded input any element allows:
+  /// a two-byte-offset copy spends 3 encoded bytes to replay up to 64,
+  /// so no valid block expands past ⌈64 / 3⌉ times its encoded size.
+  internal static let maximumExpansionFactor = 22
 }

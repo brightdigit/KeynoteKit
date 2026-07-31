@@ -47,7 +47,11 @@ internal enum ProtobufVarint {
     var cursor = index
     while cursor < bytes.count, cursor - index < maximumWidth {
       let byte = bytes[cursor]
-      value |= UInt64(byte & 0x7F) << shift
+      let group = UInt64(byte & 0x7F)
+      guard (group << shift) >> shift == group else {
+        return nil
+      }
+      value |= group << shift
       cursor += 1
       if byte & 0x80 == 0 {
         return (value: value, next: cursor)

@@ -61,10 +61,10 @@ internal enum Varint {
       shift += 7
     }
 
-    guard result <= UInt64(UInt32.max) else {
+    guard result <= UInt64(UInt32.max), let value = Int(exactly: result) else {
       throw SnappyError.invalidLengthPreamble
     }
-    return Int(result)
+    return value
   }
 
   /// Appends `value` to `output` as a varint.

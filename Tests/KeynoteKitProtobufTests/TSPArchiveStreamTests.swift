@@ -86,6 +86,26 @@ internal struct TSPArchiveStreamTests {
     }
   }
 
+  @Test("rejects a header length exceeding Int.max without trapping")
+  internal func rejectsHugeVarintHeaderLength() {
+    // Ten varint bytes decoding to 2^63 — larger than any addressable
+    // stream; Int(headerLength) on this value would trap.
+    let huge: [UInt8] = [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01]
+    #expect(throws: TSPArchiveStreamError.self) {
+      _ = try TSPArchiveStream.default.records(from: huge)
+    }
+  }
+
+  @Test("rejects a varint whose tenth byte overflows UInt64")
+  internal func rejectsOverflowingVarint() {
+    // [0xFF ×9, 0x7F] would silently wrap to UInt64.max if overflow were
+    // not detected; the reader must treat it as malformed instead.
+    let wrapped = [UInt8](repeating: 0xFF, count: 9) + [0x7F]
+    #expect(throws: TSPArchiveStreamError.truncatedVarint(offset: 0)) {
+      _ = try TSPArchiveStream.default.records(from: wrapped)
+    }
+  }
+
   @Test("rejects a payload running past the stream")
   internal func rejectsTruncatedPayload() throws {
     let record = try makeRecord(identifier: 6, payloads: [Array("payload".utf8)])

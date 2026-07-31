@@ -59,6 +59,23 @@ internal struct MalformedBlockTests {
     }
   }
 
+  @Test("rejects a tiny input claiming a ~4 GiB length")
+  internal func rejectsHugeClaimedLength() {
+    // The preamble alone claims UInt32.max uncompressed bytes; the decoder
+    // must fail on the truncated body without reserving that allocation.
+    #expect(throws: SnappyError.truncatedInput) {
+      _ = try Snappy.default.decompress([0xFF, 0xFF, 0xFF, 0xFF, 0x0F, 0x00])
+    }
+  }
+
+  @Test("rejects a copy overshooting the promised output length")
+  internal func rejectsCopyPastPromisedLength() {
+    // Preamble promises 2 bytes; a literal plus a 4-byte copy would emit 5.
+    #expect(throws: SnappyError.lengthMismatch) {
+      _ = try Snappy.default.decompress([0x02, 0x00, 0x61, 0x01, 0x01])
+    }
+  }
+
   @Test("throws rather than traps on arbitrary bytes")
   internal func survivesArbitraryInput() {
     // Deterministic sweep: whatever these decode to, nothing may crash.

@@ -51,14 +51,33 @@ internal struct SnappyDecoder: Sendable {
     }
 
     var output = [UInt8]()
-    output.reserveCapacity(expectedCount)
+    // A 6-byte input can claim a ~4 GiB length; reserve no more than the
+    // input could possibly expand to so a crafted preamble cannot force a
+    // giant allocation before any body validation.
+    let expansionBound =
+      input.count <= Int.max / Element.maximumExpansionFactor
+      ? input.count * Element.maximumExpansionFactor
+      : expectedCount
+    output.reserveCapacity(min(expectedCount, expansionBound))
 
     while index < input.count {
       let tag = input[index]
       if tag & 0x03 == Element.literalTag {
-        try appendLiteral(tag: tag, input: input, index: &index, output: &output)
+        try appendLiteral(
+          tag: tag,
+          input: input,
+          index: &index,
+          output: &output,
+          expectedCount: expectedCount
+        )
       } else {
-        try appendCopy(tag: tag, input: input, index: &index, output: &output)
+        try appendCopy(
+          tag: tag,
+          input: input,
+          index: &index,
+          output: &output,
+          expectedCount: expectedCount
+        )
       }
     }
 
@@ -77,12 +96,18 @@ internal struct SnappyDecoder: Sendable {
     guard index + width <= input.count else {
       throw SnappyError.truncatedInput
     }
-    var value = 0
+    // Accumulate in UInt64: a four-byte operand shifted into a 32-bit `Int`
+    // lands in the sign bit, and a negative length would slip past bounds
+    // guards into a trapping slice.
+    var value: UInt64 = 0
     for offset in 0..<width {
-      value |= Int(input[index + offset]) << (8 * offset)
+      value |= UInt64(input[index + offset]) << (8 * offset)
     }
     index += width
-    return value
+    guard let result = Int(exactly: value) else {
+      throw SnappyError.blockTooLarge
+    }
+    return result
   }
 
   /// Appends a literal element's bytes to `output`.
@@ -90,7 +115,8 @@ internal struct SnappyDecoder: Sendable {
     tag: UInt8,
     input: UnsafeBufferPointer<UInt8>,
     index: inout Int,
-    output: inout [UInt8]
+    output: inout [UInt8],
+    expectedCount: Int
   ) throws {
     let selector = Int(tag >> 2)
     index += 1
@@ -102,11 +128,18 @@ internal struct SnappyDecoder: Sendable {
       length = selector + 1
     } else {
       let width = selector - Element.firstExtendedLiteralSelector + 1
-      length = try readInteger(from: input, at: &index, width: width) + 1
+      let stored = try readInteger(from: input, at: &index, width: width)
+      guard stored < Int.max else {
+        throw SnappyError.blockTooLarge
+      }
+      length = stored + 1
     }
 
-    guard index + length <= input.count else {
+    guard length <= input.count - index else {
       throw SnappyError.truncatedInput
+    }
+    guard length <= expectedCount - output.count else {
+      throw SnappyError.lengthMismatch
     }
     output.append(contentsOf: UnsafeBufferPointer(rebasing: input[index..<(index + length)]))
     index += length
@@ -117,12 +150,16 @@ internal struct SnappyDecoder: Sendable {
     tag: UInt8,
     input: UnsafeBufferPointer<UInt8>,
     index: inout Int,
-    output: inout [UInt8]
+    output: inout [UInt8],
+    expectedCount: Int
   ) throws {
     let (length, offset) = try readCopyOperands(tag: tag, input: input, index: &index)
 
     guard offset > 0, offset <= output.count else {
       throw SnappyError.invalidCopyOffset
+    }
+    guard length <= expectedCount - output.count else {
+      throw SnappyError.lengthMismatch
     }
 
     // Overlapping copies are legal and are how runs are encoded, so this must

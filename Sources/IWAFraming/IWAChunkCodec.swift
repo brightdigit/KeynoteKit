@@ -47,8 +47,9 @@ public struct IWAChunkCodec: Sendable {
   /// The exact uncompressed size at which Apple's writer splits chunks.
   ///
   /// Measured, not assumed: five fixture chunks sit exactly on this boundary
-  /// and none exceed it.
-  public var maximumUncompressedChunkCount = 65_536
+  /// and none exceed it. Immutable by design: `0` would hang ``encode(_:)``
+  /// and an oversized value would wrap the 24-bit chunk length field.
+  public let maximumUncompressedChunkCount = 65_536
 
   /// The number of bytes in a chunk header.
   private let headerByteCount = 4

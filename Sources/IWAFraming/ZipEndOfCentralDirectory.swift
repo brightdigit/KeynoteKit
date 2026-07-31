@@ -71,9 +71,14 @@ internal struct ZipEndOfCentralDirectory {
     guard entryCount < 0xFFFF, directoryOffset < 0xFFFF_FFFF else {
       throw KeyBundleError.zip64Unsupported
     }
+    // `Int(exactly:)` keeps the untrusted offset from trapping on 32-bit
+    // platforms, where it cannot address real data anyway.
+    guard let centralDirectoryOffset = Int(exactly: directoryOffset) else {
+      throw KeyBundleError.truncatedArchive(context: "central directory offset")
+    }
     return ZipEndOfCentralDirectory(
       entryCount: entryCount,
-      centralDirectoryOffset: Int(directoryOffset)
+      centralDirectoryOffset: centralDirectoryOffset
     )
   }
 
