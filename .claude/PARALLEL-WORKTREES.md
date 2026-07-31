@@ -130,14 +130,13 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-30): drawable depth (#3 / #37 / #38) in `wt-drawable` / `3-37-38-drawable-depth`.**
+> **Current position (2026-07-31, post-#41): expanded #24 acceptance in `wt-24-expanded` / `24-expanded-acceptance` — the only active lane.**
 >
-> - PR #36 (`24f7c40`) landed: #24 Keynote open pass **5/5 green** + multi-slide cloning fixes.
-> - Map #12 promoted geometry (#3), text formatting (#37), and images (#38) into v0.1.0 before the tag.
-> - This lane implements all three in one PR (shared `Text` / slide-item / surgeon seams). Findings: `drawable_geometry.md`, `text_formatting.md`, `image_authoring.md`, **`drawable_open_crash.md`**.
-> - Keynote 15.3: **all 8 acceptance decks open AND render green** (2026-07-31). The 2026-07-30 open-only pass missed three render failures the human pass caught; all root-caused and fixed: multi-slide clone bugs (RecordCloner empty-reference materialization + missing component uuid/data-reference bookkeeping — the drawable_geometry crash/blank slide 2), text formatting switched to Keynote's paragraph-style-variation mechanism with full cross-component registration (+ `tsdFill` for color), and a decodable sample JPEG (old 1×1 was rejected by ImageIO → "?" placeholder). Verified via scripted slide-image export + AppleScript model probes — see `drawable_open_crash.md`.
-> - Remaining before tag `v0.1.0`: human pass (confirm Magic Move plays 1→2, no silent "repair" dialog), merge PR #39, tag.
-> - Post-v0.1.0 lanes unchanged: **#4** shapes deferred; **#10** live Keynote verify still open. Cross-check with `gh issue view 12`.
+> - PR #39 (`211b956`) **merged** to `v0.1.x`: drawable depth (#3 geometry, #37 text formatting, #38 images) — issues closed; #5 closed (stay vendored); #12 map updated. Lane branch `3-37-38-drawable-depth` deleted local+remote; stale `24-build-acceptance-note` / `zip-storage-finding` deleted (squash-contained in `24f7c40` / `dda22d4`).
+> - PR #41 (`45b8c4f`) **merged** to `v0.1.x` pre-tag: #40 mixed formatting runs (per-run `tableCharStyle` + minted `TSWP_CharacterStyleArchive` type 2021, render-verified by human pass) **plus the DSL rename** `Text`→`TextBox` / `TextRun`→`Text` — merged before the tag because it renames the public v0.1.0 surface. Lane branch `40-mixed-formatting-runs` deleted on remote; `wt-40-runs` can be removed. Catalog is now **9** decks (adds `text_runs`).
+> - Keynote 15.3: all 8 pre-#40 acceptance decks were open+render green pre-merge on the identical tree (2026-07-31, scripted slide-image export + AppleScript probes — `drawable_open_crash.md`); `text_runs.key` render-verified by human pass the same day.
+> - **Remaining before tag `v0.1.0`** (lane `24-expanded-acceptance`): human pass per the expanded checklist in `research/findings/acceptance_keynote_open.md` — confirm no silent "repair" dialog, animations play (Magic Move 1→2, image Dissolve In), builds/order/direction; optionally `KEYNOTEKIT_LIVE_KEYNOTE=1 swift test` to close #10. Then PR the recorded results, tag `v0.1.0`, close #24 + #12 (+ #40 housekeeping — its code merged via PR #41).
+> - Post-v0.1.0 lanes otherwise unchanged: **#4** shapes deferred; **#10** live Keynote verify open. Cross-check with `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
 
