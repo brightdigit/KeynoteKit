@@ -32,16 +32,6 @@ package import IWAFraming
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
-  /// Object / data identifiers wired into one image drawable.
-  internal struct ImageDrawableIdentifiers {
-    internal var object: UInt64
-    internal var titleCaption: UInt64
-    internal var caption: UInt64
-    internal var data: UInt64
-    internal var parentSlide: UInt64
-    internal var style: UInt64?
-  }
-
   /// One minted image drawable plus its zip / metadata bookkeeping.
   private struct MintedImage {
     var record: TSPArchiveRecord
@@ -76,6 +66,9 @@ extension KeynoteArchiveSurgeon {
       partial: true
     )
     slide.drawablesZOrder.removeAll()
+    let existingRecordIdentifiers = Set(
+      members[location.memberIndex].records.map(\.info.identifier)
+    )
     var pending = PendingRegistrations()
     for item in items {
       try appendDrawable(
@@ -89,6 +82,16 @@ extension KeynoteArchiveSurgeon {
     }
     members[location.memberIndex].records[location.recordIndex].payloads[0] =
       try slide.serializedBytes(partial: true)
+    var uuidEntries: [TSP_ObjectUUIDMapEntry] = []
+    for record in members[location.memberIndex].records
+    where !existingRecordIdentifiers.contains(record.info.identifier) {
+      var entry = TSP_ObjectUUIDMapEntry()
+      entry.identifier = record.info.identifier
+      entry.uuid.lower = UInt64.random(in: .min ... .max, using: &generator)
+      entry.uuid.upper = UInt64.random(in: .min ... .max, using: &generator)
+      uuidEntries.append(entry)
+    }
+    try registerUUIDEntries(uuidEntries, slideIdentifier: location.slideIdentifier)
     for entry in pending.data {
       bundle.upsertEntry(body: entry.body, at: entry.path)
     }

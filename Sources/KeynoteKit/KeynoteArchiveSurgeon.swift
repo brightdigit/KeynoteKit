@@ -76,7 +76,12 @@ package struct KeynoteArchiveSurgeon {
   ) throws {
     var nextIdentifier = maximumIdentifier() + 1
     let firstIdentifier = nextIdentifier
-    try expandSlides(to: deck.slides.count, in: &bundle, nextIdentifier: &nextIdentifier)
+    try expandSlides(
+      to: deck.slides.count,
+      in: &bundle,
+      nextIdentifier: &nextIdentifier,
+      using: &generator
+    )
     let slides = try SlideCatalog(members: members).orderedSlides()
     guard slides.count == deck.slides.count else {
       throw ArchiveSurgeryError.slideCountMismatch(expected: deck.slides.count, found: slides.count)

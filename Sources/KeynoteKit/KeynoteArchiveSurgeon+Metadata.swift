@@ -68,6 +68,63 @@ extension KeynoteArchiveSurgeon {
     }
   }
 
+  /// Appends uuid-map entries to the component whose locator stem matches
+  /// `componentStem` (e.g. `DocumentStylesheet`).
+  internal mutating func registerUUIDEntries(
+    _ entries: [TSP_ObjectUUIDMapEntry],
+    componentStem: String
+  ) throws {
+    guard !entries.isEmpty else {
+      return
+    }
+    try withPackageMetadata { metadata in
+      guard
+        let componentIndex = metadata.components.firstIndex(where: {
+          $0.preferredLocator == componentStem || $0.locator == componentStem
+        })
+      else {
+        return
+      }
+      metadata.components[componentIndex].objectUuidMapEntries.append(contentsOf: entries)
+    }
+  }
+
+  /// Merges one (object → data) usage into a component's data-reference
+  /// list, extending the existing row for `dataIdentifier` when present.
+  ///
+  /// A record whose header declares a data reference that the owning
+  /// component does not register fails TSP's integrity check and silently
+  /// refuses to load.
+  internal mutating func registerDataObjectReference(
+    dataIdentifier: UInt64,
+    objectIdentifier: UInt64,
+    count: UInt32,
+    componentStem: String
+  ) throws {
+    try withPackageMetadata { metadata in
+      guard
+        let componentIndex = metadata.components.firstIndex(where: {
+          $0.preferredLocator == componentStem || $0.locator == componentStem
+        })
+      else {
+        return
+      }
+      var objectReference = TSP_ComponentDataReference.ObjectReference()
+      objectReference.objectIdentifier = objectIdentifier
+      objectReference.count = count
+      var rows = metadata.components[componentIndex].dataReferences
+      if let rowIndex = rows.firstIndex(where: { $0.dataIdentifier == dataIdentifier }) {
+        rows[rowIndex].objectReferenceList.append(objectReference)
+      } else {
+        var row = TSP_ComponentDataReference()
+        row.dataIdentifier = dataIdentifier
+        row.objectReferenceList = [objectReference]
+        rows.append(row)
+      }
+      metadata.components[componentIndex].dataReferences = rows
+    }
+  }
+
   /// Registers new `DataInfo` rows and slide-component data references.
   internal mutating func registerData(
     infos: [TSP_DataInfo],

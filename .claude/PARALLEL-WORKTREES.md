@@ -135,8 +135,8 @@ Each new worktree that runs Python research tools needs its own venv setup
 > - PR #36 (`24f7c40`) landed: #24 Keynote open pass **5/5 green** + multi-slide cloning fixes.
 > - Map #12 promoted geometry (#3), text formatting (#37), and images (#38) into v0.1.0 before the tag.
 > - This lane implements all three in one PR (shared `Text` / slide-item / surgeon seams). Findings: `drawable_geometry.md`, `text_formatting.md`, `image_authoring.md`, **`drawable_open_crash.md`**.
-> - Keynote open: **all 8 acceptance decks green in 15.3** (2026-07-30 scripted pass: process survives + no new `.ips`). Image crashes root-caused and fixed: `DataInfo` `materializedLength` + `ImageDataAttributes`, no thumbnail, `ownedDrawables`, and the slide-component `externalReferences` edge to the media style — see `drawable_open_crash.md`.
-> - Remaining before tag `v0.1.0`: human open pass (confirm no silent "repair" warning — the scripted pass can't see dialogs), merge PR #39, tag.
+> - Keynote 15.3: **all 8 acceptance decks open AND render green** (2026-07-31). The 2026-07-30 open-only pass missed three render failures the human pass caught; all root-caused and fixed: multi-slide clone bugs (RecordCloner empty-reference materialization + missing component uuid/data-reference bookkeeping — the drawable_geometry crash/blank slide 2), text formatting switched to Keynote's paragraph-style-variation mechanism with full cross-component registration (+ `tsdFill` for color), and a decodable sample JPEG (old 1×1 was rejected by ImageIO → "?" placeholder). Verified via scripted slide-image export + AppleScript model probes — see `drawable_open_crash.md`.
+> - Remaining before tag `v0.1.0`: human pass (confirm Magic Move plays 1→2, no silent "repair" dialog), merge PR #39, tag.
 > - Post-v0.1.0 lanes unchanged: **#4** shapes deferred; **#10** live Keynote verify still open. Cross-check with `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)

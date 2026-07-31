@@ -38,10 +38,11 @@ extension KeynoteArchiveSurgeon {
   internal mutating func expandSlides(
     to count: Int,
     in bundle: inout KeyBundle,
-    nextIdentifier: inout UInt64
+    nextIdentifier: inout UInt64,
+    using generator: inout some RandomNumberGenerator
   ) throws {
     while try SlideCatalog(members: members).orderedSlides().count < count {
-      try cloneLastSlide(in: &bundle, nextIdentifier: &nextIdentifier)
+      try cloneLastSlide(in: &bundle, nextIdentifier: &nextIdentifier, using: &generator)
     }
   }
 

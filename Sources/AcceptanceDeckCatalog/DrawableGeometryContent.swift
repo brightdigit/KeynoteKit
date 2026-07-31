@@ -38,13 +38,13 @@ package struct DrawableGeometryContent: SlideContent {
         .position(x: 200, y: 200)
         .frame(width: 120, height: 60)
     }
+    .transition(.magicMove.duration(1))
     Slide {
       Text("Alpha")
         .magicId("alpha")
         .position(x: 480, y: 360)
         .frame(width: 280, height: 140)
     }
-    .transition(.magicMove.duration(1))
   }
 
   /// Creates the content.

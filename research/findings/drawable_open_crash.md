@@ -1,8 +1,72 @@
 # Drawable open-crash triage (#3 / #37 / #38) — RESOLVED
 
-Status as of 2026-07-30 (branch `3-37-38-drawable-depth`, PR #39): **all
+Status as of 2026-07-31 (branch `3-37-38-drawable-depth`, PR #39): **all
 resolved**. All 8 acceptance decks (5 original + 3 drawable-depth) open cleanly
-in Keynote 15.3 with no crash and no new `.ips`.
+in Keynote 15.3 with no crash and no new `.ips`, AND render correctly
+(verified via scripted `export … as slide images`, not just open-survival —
+the 2026-07-30 pass missed three render-level failures the human pass caught).
+
+## Human-pass failures found 2026-07-31 (all fixed)
+
+### drawable_geometry crash + blank slide 2 — three stacked clone bugs
+
+The user-reported open crash (`+[NSSet setWithObject:]` with nil, uncaught,
+via NSViewLayout) and the "slide 2 renders empty / 0 iWork items" symptom were
+the multi-slide CLONE path, root-caused by normalizing the cloned member's ids
+back to the template's and diffing, plus field-level comparison against a
+Keynote-made `duplicate slide` reference:
+
+1. **RecordCloner materialized absent optional references as EMPTY messages**
+   (identifier 0): accessing `slide.objectPlaceholder` / `drawable.caption` /
+   `drawable.title` through the generated accessor `inout` creates the field.
+   Keynote resolves reference 0 to nil → the slide's objects silently never
+   load (0 iWork items, `transition properties` = missing value) and Magic
+   Move pairing crashes on the nil. Fix: guard every singular remap with the
+   `has*` check (`RecordCloner.swift`).
+2. **Cloned slide component had `objectUuidMapEntries = []`** — Keynote gives
+   every slide-member record a fresh-uuid entry in its component map (14 on
+   the blank), and a fresh set again on duplicate. Fix: remap the template's
+   entries through the clone id map with fresh uuids (`appendComponent`).
+3. **Cloned slide node was missing Document-component bookkeeping**: a uuid
+   entry for the node, and a data-reference row entry for the node's
+   thumbnail data (`Data/st-…-9058.jpg`). A record whose header declares
+   `dataReferences` the component does not register fails TSP integrity.
+   Fix: `registerUUIDEntries(componentStem: "Document")` +
+   `registerDataObjectReference` merge (`cloneLastSlide`).
+
+Also: the DSL transition in `DrawableGeometryContent` moved to slide 1 —
+Keynote plays the OUTGOING slide's transition, so a Magic Move declared on the
+last slide never plays.
+
+### text_formatting rendered plain — wrong style mechanism
+
+The forked `TSWP.CharacterStyleArchive` on `tableCharStyle` opened cleanly but
+never rendered. Keynote's own whole-item formatting (script-driven reference
+on the same blank) uses a **`TSWP.ParagraphStyleArchive` variation**:
+`isVariation: true`, `parent` = the storage's current paragraph style,
+`stylesheet` super, char properties on the fork, `overrideCount` = property
+count, wired via the storage's `tableParaStyle` entry. Registration needs ALL
+of: stylesheet `styles` list, stylesheet `parentToChildrenStyleMap` under the
+parent, the storage record header's `objectReferences` swapped from parent to
+fork, slide-component `externalReferences` edge, and uuid entries in both the
+DocumentStylesheet and Slide components. **Color only paints via
+`charProperties.tsdFill`** (a fill with the same color) — `fontColor` alone
+renders black.
+
+### image_drawable showed the missing-media "?" placeholder
+
+The embedded hand-minimal 1×1 JPEG is not decodable by macOS ImageIO (`sips`
+returns nil dimensions) — wiring was fine; the media itself was rejected, so
+the editor showed "?" and playback showed nothing. Fix: embed a real
+sips-encoded 64×48 JPEG in `AcceptanceSampleJPEG`.
+
+## Verification harness additions
+
+`renderdeck.sh <deck> <outdir>`: open in Keynote, AppleScript
+`export … as slide images (PNG)`, read the PNGs — catches render-level
+failures that the open/crash pass cannot. AppleScript object-model queries
+(`count of iWork items of slide N`, `transition properties of slide N`)
+distinguish "component never loaded" from "loaded but not painted".
 
 ## Root causes (in the order they were found)
 

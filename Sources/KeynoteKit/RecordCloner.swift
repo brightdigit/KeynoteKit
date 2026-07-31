@@ -90,12 +90,27 @@ package enum RecordCloner {
 
   private static func rewrittenSlide(_ payload: [UInt8], map: [UInt64: UInt64]) throws -> [UInt8] {
     var slide = try KN_SlideArchive(serializedBytes: payload, partial: true)
-    remap(&slide.titlePlaceholder, map: map)
-    remap(&slide.bodyPlaceholder, map: map)
-    remap(&slide.slideNumberPlaceholder, map: map)
-    remap(&slide.objectPlaceholder, map: map)
-    remap(&slide.note, map: map)
-    remap(&slide.userDefinedGuideStorage, map: map)
+    remapSlideAnchors(&slide, map: map)
+    remapSlideLists(&slide, map: map)
+    return try slide.serializedBytes(partial: true)
+  }
+
+  /// Remaps the slide's singular references.
+  ///
+  /// Touching an absent optional field through its accessor materializes an
+  /// EMPTY reference (identifier 0) — Keynote resolves it to nil and
+  /// silently refuses to load the slide. Only remap fields that exist.
+  private static func remapSlideAnchors(_ slide: inout KN_SlideArchive, map: [UInt64: UInt64]) {
+    if slide.hasTitlePlaceholder { remap(&slide.titlePlaceholder, map: map) }
+    if slide.hasBodyPlaceholder { remap(&slide.bodyPlaceholder, map: map) }
+    if slide.hasSlideNumberPlaceholder { remap(&slide.slideNumberPlaceholder, map: map) }
+    if slide.hasObjectPlaceholder { remap(&slide.objectPlaceholder, map: map) }
+    if slide.hasNote { remap(&slide.note, map: map) }
+    if slide.hasUserDefinedGuideStorage { remap(&slide.userDefinedGuideStorage, map: map) }
+  }
+
+  /// Remaps the slide's repeated references.
+  private static func remapSlideLists(_ slide: inout KN_SlideArchive, map: [UInt64: UInt64]) {
     for index in slide.drawablesZOrder.indices {
       remap(&slide.drawablesZOrder[index], map: map)
     }
@@ -105,7 +120,6 @@ package enum RecordCloner {
     for index in slide.buildChunks.indices {
       remap(&slide.buildChunks[index], map: map)
     }
-    return try slide.serializedBytes(partial: true)
   }
 
   private static func rewrittenPlaceholder(
@@ -113,11 +127,21 @@ package enum RecordCloner {
     map: [UInt64: UInt64]
   ) throws -> [UInt8] {
     var placeholder = try KN_PlaceholderArchive(serializedBytes: payload, partial: true)
-    remap(&placeholder.super.deprecatedStorage, map: map)
-    remap(&placeholder.super.ownedStorage, map: map)
-    remap(&placeholder.super.super.super.caption, map: map)
-    remap(&placeholder.super.super.super.title, map: map)
-    remap(&placeholder.super.super.super.parent, map: map)
+    if placeholder.super.hasDeprecatedStorage {
+      remap(&placeholder.super.deprecatedStorage, map: map)
+    }
+    if placeholder.super.hasOwnedStorage {
+      remap(&placeholder.super.ownedStorage, map: map)
+    }
+    if placeholder.super.super.super.hasCaption {
+      remap(&placeholder.super.super.super.caption, map: map)
+    }
+    if placeholder.super.super.super.hasTitle {
+      remap(&placeholder.super.super.super.title, map: map)
+    }
+    if placeholder.super.super.super.hasParent {
+      remap(&placeholder.super.super.super.parent, map: map)
+    }
     return try placeholder.serializedBytes(partial: true)
   }
 
@@ -134,13 +158,17 @@ package enum RecordCloner {
 
   private static func rewrittenNote(_ payload: [UInt8], map: [UInt64: UInt64]) throws -> [UInt8] {
     var note = try KN_NoteArchive(serializedBytes: payload, partial: true)
-    remap(&note.containedStorage, map: map)
+    if note.hasContainedStorage {
+      remap(&note.containedStorage, map: map)
+    }
     return try note.serializedBytes(partial: true)
   }
 
   private static func rewrittenNode(_ payload: [UInt8], map: [UInt64: UInt64]) throws -> [UInt8] {
     var node = try KN_SlideNodeArchive(serializedBytes: payload, partial: true)
-    remap(&node.slide, map: map)
+    if node.hasSlide {
+      remap(&node.slide, map: map)
+    }
     return try node.serializedBytes(partial: true)
   }
 }

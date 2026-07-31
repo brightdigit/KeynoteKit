@@ -30,32 +30,36 @@
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
-  /// Registry type for `TSWP.CharacterStyleArchive`.
-  private static let characterStyleArchiveType: UInt32 = 2_021
+  /// Registry type for `TSWP.ParagraphStyleArchive`.
+  private static let paragraphStyleArchiveType: UInt32 = 2_022
 
-  /// Mints a per-item `TSWP.CharacterStyleArchive` so formatting does not
-  /// mutate the shared Body paragraph style in the document stylesheet.
+  /// Mints the forked paragraph-style variation carrying an item's formatting.
   ///
-  /// Real Keynote character styles always carry a `TSS.StyleArchive` `super`
-  /// pointing at the document stylesheet; omitting it crashes on open.
-  internal func characterStyleRecord(
+  /// Matches how Keynote itself styles a whole text item: a
+  /// `TSWP.ParagraphStyleArchive` with `isVariation`, `parent` = the storage's
+  /// current paragraph style, `stylesheet` super, and character properties.
+  /// Color must carry `tsdFill` alongside `fontColor` — modern Keynote paints
+  /// glyphs with the fill and ignores the legacy color alone.
+  internal func paragraphStyleRecord(
     for item: AuthoredSlide.TextItem,
-    identifier: UInt64
+    identifier: UInt64,
+    parentIdentifier: UInt64
   ) throws -> TSPArchiveRecord {
     guard let stylesheetIdentifier = try documentStylesheetIdentifier() else {
       throw ArchiveSurgeryError.missingSlideRecord(identifier: 0)
     }
     let properties = characterStyleProperties(for: item)
-    var base = TSS_StyleArchive()
-    base.stylesheet.identifier = stylesheetIdentifier
-    var style = TSWP_CharacterStyleArchive()
-    style.super = base
-    style.charProperties = properties
-    style.overrideCount = 1
+    var style = TSWP_ParagraphStyleArchive()
+    style.super.isVariation = true
+    style.super.parent.identifier = parentIdentifier
+    style.super.stylesheet.identifier = stylesheetIdentifier
+    style.charProperties = properties.bag
+    style.paraProperties = TSWP_ParagraphStylePropertiesArchive()
+    style.overrideCount = properties.count
     var messageInfo = TSP_MessageInfo()
-    messageInfo.type = Self.characterStyleArchiveType
+    messageInfo.type = Self.paragraphStyleArchiveType
     messageInfo.version = BuildRecordFactory.version
-    messageInfo.objectReferences = [stylesheetIdentifier]
+    messageInfo.objectReferences = [parentIdentifier]
     var info = TSP_ArchiveInfo()
     info.identifier = identifier
     info.messageInfos = [messageInfo]
@@ -65,48 +69,51 @@ extension KeynoteArchiveSurgeon {
     )
   }
 
-  /// Identifier of the document `TSS.StylesheetArchive`, if present.
-  internal func documentStylesheetIdentifier() throws -> UInt64? {
+  /// The storage's current paragraph style (`tableParaStyle` entry 0), used
+  /// as the fork's parent.
+  internal func currentParagraphStyleIdentifier(
+    ofStorage identifier: UInt64
+  ) throws -> UInt64? {
     let catalog = SlideCatalog(members: members)
-    guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
+    guard
+      let location = try catalog.locate(
+        recordIdentifier: identifier,
+        named: "TSWP.StorageArchive"
+      )
+    else {
       return nil
     }
-    return members[location.memberIndex].records[location.recordIndex].info.identifier
-  }
-
-  /// Registers `styleIdentifier` on the document stylesheet's `styles` list.
-  internal mutating func registerStyleInDocumentStylesheet(_ styleIdentifier: UInt64) throws {
-    let catalog = SlideCatalog(members: members)
-    guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: styleIdentifier)
-    }
-    var sheet = try TSS_StylesheetArchive(
+    let storage = try TSWP_StorageArchive(
       serializedBytes: members[location.memberIndex]
         .records[location.recordIndex]
         .payloads[location.payloadIndex],
       partial: true
     )
-    guard !sheet.styles.contains(where: { $0.identifier == styleIdentifier }) else {
-      return
-    }
-    var reference = TSP_Reference()
-    reference.identifier = styleIdentifier
-    sheet.styles.append(reference)
-    members[location.memberIndex].records[location.recordIndex]
-      .payloads[location.payloadIndex] = try sheet.serializedBytes(partial: true)
+    return storage.tableParaStyle.entries.first?.object.identifier
   }
 
-  /// Character-style property bag for an authored text item.
+  /// Character-style property bag for an authored text item, plus the number
+  /// of overridden properties (`overrideCount` on the fork).
   private func characterStyleProperties(
     for item: AuthoredSlide.TextItem
-  ) -> TSWP_CharacterStylePropertiesArchive {
+  ) -> (bag: TSWP_CharacterStylePropertiesArchive, count: UInt32) {
     var properties = TSWP_CharacterStylePropertiesArchive()
-    if let isBold = item.isBold { properties.bold = isBold }
-    if let isItalic = item.isItalic { properties.italic = isItalic }
-    if let fontSize = item.fontSize { properties.fontSize = Float(fontSize) }
+    var count: UInt32 = 0
+    if let isBold = item.isBold {
+      properties.bold = isBold
+      count += 1
+    }
+    if let isItalic = item.isItalic {
+      properties.italic = isItalic
+      count += 1
+    }
+    if let fontSize = item.fontSize {
+      properties.fontSize = Float(fontSize)
+      count += 1
+    }
     if let fontName = item.fontName {
       properties.fontName = fontName
-      properties.fontNameNull = false
+      count += 1
     }
     if let color = item.color {
       var tspColor = TSP_Color()
@@ -117,16 +124,20 @@ extension KeynoteArchiveSurgeon {
       tspColor.a = Float(color.alpha)
       tspColor.rgbspace = .srgb
       properties.fontColor = tspColor
-      properties.fontColorNull = false
+      var fill = TSD_FillArchive()
+      fill.color = tspColor
+      properties.tsdFill = fill
+      count += 2
     }
-    return properties
+    return (properties, count)
   }
 
-  /// Writes `text` into a placeholder's owned storage, optionally attaching
-  /// a character-style run for the whole string.
+  /// Writes `text` into a placeholder's owned storage; when a forked
+  /// paragraph style is supplied, swaps the storage's `tableParaStyle` entry
+  /// and the record header reference from the parent style to the fork.
   internal mutating func applyText(
     _ text: String,
-    characterStyleIdentifier: UInt64?,
+    paragraphStyle: (identifier: UInt64, parent: UInt64)?,
     toStorage identifier: UInt64
   ) throws {
     let catalog = SlideCatalog(members: members)
@@ -145,15 +156,48 @@ extension KeynoteArchiveSurgeon {
       partial: true
     )
     storage.text = [text]
-    if let characterStyleIdentifier {
-      var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
-      entry.characterIndex = 0
-      entry.object.identifier = characterStyleIdentifier
-      var table = TSWP_ObjectAttributeTable()
-      table.entries = [entry]
-      storage.tableCharStyle = table
+    if let paragraphStyle {
+      if storage.tableParaStyle.entries.isEmpty {
+        var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
+        entry.characterIndex = 0
+        entry.object.identifier = paragraphStyle.identifier
+        storage.tableParaStyle.entries = [entry]
+      } else {
+        storage.tableParaStyle.entries[0].object.identifier = paragraphStyle.identifier
+      }
+      replaceRecordHeaderReference(
+        paragraphStyle.parent,
+        with: paragraphStyle.identifier,
+        at: location
+      )
     }
     members[location.memberIndex].records[location.recordIndex]
       .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
+  }
+
+  /// Swaps `old` for `new` on a record header's object references — an
+  /// unlisted cross-record reference resolves to nil at load and the style
+  /// silently fails to apply.
+  private mutating func replaceRecordHeaderReference(
+    _ old: UInt64,
+    with new: UInt64,
+    at location: SlideCatalog.Location
+  ) {
+    guard !members[location.memberIndex].records[location.recordIndex].info.messageInfos.isEmpty
+    else {
+      return
+    }
+    var references = members[location.memberIndex].records[location.recordIndex]
+      .info.messageInfos[0].objectReferences
+    guard !references.contains(new) else {
+      return
+    }
+    if let index = references.firstIndex(of: old) {
+      references[index] = new
+    } else {
+      references.append(new)
+    }
+    members[location.memberIndex].records[location.recordIndex]
+      .info.messageInfos[0].objectReferences = references
   }
 }

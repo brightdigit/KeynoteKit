@@ -31,6 +31,16 @@ import Foundation
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
+  /// Object / data identifiers wired into one image drawable.
+  internal struct ImageDrawableIdentifiers {
+    internal var object: UInt64
+    internal var titleCaption: UInt64
+    internal var caption: UInt64
+    internal var data: UInt64
+    internal var parentSlide: UInt64
+    internal var style: UInt64?
+  }
+
   /// Registry type for `TSD.ImageArchive`.
   private static let imageArchiveType: UInt32 = 3_005
 

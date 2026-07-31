@@ -81,7 +81,8 @@ extension KeynoteArchiveSurgeon {
         at: location,
         slideIndex: slideIndex,
         nextIdentifier: &nextIdentifier,
-        minted: &minted
+        minted: &minted,
+        using: &generator
       )
       minted.dirtyPaths.insert(members[location.memberIndex].path)
     }
