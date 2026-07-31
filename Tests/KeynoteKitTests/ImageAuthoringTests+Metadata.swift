@@ -1,5 +1,4 @@
 import Foundation
-import IWAFraming
 import KeynoteKitProtobuf
 import Testing
 
@@ -63,24 +62,5 @@ extension ImageAuthoringTests {
         .payloads[metaLoc.payloadIndex],
       partial: true
     )
-  }
-
-  /// Central-directory path list from a zip byte array.
-  internal func zipPaths(_ bytes: [UInt8]) -> [String] {
-    let temp = FileManager.default.temporaryDirectory
-      .appending(path: "zippaths-\(UUID().uuidString).key")
-    try? Data(bytes).write(to: temp)
-    defer { try? FileManager.default.removeItem(at: temp) }
-    let proc = Process()
-    proc.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
-    proc.arguments = ["-Z1", temp.path]
-    let pipe = Pipe()
-    proc.standardOutput = pipe
-    try? proc.run()
-    proc.waitUntilExit()
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    return String(data: data, encoding: .utf8)?
-      .split(separator: "\n")
-      .map(String.init) ?? []
   }
 }

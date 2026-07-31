@@ -45,7 +45,7 @@ internal struct ImageAuthoringTests {
     let surgeon = try KeynoteArchiveSurgeon(bundle: bundle)
     let catalog = SlideCatalog(members: surgeon.members)
 
-    let dataPath = try expectAuthoredDataPath(in: zipBytes, bundle: bundle)
+    let dataPath = try expectAuthoredDataPath(in: bundle)
     let info = try expectDataInfo(for: dataPath, in: surgeon, catalog: catalog)
     #expect(info.digest.count == 20)
     #expect(Data(info.digest) == Data(SHA1Digest.hash(Array(tinyJPEG))))
@@ -63,15 +63,10 @@ internal struct ImageAuthoringTests {
   }
 
   /// Asserts exactly one authored `Data/kn-` member exists and returns its path.
-  private func expectAuthoredDataPath(
-    in zipBytes: [UInt8],
-    bundle: KeyBundle
-  ) throws -> String {
-    let dataPaths = zipPaths(zipBytes).filter { $0.hasPrefix("Data/kn-") }
+  private func expectAuthoredDataPath(in bundle: KeyBundle) throws -> String {
+    let dataPaths = bundle.entries.map(\.path).filter { $0.hasPrefix("Data/kn-") }
     #expect(dataPaths.count == 1)
-    let dataPath = try #require(dataPaths.first)
-    #expect(bundle.entry(at: dataPath) != nil)
-    return dataPath
+    return try #require(dataPaths.first)
   }
 
   /// Asserts slide drawables and image geometry; returns the image drawable id.
