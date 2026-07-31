@@ -27,7 +27,7 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// A text item on a slide — the only drawable v0.1.0 authors.
+/// A text item on a slide.
 public struct TextBox: Sendable {
   /// The item's string content.
   internal var content: String

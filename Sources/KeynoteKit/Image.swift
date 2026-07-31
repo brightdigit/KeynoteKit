@@ -82,7 +82,7 @@ public struct Image: Sendable {
   ) {
     self.data = Array(data)
     self.fileExtension = fileExtension
-    let detected = JPEGSize.dimensions(of: self.data)
+    let detected = JPEGSize.dimensions(of: self.data) ?? PNGSize.dimensions(of: self.data)
     self.naturalWidth = naturalWidth ?? detected?.width
     self.naturalHeight = naturalHeight ?? detected?.height
   }

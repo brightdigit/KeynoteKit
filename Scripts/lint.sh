@@ -63,7 +63,7 @@ else
 	SWIFTLINT_OPTIONS=""
 fi
 
-pushd $PACKAGE_DIR
+pushd "$PACKAGE_DIR"
 
 # Bootstrap tools (mise will install based on .mise.toml)
 run_command "$MISE_BIN" install
@@ -81,7 +81,8 @@ if [ -z "$FORMAT_ONLY" ]; then
 	# authoring a deck independent of a running copy of Keynote. Matches import
 	# statements only, so documentation may still name the framework.
 	if grep -rnE '^[[:space:]]*(@[a-zA-Z]+[[:space:]]+)?import[[:space:]]+ScriptingBridge' \
-		Sources/KeynoteKit Sources/IWAFraming Sources/Snappy Sources/KeynoteKitProtobuf; then
+		Sources/KeynoteKit Sources/IWAFraming Sources/Snappy Sources/KeynoteKitProtobuf \
+		Sources/AcceptanceDeckCatalog Sources/AcceptanceDecks Sources/KeynoteArchiveNavigation; then
 		echo "error: ScriptingBridge imported in the write path"
 		ERRORS=$((ERRORS + 1))
 	fi
@@ -95,7 +96,7 @@ fi
 
 # header.sh rewrites file headers in place, so it only runs locally — never in CI.
 if [ -z "$CI" ]; then
-	$PACKAGE_DIR/Scripts/header.sh -d $PACKAGE_DIR/Sources -c "Leo Dion" -o "BrightDigit" -p "KeynoteKit"
+	"$PACKAGE_DIR/Scripts/header.sh" -d "$PACKAGE_DIR/Sources" -c "Leo Dion" -o "BrightDigit" -p "KeynoteKit"
 fi
 
 # Periphery runs locally now that #16/#17 landed real implementations (CI's

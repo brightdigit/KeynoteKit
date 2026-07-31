@@ -29,31 +29,84 @@
 
 /// Minimal JPEG SOF dimension reader (no ImageIO — keeps Linux clean).
 internal enum JPEGSize {
+  /// Returns true if `marker` is a Start-of-Frame marker carrying pixel dimensions.
+  private static func isSOFMarker(_ marker: UInt8) -> Bool {
+    switch marker {
+    case 0xC0...0xC3, 0xC5...0xC7, 0xC9...0xCB, 0xCD...0xCF:
+      return true
+    default:
+      return false
+    }
+  }
+
+  /// Extracts width and height from an SOF segment.
+  private static func parseSOFSegment(
+    data: [UInt8],
+    index: Int,
+    length: Int
+  ) -> (width: Double, height: Double)? {
+    guard length >= 7, index + 7 <= data.count else {
+      return nil
+    }
+    let height = Int(data[index + 3]) << 8 | Int(data[index + 4])
+    let width = Int(data[index + 5]) << 8 | Int(data[index + 6])
+    return (Double(width), Double(height))
+  }
+
+  /// Returns true if `data` starts with JPEG SOI marker.
+  private static func isValidHeader(_ data: [UInt8]) -> Bool {
+    data.count > 4 && data[0] == 0xFF && data[1] == 0xD8
+  }
+
+  /// Advances `index` past consecutive 0xFF fill bytes.
+  private static func skipFillBytes(in data: [UInt8], startingAt index: Int) -> Int {
+    var idx = index
+    while idx < data.count, data[idx] == 0xFF {
+      idx += 1
+    }
+    return idx
+  }
+
+  /// Returns true if `marker` indicates end of image or start of scan (no more metadata markers).
+  private static func isTerminalMarker(_ marker: UInt8) -> Bool {
+    marker == 0xD9 || marker == 0xDA
+  }
+
+  /// Reads and validates a 2-byte big-endian segment length.
+  private static func segmentLength(in data: [UInt8], at index: Int) -> Int? {
+    guard index + 2 <= data.count else {
+      return nil
+    }
+    let length = Int(data[index]) << 8 | Int(data[index + 1])
+    guard length >= 2, index + length <= data.count else {
+      return nil
+    }
+    return length
+  }
+
   /// Pixel size from a JPEG SOF marker, when present.
   internal static func dimensions(of data: [UInt8]) -> (width: Double, height: Double)? {
-    guard data.count > 4, data[0] == 0xFF, data[1] == 0xD8 else {
+    guard isValidHeader(data) else {
       return nil
     }
     var index = 2
-    while index + 9 < data.count {
-      guard data[index] == 0xFF else {
+    while index < data.count {
+      index = skipFillBytes(in: data, startingAt: index)
+      guard index < data.count else {
         return nil
       }
-      let marker = data[index + 1]
-      if marker == 0xD9 || marker == 0xDA {
+      let marker = data[index]
+      index += 1
+      if isTerminalMarker(marker) {
         return nil
       }
-      let length = Int(data[index + 2]) << 8 | Int(data[index + 3])
-      guard length >= 2, index + 2 + length <= data.count else {
+      guard let length = segmentLength(in: data, at: index) else {
         return nil
       }
-      // SOF0–SOF3, SOF5–SOF7, SOF9–SOF11, SOF13–SOF15
-      if marker >= 0xC0 && marker <= 0xCF, marker != 0xC4, marker != 0xC8, marker != 0xCC {
-        let height = Int(data[index + 5]) << 8 | Int(data[index + 6])
-        let width = Int(data[index + 7]) << 8 | Int(data[index + 8])
-        return (Double(width), Double(height))
+      if isSOFMarker(marker) {
+        return parseSOFSegment(data: data, index: index, length: length)
       }
-      index += 2 + length
+      index += length
     }
     return nil
   }

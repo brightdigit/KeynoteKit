@@ -182,7 +182,7 @@ matching library target unless noted):
 | `IWAFraming` | Apple chunk layout over the block codec | Implemented |
 | `KeynoteKitProtobuf` | Generated 15.3 messages + `TSPRegistryMapping` | Implemented (Step 1); keeps protoc output out of the DSL module |
 | `KeynoteKit` | Public authoring API + `deck.write(to:)` | Implemented — **must not** link ScriptingBridge |
-| `KeynoteKitScripting` | ScriptingBridge escape hatch (#10) | **Scaffolded empty** in Step 0 (name + product reserved); body is #10, past v0.1 |
+| `KeynoteKitScripting` | ScriptingBridge escape hatch (#10) | **Shipped** via PR #35 — live-Keynote verify (`KEYNOTEKIT_LIVE_KEYNOTE=1`) still open on #10 |
 
 Dependency direction: `KeynoteKit` → (`IWAFraming` → `Snappy`) + `KeynoteKitProtobuf`.
 `KeynoteKitScripting` depends on Apple frameworks only — **not** on the write

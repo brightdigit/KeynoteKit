@@ -92,12 +92,16 @@ public struct MotionPath: Sendable {
   /// Creates a path from full bezier nodes.
   public init(nodes: [Node]) {
     self.nodes = nodes
-    let xs = nodes.flatMap { [$0.position.x, $0.controlIn?.x, $0.controlOut?.x].compactMap { $0 } }
-    let ys = nodes.flatMap { [$0.position.y, $0.controlIn?.y, $0.controlOut?.y].compactMap { $0 } }
+    let xValues = nodes.flatMap {
+      [$0.position.x, $0.controlIn?.x, $0.controlOut?.x].compactMap { $0 }
+    }
+    let yValues = nodes.flatMap {
+      [$0.position.y, $0.controlIn?.y, $0.controlOut?.y].compactMap { $0 }
+    }
     // Natural size is the path's extent, not its maximum coordinate — a
     // leftward or offset path would otherwise claim a zero or inflated box.
-    self.naturalWidth = (xs.max() ?? 0) - (xs.min() ?? 0)
-    self.naturalHeight = (ys.max() ?? 0) - (ys.min() ?? 0)
+    self.naturalWidth = (xValues.max() ?? 0) - (xValues.min() ?? 0)
+    self.naturalHeight = (yValues.max() ?? 0) - (yValues.min() ?? 0)
   }
 
   /// Sets the action's duration in seconds.

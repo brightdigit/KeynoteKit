@@ -1,6 +1,5 @@
 import Foundation
 import IWAFraming
-import KeynoteKit
 import KeynoteKitProtobuf
 
 /// Reverses the archive surgery inside a golden, recovering the AppleScript

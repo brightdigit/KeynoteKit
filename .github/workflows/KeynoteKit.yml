@@ -28,6 +28,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   PACKAGE_NAME: KeynoteKit
 
@@ -52,6 +55,7 @@ jobs:
           REF="${{ github.ref }}"; EVENT="${{ github.event_name }}"; BASE_REF="${{ github.base_ref }}"
           if [[ "$REF" == "refs/heads/main" ]]; then FULL=true
           elif [[ "$REF" =~ ^refs/heads/v?[0-9]+\.[0-9]+\.[0-9x]+ ]]; then FULL=true
+          elif [[ "$REF" =~ ^refs/tags/v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then FULL=true
           elif [[ "$EVENT" == "workflow_dispatch" ]]; then FULL=true
           elif [[ "$EVENT" == "pull_request" ]]; then
             if [[ "$BASE_REF" == "main" ]]; then FULL=true

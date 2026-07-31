@@ -96,11 +96,6 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
 
   package var description: String { name }
 
-  /// Whether a committed golden / spec exists for differential tests.
-  package var hasGolden: Bool {
-    Self.goldenBacked.contains { $0.name == name }
-  }
-
   /// Creates an acceptance deck.
   package init(name: String, buildCount: Int, deck: Deck) {
     self.name = name

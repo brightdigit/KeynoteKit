@@ -29,7 +29,7 @@
 
 /// One object build at archive level, mirroring the dictionaries Python's
 /// `deckkit.extract_builds` emits (and the committed expected JSON).
-package struct BuildRecord: Equatable, Codable, Sendable {
+package struct BuildRecord: Equatable, Codable, CustomStringConvertible, Sendable {
   /// The animation kind: `In`, `Out`, or `Action`.
   package var kind: String?
 
@@ -55,6 +55,16 @@ package struct BuildRecord: Equatable, Codable, Sendable {
   /// `KN.TransitionAttributesArchive` — a build block can never carry it,
   /// so the key is unreachable on both sides.
   package var options: [String: BuildOptionValue]
+
+  package var description: String {
+    let durationString = duration.map { String($0) } ?? "nil"
+    let delayString = delay.map { String($0) } ?? "nil"
+    let directionString = direction.map { String($0) } ?? "nil"
+    return "BuildRecord(kind: \(kind ?? "nil"), effect: \(effect), "
+      + "duration: \(durationString), delay: \(delayString), "
+      + "direction: \(directionString), drawable: \(drawable ?? "nil"), "
+      + "options: \(options))"
+  }
 
   /// Creates a record; see the field documentation for semantics.
   package init(
