@@ -12,14 +12,14 @@ import Testing
 /// of #24 after this suite is only the human Keynote 15.3 open pass.
 @Suite("Acceptance decks")
 internal struct AcceptanceDeckTests {
-  @Test("the DSL lowers to the committed spec", arguments: AcceptanceDeck.all)
+  @Test("the DSL lowers to the committed spec", arguments: AcceptanceDeck.goldenBacked)
   internal func lowersToSpec(acceptance: AcceptanceDeck) throws {
     let fixture = try golden(for: acceptance)
     let spec = try DeckSpec.load(fixture.specURL)
     #expect(surgeryModel(of: acceptance) == spec)
   }
 
-  @Test("the DSL reproduces the golden archive graph", arguments: AcceptanceDeck.all)
+  @Test("the DSL reproduces the golden archive graph", arguments: AcceptanceDeck.goldenBacked)
   internal func reproducesGoldenGraph(acceptance: AcceptanceDeck) throws {
     let fixture = try golden(for: acceptance)
     let goldenBundle = try KeyBundle(contentsOfZip: fixture.loadKey())

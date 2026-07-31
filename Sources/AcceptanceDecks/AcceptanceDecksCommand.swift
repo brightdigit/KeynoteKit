@@ -33,7 +33,7 @@ import IWAFraming
 import KeynoteKit
 import KeynoteKitProtobuf
 
-/// Writes the five #24 acceptance decks for the human pass:
+/// Writes the #24 acceptance decks for the human pass:
 /// `swift run AcceptanceDecks [output-directory]` (default `acceptance-decks`).
 ///
 /// Each deck is authored through the public DSL from the bundled template and
@@ -43,17 +43,23 @@ import KeynoteKitProtobuf
 /// (PLAN Step 6).
 @main
 internal enum AcceptanceDecksCommand {
-  /// The per-deck checklist from PLAN Step 6, printed for the human pass.
+  /// The per-deck checklist from PLAN Step 6 + drawable depth, printed for
+  /// the human pass.
   private static let checklist = """
 
     Human pass (#24) — open each deck in Keynote 15.3 by hand and confirm:
-      1. no crash
-      2. no repair warning — a silent "repair" is a failure, not a pass
-      3. In/Out/Action builds, ordering, and the transition direction survived
-    Tag v0.1.0 when all five decks are green.
+      Original five:
+        1. no crash
+        2. no repair warning — a silent "repair" is a failure, not a pass
+        3. In/Out/Action builds, ordering, and the transition direction survived
+      Drawable depth:
+        - drawable_geometry.key — Magic Move grows "Alpha" (size + position)
+        - text_formatting.key — "Styled" is large red bold-italic; neighbor plain
+        - image_drawable.key — image present; Dissolve In on the image plays
+    Tag v0.1.0 when all decks are green.
     """
 
-  /// Writes and self-checks all five decks, then prints the checklist.
+  /// Writes and self-checks every acceptance deck, then prints the checklist.
   internal static func main() throws {
     let directory = outputDirectory()
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
