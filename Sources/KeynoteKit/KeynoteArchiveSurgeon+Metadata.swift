@@ -54,7 +54,7 @@ extension KeynoteArchiveSurgeon {
   /// Registers new `DataInfo` rows and slide-component data references.
   internal mutating func registerData(
     infos: [TSP_DataInfo],
-    componentReferences: [(dataIdentifier: UInt64, objectIdentifier: UInt64)],
+    componentReferences: [(dataIdentifier: UInt64, objectIdentifier: UInt64, count: UInt32)],
     slideIdentifier: UInt64
   ) throws {
     try withPackageMetadata { metadata in
@@ -71,7 +71,7 @@ extension KeynoteArchiveSurgeon {
         dataReference.dataIdentifier = reference.dataIdentifier
         var objectReference = TSP_ComponentDataReference.ObjectReference()
         objectReference.objectIdentifier = reference.objectIdentifier
-        objectReference.count = 1
+        objectReference.count = reference.count
         dataReference.objectReferenceList = [objectReference]
         metadata.components[componentIndex].dataReferences.append(dataReference)
       }

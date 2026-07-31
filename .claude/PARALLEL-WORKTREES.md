@@ -134,8 +134,9 @@ Each new worktree that runs Python research tools needs its own venv setup
 >
 > - PR #36 (`24f7c40`) landed: #24 Keynote open pass **5/5 green** + multi-slide cloning fixes.
 > - Map #12 promoted geometry (#3), text formatting (#37), and images (#38) into v0.1.0 before the tag.
-> - This lane implements all three in one PR (shared `Text` / slide-item / surgeon seams). Findings: `drawable_geometry.md`, `text_formatting.md`, `image_authoring.md`.
-> - After merge: expand #24 acceptance for geometry / format / image, human open pass, then tag `v0.1.0`.
+> - This lane implements all three in one PR (shared `Text` / slide-item / surgeon seams). Findings: `drawable_geometry.md`, `text_formatting.md`, `image_authoring.md`, **`drawable_open_crash.md`**.
+> - Keynote open: geometry OK; formatting OK after CharacterStyle `super` fix; **images still crash** (blank integration — see open-crash finding). Do not tag until images open and expanded #24 passes.
+> - After images open: expand #24 acceptance for geometry / format / image, human open pass, then tag `v0.1.0`.
 > - Post-v0.1.0 lanes unchanged: **#4** shapes deferred; **#10** live Keynote verify still open. Cross-check with `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)

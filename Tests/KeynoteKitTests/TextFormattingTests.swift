@@ -123,6 +123,8 @@ internal struct TextFormattingTests {
         .payloads[styleLocation.payloadIndex],
       partial: true
     )
+    #expect(style.hasSuper)
+    #expect(style.super.hasStylesheet)
     return style.charProperties
   }
 }

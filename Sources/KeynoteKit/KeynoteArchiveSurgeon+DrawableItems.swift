@@ -66,9 +66,22 @@ extension KeynoteArchiveSurgeon {
       }
     }
     if !styleRecords.isEmpty {
-      members[location.memberIndex].records.append(contentsOf: styleRecords)
-      appendHeaderReferences(styleIdentifiers, toRecordAt: location)
+      try appendCharacterStylesToDocumentStylesheet(styleRecords)
+      for styleIdentifier in styleIdentifiers {
+        try registerStyleInDocumentStylesheet(styleIdentifier)
+      }
     }
+  }
+
+  /// Appends minted character-style records to `DocumentStylesheet.iwa`.
+  private mutating func appendCharacterStylesToDocumentStylesheet(
+    _ records: [TSPArchiveRecord]
+  ) throws {
+    let catalog = SlideCatalog(members: members)
+    guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: 0)
+    }
+    members[location.memberIndex].records.append(contentsOf: records)
   }
 
   /// Applies one text item; returns a minted character style when formatting is set.

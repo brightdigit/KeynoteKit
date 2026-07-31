@@ -65,8 +65,8 @@ internal struct ImageAuthoringTests {
     bundle: KeyBundle
   ) throws -> String {
     let dataPaths = zipPaths(zipBytes).filter { $0.hasPrefix("Data/kn-") }
-    #expect(dataPaths.count == 1)
-    let dataPath = try #require(dataPaths.first)
+    #expect(dataPaths.count == 2)
+    let dataPath = try #require(dataPaths.first { !$0.contains("-small-") })
     #expect(bundle.entry(at: dataPath) != nil)
     return dataPath
   }
@@ -128,6 +128,9 @@ internal struct ImageAuthoringTests {
     #expect(image.super.geometry.size.width == 320)
     #expect(image.super.geometry.size.height == 240)
     #expect(image.data.identifier == dataIdentifier)
+    #expect(image.hasThumbnailData)
+    #expect(image.super.hasTitle)
+    #expect(image.super.hasCaption)
     return imageId
   }
 

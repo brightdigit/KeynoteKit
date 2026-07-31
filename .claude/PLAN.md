@@ -150,8 +150,9 @@ Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.m
 
 **Drawable depth (promoted into v0.1.0 on 2026-07-30):** #3 geometry, #37 text
 formatting, #38 images — implemented on branch `3-37-38-drawable-depth`
-(`wt-drawable`). Tag `v0.1.0` still blocked on expanded #24 acceptance covering
-geometry / formatting / image after this lands.
+(`wt-drawable`). Keynote open: geometry + formatting OK; **images still crash**
+(triage in `research/findings/drawable_open_crash.md`). Tag `v0.1.0` blocked
+until images open cleanly and expanded #24 acceptance covers all three.
 
 **Prior open-pass note:** Human Keynote 15.3 open pass is **5/5 green** for the
 original five decks (`bisect_in`, `bisect_out`, `bisect_action`,

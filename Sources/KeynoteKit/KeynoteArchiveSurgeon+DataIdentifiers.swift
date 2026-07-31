@@ -47,17 +47,35 @@ extension KeynoteArchiveSurgeon {
     return maximum + 1
   }
 
-  /// The first `TSD.MediaStyleArchive` in the document stylesheet, if any.
+  /// A document stylesheet `TSD.MediaStyleArchive` suitable for photos.
+  ///
+  /// Prefer `image-*-imageStyle` over `equation-*-imageStyle` — attaching the
+  /// equation style to a regular image crashes Keynote on open.
   internal func mediaStyleIdentifier() throws -> UInt64? {
+    var fallback: UInt64?
     for member in members {
       for record in member.records {
         let names = record.resolvedTypes.compactMap { TSPRegistryMapping.messageName(for: $0) }
-        if names.contains("TSD.MediaStyleArchive") {
+        guard names.contains("TSD.MediaStyleArchive") else { continue }
+        let style = try TSD_MediaStyleArchive(
+          serializedBytes: record.payloads[0],
+          partial: true
+        )
+        let styleId = style.hasSuper && style.super.hasStyleIdentifier
+          ? style.super.styleIdentifier
+          : ""
+        if styleId.contains("equation") {
+          continue
+        }
+        if styleId.contains("image") {
           return record.info.identifier
+        }
+        if fallback == nil {
+          fallback = record.info.identifier
         }
       }
     }
-    return nil
+    return fallback
   }
 
   /// Formats a lowercase UUID string from `generator`.

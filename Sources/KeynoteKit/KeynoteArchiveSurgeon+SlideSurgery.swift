@@ -37,7 +37,8 @@ extension KeynoteArchiveSurgeon {
     internal var dirtyPaths: Set<String> = []
     internal var dataEntries: [(path: String, body: [UInt8])] = []
     internal var dataInfos: [TSP_DataInfo] = []
-    internal var componentDataReferences: [(dataIdentifier: UInt64, objectIdentifier: UInt64)] = []
+    internal var componentDataReferences:
+      [(dataIdentifier: UInt64, objectIdentifier: UInt64, count: UInt32)] = []
   }
 
   /// One slide's freshly minted records and identifiers.

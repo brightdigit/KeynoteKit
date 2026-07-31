@@ -14,10 +14,12 @@ item (and the theme).
 When ``Text`` sets font / size / bold / italic / color:
 
 1. Mint a fresh `TSWP.CharacterStyleArchive` (registry type **2021**) with
-   `char_properties` filled (`font_name`, `font_size`, `bold`, `italic`,
+   required `TSS.StyleArchive` `super.stylesheet` → document stylesheet,
+   plus `char_properties` (`font_name`, `font_size`, `bold`, `italic`,
    `font_color` as sRGB `TSP.Color`).
-2. Append the record to the slide member; register it on the slide
-   `MessageInfo.objectReferences`.
+2. Append the record to `DocumentStylesheet.iwa`, register it on
+   `TSS.StylesheetArchive.styles`, and set `MessageInfo.objectReferences` to
+   the stylesheet id. (Omitting `super` crashes Keynote on open.)
 3. Set `StorageArchive.table_char_style` to a single run at `character_index 0`
    pointing at the new style.
 

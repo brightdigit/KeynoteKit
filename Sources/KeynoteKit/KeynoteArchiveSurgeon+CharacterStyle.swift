@@ -35,17 +35,27 @@ extension KeynoteArchiveSurgeon {
 
   /// Mints a per-item `TSWP.CharacterStyleArchive` so formatting does not
   /// mutate the shared Body paragraph style in the document stylesheet.
+  ///
+  /// Real Keynote character styles always carry a `TSS.StyleArchive` `super`
+  /// pointing at the document stylesheet; omitting it crashes on open.
   internal func characterStyleRecord(
     for item: AuthoredSlide.TextItem,
     identifier: UInt64
   ) throws -> TSPArchiveRecord {
+    guard let stylesheetIdentifier = try documentStylesheetIdentifier() else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: 0)
+    }
     var properties = characterStyleProperties(for: item)
+    var base = TSS_StyleArchive()
+    base.stylesheet.identifier = stylesheetIdentifier
     var style = TSWP_CharacterStyleArchive()
+    style.super = base
     style.charProperties = properties
     style.overrideCount = 1
     var messageInfo = TSP_MessageInfo()
     messageInfo.type = Self.characterStyleArchiveType
     messageInfo.version = BuildRecordFactory.version
+    messageInfo.objectReferences = [stylesheetIdentifier]
     var info = TSP_ArchiveInfo()
     info.identifier = identifier
     info.messageInfos = [messageInfo]
@@ -53,6 +63,35 @@ extension KeynoteArchiveSurgeon {
       info: info,
       payloads: [try style.serializedBytes(partial: true)]
     )
+  }
+
+  /// Identifier of the document `TSS.StylesheetArchive`, if present.
+  internal func documentStylesheetIdentifier() throws -> UInt64? {
+    let catalog = SlideCatalog(members: members)
+    guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
+      return nil
+    }
+    return members[location.memberIndex].records[location.recordIndex].info.identifier
+  }
+
+  /// Registers `styleIdentifier` on the document stylesheet's `styles` list.
+  internal mutating func registerStyleInDocumentStylesheet(_ styleIdentifier: UInt64) throws {
+    let catalog = SlideCatalog(members: members)
+    guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: styleIdentifier)
+    }
+    var sheet = try TSS_StylesheetArchive(
+      serializedBytes: members[location.memberIndex]
+        .records[location.recordIndex]
+        .payloads[location.payloadIndex],
+      partial: true
+    )
+    guard !sheet.styles.contains(where: { $0.identifier == styleIdentifier }) else { return }
+    var reference = TSP_Reference()
+    reference.identifier = styleIdentifier
+    sheet.styles.append(reference)
+    members[location.memberIndex].records[location.recordIndex]
+      .payloads[location.payloadIndex] = try sheet.serializedBytes(partial: true)
   }
 
   /// Character-style property bag for an authored text item.
