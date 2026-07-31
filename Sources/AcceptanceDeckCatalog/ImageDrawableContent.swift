@@ -33,7 +33,7 @@ import KeynoteKit
 package struct ImageDrawableContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text("Caption")
+      TextBox("Caption")
         .position(x: 100, y: 480)
         .frame(width: 300, height: 50)
       Image(data: AcceptanceSampleJPEG.data)

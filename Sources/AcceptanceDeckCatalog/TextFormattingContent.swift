@@ -33,14 +33,14 @@ import KeynoteKit
 package struct TextFormattingContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text("Styled")
+      TextBox("Styled")
         .font("HelveticaNeue", size: 48)
         .bold()
         .italic()
         .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
         .position(x: 160, y: 220)
         .frame(width: 480, height: 100)
-      Text("Plain neighbor")
+      TextBox("Plain neighbor")
         .position(x: 160, y: 360)
         .frame(width: 400, height: 60)
     }

@@ -27,157 +27,70 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// A text item on a slide — the only drawable v0.1.0 authors.
+/// One styled span inside a ``TextBox`` item. Runs concatenate in declaration
+/// order into the item's string; each run's style fields override the item's
+/// (paragraph-wide) formatting for that span only.
 public struct Text: Sendable {
-  /// The item's string content.
+  /// The run's string content.
   internal var content: String
 
-  /// The item's x position (Python-parity default 200).
-  internal var x: Double = 200
-
-  /// The item's y position (Python-parity default 200).
-  internal var y: Double = 200
-
-  /// Authored width in points; `nil` leaves the template placeholder size.
-  internal var width: Double?
-
-  /// Authored height in points; `nil` leaves the template placeholder size.
-  internal var height: Double?
-
-  /// Layer order; higher values draw above lower ones. `nil` means 0.
-  /// Declaration order breaks ties. Final order becomes `drawablesZOrder`.
-  internal var zIndex: Int?
-
-  /// Authored font family; `nil` leaves the template style.
+  /// Authored font family; `nil` inherits the item / template style.
   internal var fontName: String?
 
-  /// Authored font size in points; `nil` leaves the template style.
+  /// Authored font size in points; `nil` inherits the item / template style.
   internal var fontSize: Double?
 
-  /// Authored bold; `nil` leaves the template style.
+  /// Authored bold; `nil` inherits the item / template style.
   internal var isBold: Bool?
 
-  /// Authored italic; `nil` leaves the template style.
+  /// Authored italic; `nil` inherits the item / template style.
   internal var isItalic: Bool?
 
-  /// Authored text color; `nil` leaves the template style.
+  /// Authored text color; `nil` inherits the item / template style.
   internal var color: TextColor?
 
-  /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
-  internal var magicIdentifier: String?
-
-  /// The item's builds, in declaration (= delivery) order.
-  internal var builds: [BuildEffectConfiguration] = []
-
-  /// The item's action, when set.
-  internal var action: MotionPath?
-
-  /// Styled spans, when the item was built from runs. Empty means the whole
-  /// item is one span styled by the item-level fields above.
-  internal var runs: [TextRun] = []
-
-  /// Creates a text item.
+  /// Creates a run.
   ///
-  /// - Parameter content: The string to display.
+  /// - Parameter content: The span's string.
   public init(_ content: String) {
     self.content = content
   }
 
-  /// Creates a text item from styled runs. Runs concatenate in declaration
-  /// order; item-level modifiers (``font(_:size:)``, ``bold(_:)``, …) style
-  /// the whole item, and each run's own style fields override them for that
-  /// span only.
-  public init(@TextRunsBuilder _ runs: () -> [TextRun]) {
-    let built = runs()
-    self.content = built.map(\.content).joined()
-    self.runs = built
-  }
-
-  /// Positions the item on the slide.
-  public func position(x: Double, y: Double) -> Text {
-    var text = self
-    text.x = x
-    text.y = y
-    return text
-  }
-
-  /// Sets the item's size. Unset dimensions leave the template size.
-  public func frame(width: Double, height: Double) -> Text {
-    var text = self
-    text.width = width
-    text.height = height
-    return text
-  }
-
-  /// Sets the item's layer order. Higher values draw above lower ones.
-  public func zIndex(_ index: Int) -> Text {
-    var text = self
-    text.zIndex = index
-    return text
-  }
-
   /// Sets the font family and optional size.
   public func font(_ name: String, size: Double? = nil) -> Text {
-    var text = self
-    text.fontName = name
+    var run = self
+    run.fontName = name
     if let size {
-      text.fontSize = size
+      run.fontSize = size
     }
-    return text
+    return run
   }
 
   /// Sets the font size in points.
   public func fontSize(_ size: Double) -> Text {
-    var text = self
-    text.fontSize = size
-    return text
+    var run = self
+    run.fontSize = size
+    return run
   }
 
-  /// Marks the text bold.
+  /// Marks the run bold.
   public func bold(_ isBold: Bool = true) -> Text {
-    var text = self
-    text.isBold = isBold
-    return text
+    var run = self
+    run.isBold = isBold
+    return run
   }
 
-  /// Marks the text italic.
+  /// Marks the run italic.
   public func italic(_ isItalic: Bool = true) -> Text {
-    var text = self
-    text.isItalic = isItalic
-    return text
+    var run = self
+    run.isItalic = isItalic
+    return run
   }
 
-  /// Sets the text color.
+  /// Sets the run's text color.
   public func foregroundColor(_ color: TextColor) -> Text {
-    var text = self
-    text.color = color
-    return text
-  }
-
-  /// Tags the item for Magic Move pairing.
-  public func magicId(_ identifier: String) -> Text {
-    var text = self
-    text.magicIdentifier = identifier
-    return text
-  }
-
-  /// Adds builds of `phase` to the item, in declaration order.
-  public func build(
-    _ phase: BuildPhase,
-    @BuildEffectsBuilder _ effects: () -> [BuildEffectConfiguration]
-  ) -> Text {
-    var text = self
-    for var configuration in effects() {
-      configuration.phase = phase
-      text.builds.append(configuration)
-    }
-    return text
-  }
-
-  /// Adds an Action build (a motion path) to the item.
-  public func action(_ path: () -> MotionPath) -> Text {
-    var text = self
-    text.action = path()
-    return text
+    var run = self
+    run.color = color
+    return run
   }
 }

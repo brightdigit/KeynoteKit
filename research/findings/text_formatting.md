@@ -37,7 +37,7 @@ predates the registration edges above and `tsdFill`.
 
 ## Mixed runs inside one item (#40 — SHIPPED, render-verified 2026-07-31)
 
-`Text { TextRun("Styled").bold(); " plain" }` authors several spans in one
+`TextBox { Text("Styled").bold(); Text(" plain") }` authors several spans in one
 text box. Implementation (`KeynoteArchiveSurgeon+CharacterRuns.swift`,
 `+TextApplication.swift`):
 

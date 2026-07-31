@@ -30,7 +30,7 @@
 /// A drawable on a slide — text or image — before z-order sorting.
 public enum SlideDrawable: Sendable {
   /// A text item.
-  case text(Text)
+  case text(TextBox)
 
   /// An image item.
   case image(Image)

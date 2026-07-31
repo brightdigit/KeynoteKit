@@ -13,7 +13,7 @@ internal struct GoalSketchTests {
   private struct TitleSlide: SlideContent {
     var body: some SlideContent {
       Slide {
-        Text("Title")
+        TextBox("Title")
           .magicId("title")
           .position(x: 200, y: 200)
           .build(.in) {
@@ -74,15 +74,15 @@ internal struct GoalSketchTests {
   internal func acceptanceShapedDeckWrites() throws {
     let deck = Deck {
       Slide {
-        Text("Build In").position(x: 200, y: 180)
+        TextBox("Build In").position(x: 200, y: 180)
           .build(.in) { Dissolve() }
-        Text("Build Out").position(x: 200, y: 360)
+        TextBox("Build Out").position(x: 200, y: 360)
           .build(.out) { Dissolve() }
-        Text("Action").position(x: 200, y: 540)
+        TextBox("Action").position(x: 200, y: 540)
           .action { MotionPath() }
       }
       Slide {
-        Text("Direction")
+        TextBox("Direction")
       }
       .transition(directionTransition)
     }

@@ -4,21 +4,21 @@ import KeynoteKit
 import KeynoteKitProtobuf
 import Testing
 
-@Suite("Text runs")
+@Suite("TextBox runs")
 internal struct TextRunTests {
   @Test("writes per-run character styles onto tableCharStyle")
   internal func writesRuns() throws {
     let surgeon = try written(
       Deck {
         Slide {
-          Text {
-            TextRun("Styled")
+          TextBox {
+            Text("Styled")
               .bold()
               .fontSize(48)
               .foregroundColor(TextColor(red: 0.9, green: 0.1, blue: 0.1))
-            " plain"
+            Text(" plain")
           }
-          Text("Neighbor")
+          TextBox("Neighbor")
         }
       }
     )
@@ -64,11 +64,11 @@ internal struct TextRunTests {
     let surgeon = try written(
       Deck {
         Slide {
-          Text {
-            "Two "
-            TextRun("plain spans")
+          TextBox {
+            Text("Two ")
+            Text("plain spans")
           }
-          Text("Neighbor")
+          TextBox("Neighbor")
         }
       }
     )
@@ -83,12 +83,12 @@ internal struct TextRunTests {
     let surgeon = try written(
       Deck {
         Slide {
-          Text {
-            TextRun("Red").foregroundColor(TextColor(red: 1, green: 0, blue: 0))
-            " default"
+          TextBox {
+            Text("Red").foregroundColor(TextColor(red: 1, green: 0, blue: 0))
+            Text(" default")
           }
           .fontSize(30)
-          Text("Neighbor")
+          TextBox("Neighbor")
         }
       }
     )

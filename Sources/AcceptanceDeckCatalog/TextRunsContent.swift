@@ -35,17 +35,17 @@ import KeynoteKit
 package struct TextRunsContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text {
-        TextRun("Bold red")
+      TextBox {
+        Text("Bold red")
           .bold()
           .fontSize(56)
           .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
-        " then plain then "
-        TextRun("italic").italic()
+        Text(" then plain then ")
+        Text("italic").italic()
       }
       .position(x: 120, y: 220)
       .frame(width: 720, height: 120)
-      Text("Whole-item styled neighbor")
+      TextBox("Whole-item styled neighbor")
         .bold()
         .position(x: 120, y: 380)
         .frame(width: 600, height: 60)

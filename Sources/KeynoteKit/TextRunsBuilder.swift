@@ -27,41 +27,36 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Collects ``TextRun`` spans for a mixed-formatting ``Text`` item.
+/// Collects ``Text`` spans for a mixed-formatting ``TextBox`` item.
 @resultBuilder
 public enum TextRunsBuilder {
   /// Collects the block's runs.
-  public static func buildBlock(_ runs: [TextRun]...) -> [TextRun] {
+  public static func buildBlock(_ runs: [Text]...) -> [Text] {
     runs.flatMap { $0 }
   }
 
   /// Lifts a run into the block.
-  public static func buildExpression(_ run: TextRun) -> [TextRun] {
+  public static func buildExpression(_ run: Text) -> [Text] {
     [run]
   }
 
-  /// Lifts a plain string into an unstyled run.
-  public static func buildExpression(_ string: String) -> [TextRun] {
-    [TextRun(string)]
-  }
-
   /// Supports `if` without `else`.
-  public static func buildOptional(_ runs: [TextRun]?) -> [TextRun] {
+  public static func buildOptional(_ runs: [Text]?) -> [Text] {
     runs ?? []
   }
 
   /// Supports `if` / `else` (first branch).
-  public static func buildEither(first runs: [TextRun]) -> [TextRun] {
+  public static func buildEither(first runs: [Text]) -> [Text] {
     runs
   }
 
   /// Supports `if` / `else` (second branch).
-  public static func buildEither(second runs: [TextRun]) -> [TextRun] {
+  public static func buildEither(second runs: [Text]) -> [Text] {
     runs
   }
 
   /// Supports `for` loops.
-  public static func buildArray(_ runs: [[TextRun]]) -> [TextRun] {
+  public static func buildArray(_ runs: [[Text]]) -> [Text] {
     runs.flatMap { $0 }
   }
 }
