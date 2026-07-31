@@ -73,8 +73,17 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     ),
   ]
 
+  /// Mixed-formatting-runs deck for #40 (no goldens).
+  package static let formattingRuns: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "text_runs",
+      buildCount: 0,
+      deck: Deck { TextRunsContent() }
+    )
+  ]
+
   /// Every deck `swift run AcceptanceDecks` writes.
-  package static let all: [AcceptanceDeck] = goldenBacked + drawableDepth
+  package static let all: [AcceptanceDeck] = goldenBacked + drawableDepth + formattingRuns
 
   /// The stem used for the output filename (`<name>.key`).
   package let name: String

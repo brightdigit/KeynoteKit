@@ -56,6 +56,9 @@ internal enum AcceptanceDecksCommand {
         - drawable_geometry.key — Magic Move grows "Alpha" (size + position)
         - text_formatting.key — "Styled" is large red bold-italic; neighbor plain
         - image_drawable.key — image present; Dissolve In on the image plays
+      Mixed runs (#40):
+        - text_runs.key — ONE box: "Bold red" large bold red, "italic" italic,
+          spans between plain; neighbor box whole-item bold
     Tag v0.1.0 when all decks are green.
     """
 

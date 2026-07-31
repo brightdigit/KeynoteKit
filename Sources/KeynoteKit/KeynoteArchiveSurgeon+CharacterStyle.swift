@@ -33,6 +33,52 @@ extension KeynoteArchiveSurgeon {
   /// Registry type for `TSWP.ParagraphStyleArchive`.
   private static let paragraphStyleArchiveType: UInt32 = 2_022
 
+  /// Character-style property bag for a set of authored fields, plus the
+  /// number of overridden properties (`overrideCount` on the minted style).
+  /// Color carries `tsdFill` alongside `fontColor` — modern Keynote paints
+  /// glyphs with the fill and ignores the legacy color alone.
+  internal static func characterStyleProperties(
+    fontName: String?,
+    fontSize: Double?,
+    isBold: Bool?,
+    isItalic: Bool?,
+    color: TextColor?
+  ) -> (bag: TSWP_CharacterStylePropertiesArchive, count: UInt32) {
+    var properties = TSWP_CharacterStylePropertiesArchive()
+    var count: UInt32 = 0
+    if let isBold {
+      properties.bold = isBold
+      count += 1
+    }
+    if let isItalic {
+      properties.italic = isItalic
+      count += 1
+    }
+    if let fontSize {
+      properties.fontSize = Float(fontSize)
+      count += 1
+    }
+    if let fontName {
+      properties.fontName = fontName
+      count += 1
+    }
+    if let color {
+      var tspColor = TSP_Color()
+      tspColor.model = .rgb
+      tspColor.r = Float(color.red)
+      tspColor.g = Float(color.green)
+      tspColor.b = Float(color.blue)
+      tspColor.a = Float(color.alpha)
+      tspColor.rgbspace = .srgb
+      properties.fontColor = tspColor
+      var fill = TSD_FillArchive()
+      fill.color = tspColor
+      properties.tsdFill = fill
+      count += 2
+    }
+    return (properties, count)
+  }
+
   /// Mints the forked paragraph-style variation carrying an item's formatting.
   ///
   /// Matches how Keynote itself styles a whole text item: a
@@ -97,107 +143,12 @@ extension KeynoteArchiveSurgeon {
   private func characterStyleProperties(
     for item: AuthoredSlide.TextItem
   ) -> (bag: TSWP_CharacterStylePropertiesArchive, count: UInt32) {
-    var properties = TSWP_CharacterStylePropertiesArchive()
-    var count: UInt32 = 0
-    if let isBold = item.isBold {
-      properties.bold = isBold
-      count += 1
-    }
-    if let isItalic = item.isItalic {
-      properties.italic = isItalic
-      count += 1
-    }
-    if let fontSize = item.fontSize {
-      properties.fontSize = Float(fontSize)
-      count += 1
-    }
-    if let fontName = item.fontName {
-      properties.fontName = fontName
-      count += 1
-    }
-    if let color = item.color {
-      var tspColor = TSP_Color()
-      tspColor.model = .rgb
-      tspColor.r = Float(color.red)
-      tspColor.g = Float(color.green)
-      tspColor.b = Float(color.blue)
-      tspColor.a = Float(color.alpha)
-      tspColor.rgbspace = .srgb
-      properties.fontColor = tspColor
-      var fill = TSD_FillArchive()
-      fill.color = tspColor
-      properties.tsdFill = fill
-      count += 2
-    }
-    return (properties, count)
-  }
-
-  /// Writes `text` into a placeholder's owned storage; when a forked
-  /// paragraph style is supplied, swaps the storage's `tableParaStyle` entry
-  /// and the record header reference from the parent style to the fork.
-  internal mutating func applyText(
-    _ text: String,
-    paragraphStyle: (identifier: UInt64, parent: UInt64)?,
-    toStorage identifier: UInt64
-  ) throws {
-    let catalog = SlideCatalog(members: members)
-    guard
-      let location = try catalog.locate(
-        recordIdentifier: identifier,
-        named: "TSWP.StorageArchive"
-      )
-    else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: identifier)
-    }
-    var storage = try TSWP_StorageArchive(
-      serializedBytes: members[location.memberIndex]
-        .records[location.recordIndex]
-        .payloads[location.payloadIndex],
-      partial: true
+    Self.characterStyleProperties(
+      fontName: item.fontName,
+      fontSize: item.fontSize,
+      isBold: item.isBold,
+      isItalic: item.isItalic,
+      color: item.color
     )
-    storage.text = [text]
-    if let paragraphStyle {
-      if storage.tableParaStyle.entries.isEmpty {
-        var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
-        entry.characterIndex = 0
-        entry.object.identifier = paragraphStyle.identifier
-        storage.tableParaStyle.entries = [entry]
-      } else {
-        storage.tableParaStyle.entries[0].object.identifier = paragraphStyle.identifier
-      }
-      replaceRecordHeaderReference(
-        paragraphStyle.parent,
-        with: paragraphStyle.identifier,
-        at: location
-      )
-    }
-    members[location.memberIndex].records[location.recordIndex]
-      .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
-  }
-
-  /// Swaps `old` for `new` on a record header's object references — an
-  /// unlisted cross-record reference resolves to nil at load and the style
-  /// silently fails to apply.
-  private mutating func replaceRecordHeaderReference(
-    _ old: UInt64,
-    with new: UInt64,
-    at location: SlideCatalog.Location
-  ) {
-    guard !members[location.memberIndex].records[location.recordIndex].info.messageInfos.isEmpty
-    else {
-      return
-    }
-    var references = members[location.memberIndex].records[location.recordIndex]
-      .info.messageInfos[0].objectReferences
-    guard !references.contains(new) else {
-      return
-    }
-    if let index = references.firstIndex(of: old) {
-      references[index] = new
-    } else {
-      references.append(new)
-    }
-    members[location.memberIndex].records[location.recordIndex]
-      .info.messageInfos[0].objectReferences = references
   }
 }

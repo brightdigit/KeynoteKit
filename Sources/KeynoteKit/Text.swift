@@ -72,11 +72,25 @@ public struct Text: Sendable {
   /// The item's action, when set.
   internal var action: MotionPath?
 
+  /// Styled spans, when the item was built from runs. Empty means the whole
+  /// item is one span styled by the item-level fields above.
+  internal var runs: [TextRun] = []
+
   /// Creates a text item.
   ///
   /// - Parameter content: The string to display.
   public init(_ content: String) {
     self.content = content
+  }
+
+  /// Creates a text item from styled runs. Runs concatenate in declaration
+  /// order; item-level modifiers (``font(_:size:)``, ``bold(_:)``, …) style
+  /// the whole item, and each run's own style fields override them for that
+  /// span only.
+  public init(@TextRunsBuilder _ runs: () -> [TextRun]) {
+    let built = runs()
+    self.content = built.map(\.content).joined()
+    self.runs = built
   }
 
   /// Positions the item on the slide.
