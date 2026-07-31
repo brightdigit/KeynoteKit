@@ -35,7 +35,7 @@ An earlier whole-item attempt via a `TSWP.CharacterStyleArchive` fork on
 `table_char_style` opened cleanly but **rendered plain** — that attempt
 predates the registration edges above and `tsdFill`.
 
-## Mixed runs inside one item (#40 — IMPLEMENTED, render verification PENDING)
+## Mixed runs inside one item (#40 — SHIPPED, render-verified 2026-07-31)
 
 `Text { TextRun("Styled").bold(); " plain" }` authors several spans in one
 text box. Implementation (`KeynoteArchiveSurgeon+CharacterRuns.swift`,
@@ -56,15 +56,13 @@ text box. Implementation (`KeynoteArchiveSurgeon+CharacterRuns.swift`,
   list, slide-component `externalReferences`, uuid-map entries in both
   components (`+TextStyleRegistration.swift`).
 
-**Render risk (open):** the char-style mechanism is the one that rendered
-plain in the pre-fix #37 attempt. It has *not* been re-tested in Keynote 15.3
-since the registration edges and `tsdFill` were understood — that was exactly
-#40's premise. Verification must be render-level (AppleScript
-`export … as slide images` + reading the PNGs, per `drawable_open_crash.md`),
-not open-level: `text_runs.key` (acceptance catalog) is the probe deck. If it
-still renders plain, build a Keynote-scripted reference (set a bold word via
-AppleScript on the blank, save, raw-diff `Index/*.iwa.yaml`) and match its
-shape — the same method that cracked #37 and #38.
+**Render verification (2026-07-31, human pass, Keynote 15.3):** `text_runs.key`
+renders the mixed formatting correctly — "Bold red" large bold red, "italic"
+italic, the spans between plain, all inside one text box, with the whole-item
+control box bold. This retires the historical "char-style fork renders plain"
+risk: that failure belonged to the pre-fix #37 attempt, which lacked the
+registration edges and `tsdFill`. With the full edge set above, per-run
+`TSWP.CharacterStyleArchive` on `table_char_style` **does** render.
 
 ## Magic Move
 
