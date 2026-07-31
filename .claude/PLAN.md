@@ -146,9 +146,17 @@ Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.m
 | 6 Acceptance (Keynote 15.3) | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) |
 
 **Done and merged on `v0.1.x`:** #13 (`d17ae91`), #15 (`d5bb1ef`),
-#19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`), #17, #18, #20, #22, #23 (`48e2bab` / PR #32), #24 (PR #36).
+#19 (`c06313d`), #14 (`9733e93`), #16 (`b8c37c6`), #21 (`3ec7c77`), #17, #18, #20, #22, #23 (`48e2bab` / PR #32), #24 open pass (`24f7c40` / PR #36).
 
-**v0.1.0 Done:** All 12 tracer bullets (#13–#24) are complete. Human Keynote 15.3 open pass is **5/5 green** (`bisect_in`, `bisect_out`, `bisect_action`, `bisect_direction`, `build_acceptance`). Ready for `v0.1.0` release tag.
+**Drawable depth (promoted into v0.1.0 on 2026-07-30):** #3 geometry, #37 text
+formatting, #38 images — implemented on branch `3-37-38-drawable-depth`
+(`wt-drawable`). Keynote open: geometry + formatting OK; **images still crash**
+(triage in `research/findings/drawable_open_crash.md`). Tag `v0.1.0` blocked
+until images open cleanly and expanded #24 acceptance covers all three.
+
+**Prior open-pass note:** Human Keynote 15.3 open pass is **5/5 green** for the
+original five decks (`bisect_in`, `bisect_out`, `bisect_action`,
+`bisect_direction`, `build_acceptance`).
 
 ## Plan
 

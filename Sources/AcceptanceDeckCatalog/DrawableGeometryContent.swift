@@ -1,5 +1,5 @@
 //
-//  SlideItemsBuilder.swift
+//  DrawableGeometryContent.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,26 +27,26 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
-@resultBuilder
-public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
-    [.text(text)]
+import KeynoteKit
+
+/// Size-changing Magic Move pair for the #3 / expanded #24 human pass.
+package struct DrawableGeometryContent: SlideContent {
+  package var body: some SlideContent {
+    Slide {
+      Text("Alpha")
+        .magicId("alpha")
+        .position(x: 200, y: 200)
+        .frame(width: 120, height: 60)
+    }
+    .transition(.magicMove.duration(1))
+    Slide {
+      Text("Alpha")
+        .magicId("alpha")
+        .position(x: 480, y: 360)
+        .frame(width: 280, height: 140)
+    }
   }
 
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
-  }
-
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
-
-  /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
+  /// Creates the content.
+  package init() {}
 }

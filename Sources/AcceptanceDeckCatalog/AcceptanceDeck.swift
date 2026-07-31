@@ -29,18 +29,16 @@
 
 import KeynoteKit
 
-/// One of the five #24 acceptance decks: a committed spec stem
-/// (`research/examples/<name>.json`, golden `research/goldens/<name>.key`)
-/// paired with the same deck expressed in the public authoring DSL.
+/// An acceptance deck: a public-DSL `Deck` written for the human Keynote
+/// 15.3 open pass (`swift run AcceptanceDecks`).
 ///
-/// PLAN Step 6 requires the acceptance decks to go through the *public* API —
-/// Action via `.action { MotionPath() }`, direction via the typed
-/// `.direction(.moveInNonDefault)` — so these are hand-written DSL mirrors of
-/// the committed specs, not decks loaded from the JSON.
+/// PLAN Step 6's original five decks also have committed goldens under
+/// `research/goldens/` and specs under `research/examples/`. Drawable-depth
+/// decks (#3 / #37 / #38) are structural + human-open only — no Python
+/// goldens yet.
 package struct AcceptanceDeck: CustomStringConvertible, Sendable {
-  /// The five acceptance decks (PLAN Step 6): the four bisect cases plus
-  /// `build_acceptance`, in golden order.
-  package static let all: [AcceptanceDeck] = [
+  /// Decks that match committed goldens / specs (golden-differential gate).
+  package static let goldenBacked: [AcceptanceDeck] = [
     AcceptanceDeck(name: "bisect_in", buildCount: 1, deck: Deck { BisectInContent() }),
     AcceptanceDeck(name: "bisect_out", buildCount: 1, deck: Deck { BisectOutContent() }),
     AcceptanceDeck(name: "bisect_action", buildCount: 1, deck: Deck { BisectActionContent() }),
@@ -56,17 +54,43 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     ),
   ]
 
-  /// The spec stem shared with `research/examples/` and `research/goldens/`.
+  /// Geometry / formatting / image decks for expanded #24 (no goldens).
+  package static let drawableDepth: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "drawable_geometry",
+      buildCount: 0,
+      deck: Deck { DrawableGeometryContent() }
+    ),
+    AcceptanceDeck(
+      name: "text_formatting",
+      buildCount: 0,
+      deck: Deck { TextFormattingContent() }
+    ),
+    AcceptanceDeck(
+      name: "image_drawable",
+      buildCount: 1,
+      deck: Deck { ImageDrawableContent() }
+    ),
+  ]
+
+  /// Every deck `swift run AcceptanceDecks` writes.
+  package static let all: [AcceptanceDeck] = goldenBacked + drawableDepth
+
+  /// The stem used for the output filename (`<name>.key`).
   package let name: String
 
-  /// The number of builds the spec declares — the UUID-map invariant's
-  /// expected count when verifying an authored copy.
+  /// Expected build count for the UUID-map invariant.
   package let buildCount: Int
 
   /// The deck, expressed in the public DSL.
   package let deck: Deck
 
   package var description: String { name }
+
+  /// Whether a committed golden / spec exists for differential tests.
+  package var hasGolden: Bool {
+    Self.goldenBacked.contains { $0.name == name }
+  }
 
   /// Creates an acceptance deck.
   package init(name: String, buildCount: Int, deck: Deck) {

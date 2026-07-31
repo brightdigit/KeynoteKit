@@ -36,7 +36,8 @@ extension KeynoteArchiveSurgeon {
   /// show's slide-tree reference, and a fresh metadata component.
   internal mutating func cloneLastSlide(
     in bundle: inout KeyBundle,
-    nextIdentifier: inout UInt64
+    nextIdentifier: inout UInt64,
+    using generator: inout some RandomNumberGenerator
   ) throws {
     let catalog = SlideCatalog(members: members)
     guard let template = try catalog.orderedSlides().last else {
@@ -72,10 +73,40 @@ extension KeynoteArchiveSurgeon {
       map: map,
       nodeIdentifier: nodeIdentifier
     )
+    var nodeEntry = TSP_ObjectUUIDMapEntry()
+    nodeEntry.identifier = nodeIdentifier
+    nodeEntry.uuid.lower = UInt64.random(in: .min ... .max, using: &generator)
+    nodeEntry.uuid.upper = UInt64.random(in: .min ... .max, using: &generator)
+    try registerUUIDEntries([nodeEntry], componentStem: "Document")
+    try registerClonedNodeDataReferences(nodeIdentifier: nodeIdentifier)
     try appendComponent(
       like: template.slideIdentifier,
-      newSlideIdentifier: newSlideIdentifier
+      newSlideIdentifier: newSlideIdentifier,
+      map: map,
+      using: &generator
     )
+  }
+
+  /// Registers the cloned node's data references (e.g. the shared thumbnail)
+  /// on the Document component — an unregistered header data reference makes
+  /// TSP silently refuse to load the slide's objects.
+  private mutating func registerClonedNodeDataReferences(nodeIdentifier: UInt64) throws {
+    let catalog = SlideCatalog(members: members)
+    guard let nodeLocation = catalog.locate(recordIdentifier: nodeIdentifier) else {
+      return
+    }
+    let record = members[nodeLocation.memberIndex].records[nodeLocation.recordIndex]
+    guard let messageInfo = record.info.messageInfos.first else {
+      return
+    }
+    for dataIdentifier in messageInfo.dataReferences {
+      try registerDataObjectReference(
+        dataIdentifier: dataIdentifier,
+        objectIdentifier: nodeIdentifier,
+        count: 1,
+        componentStem: "Document"
+      )
+    }
   }
 
   /// Clones the template's slide node and appends it to the slide tree.
@@ -117,10 +148,18 @@ extension KeynoteArchiveSurgeon {
 
   /// Registers a fresh component for a cloned slide, modeled on the
   /// template slide's component.
+  ///
+  /// The template's `objectUuidMapEntries` are remapped through the clone's
+  /// id map with fresh uuids — Keynote requires every slide-member record to
+  /// appear in its component's uuid map, and a slide whose map is empty loads
+  /// blank and crashes Magic Move with an NSSet nil exception.
   private mutating func appendComponent(
     like templateSlideIdentifier: UInt64,
-    newSlideIdentifier: UInt64
+    newSlideIdentifier: UInt64,
+    map: [UInt64: UInt64],
+    using generator: inout some RandomNumberGenerator
   ) throws {
+    var remappedEntries: [TSP_ObjectUUIDMapEntry] = []
     try withPackageMetadata { metadata in
       guard
         let templateComponent = metadata.components.first(where: {
@@ -131,12 +170,22 @@ extension KeynoteArchiveSurgeon {
           slideIdentifier: templateSlideIdentifier
         )
       }
+      for entry in templateComponent.objectUuidMapEntries {
+        guard let mapped = map[entry.identifier] else {
+          continue
+        }
+        var fresh = TSP_ObjectUUIDMapEntry()
+        fresh.identifier = mapped
+        fresh.uuid.lower = UInt64.random(in: .min ... .max, using: &generator)
+        fresh.uuid.upper = UInt64.random(in: .min ... .max, using: &generator)
+        remappedEntries.append(fresh)
+      }
       var component = templateComponent
       component.identifier = newSlideIdentifier
       if component.hasLocator {
         component.locator = "Slide-\(newSlideIdentifier)"
       }
-      component.objectUuidMapEntries = []
+      component.objectUuidMapEntries = remappedEntries
       metadata.components.append(component)
       if let docIndex = metadata.components.firstIndex(where: {
         $0.preferredLocator == "Document" || $0.identifier == 1

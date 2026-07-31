@@ -1,5 +1,5 @@
 //
-//  SlideItemsBuilder.swift
+//  TextColor.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,26 +27,25 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
-@resultBuilder
-public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
-    [.text(text)]
-  }
+/// An sRGB text color for authored ``Text`` formatting.
+public struct TextColor: Equatable, Sendable {
+  /// Red channel in 0...1.
+  public var red: Double
 
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
-  }
+  /// Green channel in 0...1.
+  public var green: Double
 
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
+  /// Blue channel in 0...1.
+  public var blue: Double
 
-  /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
-    items.flatMap { $0 }
+  /// Alpha channel in 0...1.
+  public var alpha: Double
+
+  /// Creates an sRGB color.
+  public init(red: Double, green: Double, blue: Double, alpha: Double = 1) {
+    self.red = red
+    self.green = green
+    self.blue = blue
+    self.alpha = alpha
   }
 }

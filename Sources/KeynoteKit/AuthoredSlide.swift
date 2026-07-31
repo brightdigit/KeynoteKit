@@ -42,12 +42,113 @@ package struct AuthoredSlide: Equatable, Sendable {
     /// The y position.
     package var y: Double
 
+    /// Authored width; `nil` leaves the template size.
+    package var width: Double?
+
+    /// Authored height; `nil` leaves the template size.
+    package var height: Double?
+
+    /// Authored font family; `nil` leaves the template style.
+    package var fontName: String?
+
+    /// Authored font size; `nil` leaves the template style.
+    package var fontSize: Double?
+
+    /// Authored bold; `nil` leaves the template style.
+    package var isBold: Bool?
+
+    /// Authored italic; `nil` leaves the template style.
+    package var isItalic: Bool?
+
+    /// Authored sRGB color; `nil` leaves the template style.
+    package var color: TextColor?
+
+    /// Whether any formatting field is set.
+    package var hasFormatting: Bool {
+      fontName != nil || fontSize != nil || isBold != nil || isItalic != nil || color != nil
+    }
+
     /// Creates a text item.
-    package init(text: String, x: Double, y: Double) {
+    package init(
+      text: String,
+      x: Double,
+      y: Double,
+      width: Double? = nil,
+      height: Double? = nil,
+      fontName: String? = nil,
+      fontSize: Double? = nil,
+      isBold: Bool? = nil,
+      isItalic: Bool? = nil,
+      color: TextColor? = nil
+    ) {
       self.text = text
       self.x = x
       self.y = y
+      self.width = width
+      self.height = height
+      self.fontName = fontName
+      self.fontSize = fontSize
+      self.isBold = isBold
+      self.isItalic = isItalic
+      self.color = color
     }
+  }
+
+  /// An image drawable's bytes and geometry.
+  package struct ImageItem: Equatable, Sendable {
+    /// Encoded image bytes.
+    package var data: [UInt8]
+
+    /// Zip / preferred filename extension.
+    package var fileExtension: String
+
+    /// The x position.
+    package var x: Double
+
+    /// The y position.
+    package var y: Double
+
+    /// Authored width in points.
+    package var width: Double?
+
+    /// Authored height in points.
+    package var height: Double?
+
+    /// Pixel width when known.
+    package var naturalWidth: Double?
+
+    /// Pixel height when known.
+    package var naturalHeight: Double?
+
+    /// Creates an image item.
+    package init(
+      data: [UInt8],
+      fileExtension: String,
+      x: Double,
+      y: Double,
+      width: Double? = nil,
+      height: Double? = nil,
+      naturalWidth: Double? = nil,
+      naturalHeight: Double? = nil
+    ) {
+      self.data = data
+      self.fileExtension = fileExtension
+      self.x = x
+      self.y = y
+      self.width = width
+      self.height = height
+      self.naturalWidth = naturalWidth
+      self.naturalHeight = naturalHeight
+    }
+  }
+
+  /// One authored drawable in z-order / build-target order.
+  package enum DrawableItem: Equatable, Sendable {
+    /// A text placeholder.
+    case text(TextItem)
+
+    /// An image drawable.
+    case image(ImageItem)
   }
 
   /// A transition's authored fields (direction travels separately in
@@ -74,7 +175,7 @@ package struct AuthoredSlide: Equatable, Sendable {
     }
   }
 
-  /// The number of text items the spec declares; must equal the base
+  /// The number of drawables the spec declares; must equal the base
   /// slide's `drawablesZOrder` count (drawable order is target order).
   package var itemCount: Int
 
@@ -85,8 +186,9 @@ package struct AuthoredSlide: Equatable, Sendable {
   /// The slide's builds, in delivery order.
   package var builds: [AuthoredBuild]
 
-  /// The text items to write into the slide's drawables, in order.
-  package var items: [TextItem]
+  /// The drawables to write, in order. Empty means "leave the base slide's
+  /// items untouched" (the golden differential path).
+  package var items: [DrawableItem]
 
   /// The transition to author, when the deck sets one.
   package var transition: Transition?
@@ -96,7 +198,7 @@ package struct AuthoredSlide: Equatable, Sendable {
     itemCount: Int,
     transitionDirection: UInt32? = nil,
     builds: [AuthoredBuild] = [],
-    items: [TextItem] = [],
+    items: [DrawableItem] = [],
     transition: Transition? = nil
   ) {
     self.itemCount = itemCount

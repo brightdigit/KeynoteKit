@@ -35,6 +35,9 @@ extension KeynoteArchiveSurgeon {
     internal var uuidEntries: [TSP_ObjectUUIDMapEntry] = []
     internal var maximumIdentifier: UInt64 = 0
     internal var dirtyPaths: Set<String> = []
+    internal var dataEntries: [(path: String, body: [UInt8])] = []
+    internal var dataInfos: [TSP_DataInfo] = []
+    internal var componentDataReferences: [TSP_ComponentDataReference] = []
   }
 
   /// One slide's freshly minted records and identifiers.
@@ -72,7 +75,15 @@ extension KeynoteArchiveSurgeon {
       try flagSlideNodeTransition(at: location, dirtyPaths: &minted.dirtyPaths)
     }
     if !spec.items.isEmpty {
-      try applyTextItems(spec.items, to: &slideArchive, slideIndex: slideIndex)
+      try applyDrawableItems(
+        spec.items,
+        to: &slideArchive,
+        at: location,
+        slideIndex: slideIndex,
+        nextIdentifier: &nextIdentifier,
+        minted: &minted,
+        using: &generator
+      )
       minted.dirtyPaths.insert(members[location.memberIndex].path)
     }
     let batch = try mintBuilds(

@@ -1,5 +1,5 @@
 //
-//  SlideItemsBuilder.swift
+//  ImageDrawableContent.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,26 +27,25 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
-@resultBuilder
-public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
-    [.text(text)]
+import KeynoteKit
+
+/// Image drawable + In build for the #38 / expanded #24 human pass.
+package struct ImageDrawableContent: SlideContent {
+  package var body: some SlideContent {
+    Slide {
+      Text("Caption")
+        .position(x: 100, y: 480)
+        .frame(width: 300, height: 50)
+      Image(data: AcceptanceSampleJPEG.data)
+        .position(x: 200, y: 140)
+        .frame(width: 320, height: 240)
+        .build(.in) {
+          Dissolve()
+            .duration(1)
+        }
+    }
   }
 
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
-  }
-
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
-
-  /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
+  /// Creates the content.
+  package init() {}
 }

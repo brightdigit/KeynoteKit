@@ -1,5 +1,5 @@
 //
-//  SlideItemsBuilder.swift
+//  SlideDrawable.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,26 +27,35 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
-@resultBuilder
-public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
-    [.text(text)]
+/// A drawable on a slide — text or image — before z-order sorting.
+public enum SlideDrawable: Sendable {
+  /// A text item.
+  case text(Text)
+
+  /// An image item.
+  case image(Image)
+
+  /// Layer order used for sorting into `drawablesZOrder`.
+  internal var zIndex: Int {
+    switch self {
+    case .text(let text): text.zIndex ?? 0
+    case .image(let image): image.zIndex ?? 0
+    }
   }
 
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
+  /// Builds attached to this drawable.
+  internal var builds: [BuildEffectConfiguration] {
+    switch self {
+    case .text(let text): text.builds
+    case .image(let image): image.builds
+    }
   }
 
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
-
-  /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
-    items.flatMap { $0 }
+  /// Action build attached to this drawable.
+  internal var action: MotionPath? {
+    switch self {
+    case .text(let text): text.action
+    case .image(let image): image.action
+    }
   }
 }

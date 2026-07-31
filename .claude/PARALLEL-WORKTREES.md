@@ -130,13 +130,14 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-30): #24 Keynote open pass is 5/5 GREEN; PR #36 updated with multi-slide cloning fix.**
+> **Current position (2026-07-30): drawable depth (#3 / #37 / #38) in `wt-drawable` / `3-37-38-drawable-depth`.**
 >
-> - PR #32 (squash `48e2bab`) landed the #17 → #18 → #20 → #22 → #23 chain on `v0.1.x`.
-> - **PR #34** landed scripted #24 generation; **PR #35** landed the #10 ScriptingBridge AFK surface.
-> - **PR #36** fixes multi-slide cloning invariants (component `preferredLocator: "Slide"`, `Document` component `externalReferences`, and slide node `hasTransition_p`), bringing Keynote 15.3 open pass to **5/5 green** (`bisect_in`, `bisect_out`, `bisect_action`, `bisect_direction`, `build_acceptance`).
-> - All 12 v0.1.0 tracer bullets (#13–#24) are complete. Ready for `v0.1.0` tag after PR #36 merge.
-> - Post-v0.1.0 lanes: **#5** stay-vendored (PR #33); **#10** live `KEYNOTEKIT_LIVE_KEYNOTE=1` verify still open. Cross-check with `gh issue view 12`.
+> - PR #36 (`24f7c40`) landed: #24 Keynote open pass **5/5 green** + multi-slide cloning fixes.
+> - Map #12 promoted geometry (#3), text formatting (#37), and images (#38) into v0.1.0 before the tag.
+> - This lane implements all three in one PR (shared `Text` / slide-item / surgeon seams). Findings: `drawable_geometry.md`, `text_formatting.md`, `image_authoring.md`, **`drawable_open_crash.md`**.
+> - Keynote 15.3: **all 8 acceptance decks open AND render green** (2026-07-31). The 2026-07-30 open-only pass missed three render failures the human pass caught; all root-caused and fixed: multi-slide clone bugs (RecordCloner empty-reference materialization + missing component uuid/data-reference bookkeeping — the drawable_geometry crash/blank slide 2), text formatting switched to Keynote's paragraph-style-variation mechanism with full cross-component registration (+ `tsdFill` for color), and a decodable sample JPEG (old 1×1 was rejected by ImageIO → "?" placeholder). Verified via scripted slide-image export + AppleScript model probes — see `drawable_open_crash.md`.
+> - Remaining before tag `v0.1.0`: human pass (confirm Magic Move plays 1→2, no silent "repair" dialog), merge PR #39, tag.
+> - Post-v0.1.0 lanes unchanged: **#4** shapes deferred; **#10** live Keynote verify still open. Cross-check with `gh issue view 12`.
 
 ### ~~Phase 0 — before #13 lands~~ (complete)
 

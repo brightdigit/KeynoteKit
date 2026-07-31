@@ -1,5 +1,5 @@
 //
-//  SlideItemsBuilder.swift
+//  TextFormattingContent.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,26 +27,25 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
-@resultBuilder
-public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
-    [.text(text)]
+import KeynoteKit
+
+/// Authored font / weight / color for the #37 / expanded #24 human pass.
+package struct TextFormattingContent: SlideContent {
+  package var body: some SlideContent {
+    Slide {
+      Text("Styled")
+        .font("HelveticaNeue", size: 48)
+        .bold()
+        .italic()
+        .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
+        .position(x: 160, y: 220)
+        .frame(width: 480, height: 100)
+      Text("Plain neighbor")
+        .position(x: 160, y: 360)
+        .frame(width: 400, height: 60)
+    }
   }
 
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
-  }
-
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
-
-  /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
-    items.flatMap { $0 }
-  }
+  /// Creates the content.
+  package init() {}
 }
