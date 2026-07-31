@@ -30,11 +30,13 @@
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
-  /// One forked paragraph style minted for a formatted text item.
+  /// One style minted for a formatted text item: a paragraph-style fork
+  /// (item-wide formatting, with a parent) or a per-run character style
+  /// (span overrides, parentless).
   private struct MintedTextStyle {
     var record: TSPArchiveRecord
     var identifier: UInt64
-    var parentIdentifier: UInt64
+    var parentIdentifier: UInt64?
   }
 
   /// Writes each drawable's content into `drawablesZOrder` slots.
@@ -59,17 +61,17 @@ extension KeynoteArchiveSurgeon {
     let catalog = SlideCatalog(members: members)
     var styles: [MintedTextStyle] = []
     for (index, item) in textItems {
-      if let style = try applyTextItem(
-        item,
-        at: index,
-        slideArchive: slideArchive,
-        catalog: catalog,
-        slideIndex: slideIndex,
-        nextIdentifier: &nextIdentifier,
-        minted: &minted
-      ) {
-        styles.append(style)
-      }
+      styles.append(
+        contentsOf: try applyTextItem(
+          item,
+          at: index,
+          slideArchive: slideArchive,
+          catalog: catalog,
+          slideIndex: slideIndex,
+          nextIdentifier: &nextIdentifier,
+          minted: &minted
+        )
+      )
     }
     if !styles.isEmpty {
       let ownerStem = try appendCharacterStylesToDocumentStylesheet(styles.map(\.record))
@@ -89,50 +91,9 @@ extension KeynoteArchiveSurgeon {
     }
   }
 
-  /// Registers the cross-component bookkeeping a minted character style needs
-  /// to *render*: uuid-map entries in both the stylesheet and slide
-  /// components, and a slide-component external reference — Keynote silently
-  /// drops the style (text renders plain) when any edge is missing.
-  private mutating func registerCharacterStyleMetadata(
-    _ styleIdentifiers: [UInt64],
-    ownerStem: String,
-    at location: SlideCatalog.Slide,
-    minted: inout MintedSlide,
-    using generator: inout some RandomNumberGenerator
-  ) throws {
-    var entries: [TSP_ObjectUUIDMapEntry] = []
-    for styleIdentifier in styleIdentifiers {
-      var uuid = TSP_UUID()
-      uuid.lower = UInt64.random(in: .min ... .max, using: &generator)
-      uuid.upper = UInt64.random(in: .min ... .max, using: &generator)
-      var entry = TSP_ObjectUUIDMapEntry()
-      entry.identifier = styleIdentifier
-      entry.uuid = uuid
-      entries.append(entry)
-      minted.uuidEntries.append(entry)
-    }
-    try registerUUIDEntries(entries, componentStem: ownerStem)
-    try registerExternalReferences(
-      styleIdentifiers.map { (ownerStem: ownerStem, objectIdentifier: $0) },
-      slideIdentifier: location.slideIdentifier
-    )
-  }
-
-  /// Appends minted character-style records to `DocumentStylesheet.iwa`;
-  /// returns the stylesheet member's locator stem.
-  private mutating func appendCharacterStylesToDocumentStylesheet(
-    _ records: [TSPArchiveRecord]
-  ) throws -> String {
-    let catalog = SlideCatalog(members: members)
-    guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: 0)
-    }
-    members[location.memberIndex].records.append(contentsOf: records)
-    return Self.locatorStem(of: members[location.memberIndex].path)
-  }
-
-  /// Applies one text item; returns a minted paragraph-style fork when
-  /// formatting is set.
+  /// Applies one text item; returns the styles minted for it — a
+  /// paragraph-style fork when item-wide formatting is set, plus one
+  /// character style per span when any span carries its own overrides.
   private mutating func applyTextItem(
     _ item: AuthoredSlide.TextItem,
     at index: Int,
@@ -141,7 +102,7 @@ extension KeynoteArchiveSurgeon {
     slideIndex: Int,
     nextIdentifier: inout UInt64,
     minted: inout MintedSlide
-  ) throws -> MintedTextStyle? {
+  ) throws -> [MintedTextStyle] {
     guard slideArchive.drawablesZOrder.indices.contains(index) else {
       throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
     }
@@ -162,30 +123,61 @@ extension KeynoteArchiveSurgeon {
       partial: true
     )
     let storageIdentifier = placeholder.super.ownedStorage.identifier
-    var mintedStyle: MintedTextStyle?
-    if item.hasFormatting,
-      let parentIdentifier = try currentParagraphStyleIdentifier(ofStorage: storageIdentifier)
-    {
-      let styleIdentifier = nextIdentifier
-      nextIdentifier += 1
-      let record = try paragraphStyleRecord(
-        for: item,
-        identifier: styleIdentifier,
-        parentIdentifier: parentIdentifier
-      )
-      minted.maximumIdentifier = max(minted.maximumIdentifier, styleIdentifier)
-      mintedStyle = MintedTextStyle(
-        record: record,
-        identifier: styleIdentifier,
-        parentIdentifier: parentIdentifier
-      )
+    let mintedStyle = try mintedParagraphFork(
+      for: item,
+      storageIdentifier: storageIdentifier,
+      nextIdentifier: &nextIdentifier,
+      minted: &minted
+    )
+    let runStyles = try characterRunStyles(for: item, nextIdentifier: &nextIdentifier)
+    if let last = runStyles.last {
+      minted.maximumIdentifier = max(minted.maximumIdentifier, last.identifier)
     }
     try applyText(
       item.text,
-      paragraphStyle: mintedStyle.map { ($0.identifier, $0.parentIdentifier) },
+      paragraphStyle: mintedStyle.flatMap { style in
+        style.parentIdentifier.map { (style.identifier, $0) }
+      },
+      characterRuns: runStyles.map {
+        CharacterRunEntry(characterIndex: $0.characterIndex, styleIdentifier: $0.identifier)
+      },
       toStorage: storageIdentifier
     )
-    return mintedStyle
+    var styles = mintedStyle.map { [$0] } ?? []
+    styles.append(
+      contentsOf: runStyles.map {
+        MintedTextStyle(record: $0.record, identifier: $0.identifier, parentIdentifier: nil)
+      }
+    )
+    return styles
+  }
+
+  /// Mints the paragraph-style fork carrying the item-wide formatting, when
+  /// any is set.
+  private mutating func mintedParagraphFork(
+    for item: AuthoredSlide.TextItem,
+    storageIdentifier: UInt64,
+    nextIdentifier: inout UInt64,
+    minted: inout MintedSlide
+  ) throws -> MintedTextStyle? {
+    guard item.hasFormatting,
+      let parentIdentifier = try currentParagraphStyleIdentifier(ofStorage: storageIdentifier)
+    else {
+      return nil
+    }
+    let styleIdentifier = nextIdentifier
+    nextIdentifier += 1
+    let record = try paragraphStyleRecord(
+      for: item,
+      identifier: styleIdentifier,
+      parentIdentifier: parentIdentifier
+    )
+    minted.maximumIdentifier = max(minted.maximumIdentifier, styleIdentifier)
+    return MintedTextStyle(
+      record: record,
+      identifier: styleIdentifier,
+      parentIdentifier: parentIdentifier
+    )
   }
 
   /// Writes authored position and optional size onto a placeholder.

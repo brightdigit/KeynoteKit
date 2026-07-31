@@ -39,11 +39,13 @@ extension KeynoteArchiveSurgeon {
     return members[location.memberIndex].records[location.recordIndex].info.identifier
   }
 
-  /// Registers a forked style on the stylesheet: the `styles` list plus the
-  /// parent→children variation map Keynote maintains for style forks.
+  /// Registers a forked style on the stylesheet: the `styles` list plus —
+  /// when the style has a parent — the parent→children variation map Keynote
+  /// maintains for style forks. Parentless minted styles (per-run character
+  /// styles) register on the `styles` list only.
   internal mutating func registerStyleInDocumentStylesheet(
     _ styleIdentifier: UInt64,
-    parentIdentifier: UInt64
+    parentIdentifier: UInt64?
   ) throws {
     let catalog = SlideCatalog(members: members)
     guard let location = try catalog.locateFirst(named: "TSS.StylesheetArchive") else {
@@ -60,21 +62,36 @@ extension KeynoteArchiveSurgeon {
     if !sheet.styles.contains(where: { $0.identifier == styleIdentifier }) {
       sheet.styles.append(reference)
     }
-    if let mapIndex = sheet.parentToChildrenStyleMap.firstIndex(where: {
+    if let parentIdentifier {
+      appendVariation(
+        reference,
+        underParent: parentIdentifier,
+        to: &sheet.parentToChildrenStyleMap
+      )
+    }
+    members[location.memberIndex].records[location.recordIndex]
+      .payloads[location.payloadIndex] = try sheet.serializedBytes(partial: true)
+  }
+
+  /// Adds a fork to its parent's entry in the variation map.
+  private func appendVariation(
+    _ reference: TSP_Reference,
+    underParent parentIdentifier: UInt64,
+    to map: inout [TSS_StylesheetArchive.StyleChildrenEntry]
+  ) {
+    if let mapIndex = map.firstIndex(where: {
       $0.parent.identifier == parentIdentifier
     }) {
-      if !sheet.parentToChildrenStyleMap[mapIndex].children.contains(where: {
-        $0.identifier == styleIdentifier
+      if !map[mapIndex].children.contains(where: {
+        $0.identifier == reference.identifier
       }) {
-        sheet.parentToChildrenStyleMap[mapIndex].children.append(reference)
+        map[mapIndex].children.append(reference)
       }
     } else {
       var entry = TSS_StylesheetArchive.StyleChildrenEntry()
       entry.parent.identifier = parentIdentifier
       entry.children = [reference]
-      sheet.parentToChildrenStyleMap.append(entry)
+      map.append(entry)
     }
-    members[location.memberIndex].records[location.recordIndex]
-      .payloads[location.payloadIndex] = try sheet.serializedBytes(partial: true)
   }
 }

@@ -34,7 +34,7 @@ import KeynoteKit
 package struct BisectInContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text("Build In")
+      TextBox("Build In")
         .position(x: 200, y: 250)
         .build(.in) {
           Dissolve()

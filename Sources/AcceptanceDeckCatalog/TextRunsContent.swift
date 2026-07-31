@@ -1,5 +1,5 @@
 //
-//  TextFormattingContent.swift
+//  TextRunsContent.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -29,20 +29,26 @@
 
 import KeynoteKit
 
-/// Authored font / weight / color for the #37 / expanded #24 human pass.
-package struct TextFormattingContent: SlideContent {
+/// Mixed formatting inside one text box for the #40 render pass: the pass is
+/// green only when "Bold red" is large bold red, "italic" is italic, and the
+/// spans between them stay plain — all within a single item.
+package struct TextRunsContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      TextBox("Styled")
-        .font("HelveticaNeue", size: 48)
+      TextBox {
+        Text("Bold red")
+          .bold()
+          .fontSize(56)
+          .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
+        Text(" then plain then ")
+        Text("italic").italic()
+      }
+      .position(x: 120, y: 220)
+      .frame(width: 720, height: 120)
+      TextBox("Whole-item styled neighbor")
         .bold()
-        .italic()
-        .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
-        .position(x: 160, y: 220)
-        .frame(width: 480, height: 100)
-      TextBox("Plain neighbor")
-        .position(x: 160, y: 360)
-        .frame(width: 400, height: 60)
+        .position(x: 120, y: 380)
+        .frame(width: 600, height: 60)
     }
   }
 

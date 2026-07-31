@@ -27,11 +27,11 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``Text`` and ``Image`` items.
+/// The result builder collecting a slide's ``TextBox`` and ``Image`` items.
 @resultBuilder
 public enum SlideItemsBuilder {
   /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: Text) -> [SlideDrawable] {
+  public static func buildExpression(_ text: TextBox) -> [SlideDrawable] {
     [.text(text)]
   }
 

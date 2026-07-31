@@ -27,7 +27,7 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// An sRGB text color for authored ``Text`` formatting.
+/// An sRGB text color for authored ``TextBox`` formatting.
 public struct TextColor: Equatable, Sendable {
   /// Red channel in 0...1.
   public var red: Double

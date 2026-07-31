@@ -28,7 +28,7 @@ internal struct ImageAuthoringTests {
   internal func authorsImageWithBuild() throws {
     let deck = Deck {
       Slide {
-        Text("Caption").position(x: 100, y: 500)
+        TextBox("Caption").position(x: 100, y: 500)
         Image(data: tinyJPEG)
           .position(x: 200, y: 150)
           .frame(width: 320, height: 240)

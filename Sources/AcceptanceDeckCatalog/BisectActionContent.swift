@@ -35,7 +35,7 @@ import KeynoteKit
 package struct BisectActionContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text("Move Action")
+      TextBox("Move Action")
         .position(x: 200, y: 250)
         .action {
           MotionPath()

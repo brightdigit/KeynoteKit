@@ -113,7 +113,17 @@ extension Deck {
           fontSize: text.fontSize,
           isBold: text.isBold,
           isItalic: text.isItalic,
-          color: text.color
+          color: text.color,
+          runs: text.runs.map { run in
+            AuthoredSlide.TextItem.Run(
+              text: run.content,
+              fontName: run.fontName,
+              fontSize: run.fontSize,
+              isBold: run.isBold,
+              isItalic: run.isItalic,
+              color: run.color
+            )
+          }
         )
       )
     case .image(let image):

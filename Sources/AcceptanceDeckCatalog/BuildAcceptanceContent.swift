@@ -36,19 +36,19 @@ import KeynoteKit
 package struct BuildAcceptanceContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text("Build In")
+      TextBox("Build In")
         .position(x: 200, y: 180)
         .build(.in) {
           Dissolve()
             .duration(1)
         }
-      Text("Build Out")
+      TextBox("Build Out")
         .position(x: 200, y: 360)
         .build(.out) {
           Dissolve()
             .duration(1)
         }
-      Text("Move Action")
+      TextBox("Move Action")
         .position(x: 200, y: 540)
         .action {
           MotionPath()
@@ -56,7 +56,7 @@ package struct BuildAcceptanceContent: SlideContent {
         }
     }
     Slide {
-      Text("Directed Move In")
+      TextBox("Directed Move In")
         .position(x: 200, y: 250)
     }
     .transition(

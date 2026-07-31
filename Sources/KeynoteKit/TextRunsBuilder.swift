@@ -1,5 +1,5 @@
 //
-//  TextFormattingContent.swift
+//  TextRunsBuilder.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,25 +27,36 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-import KeynoteKit
-
-/// Authored font / weight / color for the #37 / expanded #24 human pass.
-package struct TextFormattingContent: SlideContent {
-  package var body: some SlideContent {
-    Slide {
-      TextBox("Styled")
-        .font("HelveticaNeue", size: 48)
-        .bold()
-        .italic()
-        .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
-        .position(x: 160, y: 220)
-        .frame(width: 480, height: 100)
-      TextBox("Plain neighbor")
-        .position(x: 160, y: 360)
-        .frame(width: 400, height: 60)
-    }
+/// Collects ``Text`` spans for a mixed-formatting ``TextBox`` item.
+@resultBuilder
+public enum TextRunsBuilder {
+  /// Collects the block's runs.
+  public static func buildBlock(_ runs: [Text]...) -> [Text] {
+    runs.flatMap { $0 }
   }
 
-  /// Creates the content.
-  package init() {}
+  /// Lifts a run into the block.
+  public static func buildExpression(_ run: Text) -> [Text] {
+    [run]
+  }
+
+  /// Supports `if` without `else`.
+  public static func buildOptional(_ runs: [Text]?) -> [Text] {
+    runs ?? []
+  }
+
+  /// Supports `if` / `else` (first branch).
+  public static func buildEither(first runs: [Text]) -> [Text] {
+    runs
+  }
+
+  /// Supports `if` / `else` (second branch).
+  public static func buildEither(second runs: [Text]) -> [Text] {
+    runs
+  }
+
+  /// Supports `for` loops.
+  public static func buildArray(_ runs: [[Text]]) -> [Text] {
+    runs.flatMap { $0 }
+  }
 }

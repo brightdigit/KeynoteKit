@@ -4,20 +4,20 @@ import KeynoteKit
 import KeynoteKitProtobuf
 import Testing
 
-@Suite("Text formatting")
+@Suite("TextBox formatting")
 internal struct TextFormattingTests {
   @Test("writes font, weight, color, and geometry onto a forked paragraph style")
   internal func writesFormatting() throws {
     let deck = Deck {
       Slide {
-        Text("Styled")
+        TextBox("Styled")
           .font("HelveticaNeue", size: 36)
           .bold()
           .italic()
           .foregroundColor(TextColor(red: 0.1, green: 0.2, blue: 0.8))
           .position(x: 160, y: 220)
           .frame(width: 480, height: 100)
-        Text("Plain")
+        TextBox("Plain")
       }
     }
     let url = FileManager.default.temporaryDirectory

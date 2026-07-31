@@ -1,4 +1,4 @@
-# Text formatting on authored Text (#37)
+# Text formatting on authored Text (#37 whole-item, #40 mixed runs)
 
 ## What the blank template stores
 
@@ -9,25 +9,63 @@ That paragraph style lives in `Index/DocumentStylesheet.iwa` and is shared
 across cloned placeholders — mutating it in place would restyle every body
 item (and the theme).
 
-## Write approach
+## Whole-item formatting (#37 — SHIPPED, render-verified 2026-07-31)
 
-When ``Text`` sets font / size / bold / italic / color:
+When ``Text`` sets font / size / bold / italic / color for the whole item,
+KeynoteKit mints a **`TSWP.ParagraphStyleArchive` variation** — the mechanism
+Keynote itself uses (verified against a script-driven reference on the same
+blank). `KeynoteArchiveSurgeon+CharacterStyle.swift`:
 
-1. Mint a fresh `TSWP.CharacterStyleArchive` (registry type **2021**) with
-   required `TSS.StyleArchive` `super.stylesheet` → document stylesheet,
-   plus `char_properties` (`font_name`, `font_size`, `bold`, `italic`,
-   `font_color` as sRGB `TSP.Color`).
-2. Append the record to `DocumentStylesheet.iwa`, register it on
-   `TSS.StylesheetArchive.styles`, and set `MessageInfo.objectReferences` to
-   the stylesheet id. (Omitting `super` crashes Keynote on open.)
-3. Set `StorageArchive.table_char_style` to a single run at `character_index 0`
-   pointing at the new style.
+1. Fork with `super.isVariation = true`, `super.parent` = the storage's
+   current paragraph style (`tableParaStyle` entry 0), `super.stylesheet` =
+   the document stylesheet, `charProperties` carrying the overrides,
+   `overrideCount` = property count. Registry type **2022**.
+2. Color must set **`charProperties.tsdFill`** (a fill with the same color)
+   alongside `fontColor` — modern Keynote paints glyphs with the fill;
+   `fontColor` alone renders black.
+3. Registration needs ALL of: append the record to `DocumentStylesheet.iwa`;
+   stylesheet `styles` list; stylesheet `parentToChildrenStyleMap` under the
+   parent; the storage record header's `objectReferences` swapped from parent
+   to fork; slide-component `externalReferences` edge into the
+   DocumentStylesheet component; uuid-map entries in both the
+   DocumentStylesheet and Slide components. Keynote silently renders plain
+   when any edge is missing (`drawable_open_crash.md`).
 
-The shared Body paragraph style is left untouched. Unset formatting fields
-leave `table_char_style` empty (template / paragraph defaults).
+An earlier whole-item attempt via a `TSWP.CharacterStyleArchive` fork on
+`table_char_style` opened cleanly but **rendered plain** — that attempt
+predates the registration edges above and `tsdFill`.
+
+## Mixed runs inside one item (#40 — SHIPPED, render-verified 2026-07-31)
+
+`TextBox { Text("Styled").bold(); Text(" plain") }` authors several spans in one
+text box. Implementation (`KeynoteArchiveSurgeon+CharacterRuns.swift`,
+`+TextApplication.swift`):
+
+- The paragraph-style variation above still carries item-wide defaults.
+- When any span has its own overrides, KeynoteKit mints one
+  **`TSWP.CharacterStyleArchive`** (registry type **2021**) per span:
+  `super.stylesheet` set (no parent), `charProperties` (color with
+  `tsdFill`), `overrideCount`. Plain spans mint an override-free style so
+  their entry resets the preceding span — a zero-identifier reference is
+  never written (Keynote resolves id 0 to nil: blank render or NSSet-nil
+  crash).
+- `StorageArchive.table_char_style` gets one object-attribute entry per span
+  keyed by the span's **UTF-16** start offset; each style id is appended to
+  the storage record header's `objectReferences`.
+- Every minted style gets the full edge set from #37: stylesheet `styles`
+  list, slide-component `externalReferences`, uuid-map entries in both
+  components (`+TextStyleRegistration.swift`).
+
+**Render verification (2026-07-31, human pass, Keynote 15.3):** `text_runs.key`
+renders the mixed formatting correctly — "Bold red" large bold red, "italic"
+italic, the spans between plain, all inside one text box, with the whole-item
+control box bold. This retires the historical "char-style fork renders plain"
+risk: that failure belonged to the pre-fix #37 attempt, which lacked the
+registration edges and `tsdFill`. With the full edge set above, per-run
+`TSWP.CharacterStyleArchive` on `table_char_style` **does** render.
 
 ## Magic Move
 
 Style-only morphs between matched `.magicId` pairs are expressible the same
-way as geometry: same string/type, different character-style properties on each
-slide. Correspondence remains a runtime heuristic (`magic_move_correspondence.md`).
+way as geometry: same string/type, different style properties on each slide.
+Correspondence remains a runtime heuristic (`magic_move_correspondence.md`).

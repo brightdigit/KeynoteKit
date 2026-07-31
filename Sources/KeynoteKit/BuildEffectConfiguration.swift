@@ -30,7 +30,7 @@
 /// One configured build effect: the archive effect string plus timing.
 ///
 /// Produced by the effect catalog types (``Dissolve``, ``MoveIn``, …) and
-/// consumed by ``Text/build(_:_:)``.
+/// consumed by ``TextBox/build(_:_:)``.
 public struct BuildEffectConfiguration: Sendable {
   /// The raw archive effect string.
   internal var effect: String
@@ -47,7 +47,7 @@ public struct BuildEffectConfiguration: Sendable {
   /// The direction ordinal, for directional effects only.
   internal var direction: UInt32?
 
-  /// The phase, stamped by ``Text/build(_:_:)``.
+  /// The phase, stamped by ``TextBox/build(_:_:)``.
   internal var phase: BuildPhase = .in
 
   /// Creates a configuration for `effect`.

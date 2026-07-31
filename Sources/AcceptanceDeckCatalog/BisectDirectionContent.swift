@@ -35,7 +35,7 @@ import KeynoteKit
 package struct BisectDirectionContent: SlideContent {
   package var body: some SlideContent {
     Slide {
-      Text("Direction Only")
+      TextBox("Direction Only")
         .position(x: 200, y: 250)
     }
     .transition(

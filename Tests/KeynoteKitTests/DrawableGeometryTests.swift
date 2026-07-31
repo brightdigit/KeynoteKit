@@ -12,7 +12,7 @@ internal struct DrawableGeometryTests {
   internal func writesFrameSize() throws {
     let deck = Deck {
       Slide {
-        Text("Sized")
+        TextBox("Sized")
           .position(x: 100, y: 120)
           .frame(width: 400, height: 80)
       }
@@ -29,13 +29,13 @@ internal struct DrawableGeometryTests {
   internal func leavesTemplateSizeWhenUnset() throws {
     let deck = Deck {
       Slide {
-        Text("Default size").position(x: 50, y: 60)
+        TextBox("Default size").position(x: 50, y: 60)
       }
     }
     let baseline = try authorSurgeon(
       from: Deck {
         Slide {
-          Text("probe")
+          TextBox("probe")
         }
       }
     )
@@ -52,13 +52,13 @@ internal struct DrawableGeometryTests {
   internal func zIndexReordersDrawables() throws {
     let deck = Deck {
       Slide {
-        Text("Bottom")
+        TextBox("Bottom")
           .zIndex(0)
           .build(.in) { Dissolve() }
-        Text("Top")
+        TextBox("Top")
           .zIndex(10)
           .build(.out) { Dissolve() }
-        Text("Middle")
+        TextBox("Middle")
           .zIndex(5)
       }
     }
