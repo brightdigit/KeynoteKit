@@ -41,4 +41,32 @@ public enum BuildEffectsBuilder {
   ) -> [BuildEffectConfiguration] {
     parts.flatMap { $0 }
   }
+
+  /// Supports `for` loops.
+  public static func buildArray(
+    _ parts: [[BuildEffectConfiguration]]
+  ) -> [BuildEffectConfiguration] {
+    parts.flatMap { $0 }
+  }
+
+  /// Supports `if` without `else`.
+  public static func buildOptional(
+    _ parts: [BuildEffectConfiguration]?
+  ) -> [BuildEffectConfiguration] {
+    parts ?? []
+  }
+
+  /// Supports the `if` branch of `if`/`else`.
+  public static func buildEither(
+    first parts: [BuildEffectConfiguration]
+  ) -> [BuildEffectConfiguration] {
+    parts
+  }
+
+  /// Supports the `else` branch of `if`/`else`.
+  public static func buildEither(
+    second parts: [BuildEffectConfiguration]
+  ) -> [BuildEffectConfiguration] {
+    parts
+  }
 }

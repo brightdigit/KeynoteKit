@@ -125,7 +125,7 @@ package enum BuildRecordFactory {
     attributes.chartRotation3D = 60.0
     if build.kind == .action {
       attributes.actionAcceleration = .kEaseBoth
-      attributes.actionMotionPathSource = pathSource(for: build)
+      attributes.actionMotionPathSource = try pathSource(for: build)
     } else {
       attributes.customDeliveryOption = .kDeliveryOptionForward
       attributes.customTextDelivery = .kTextDeliveryByObject
@@ -171,22 +171,32 @@ package enum BuildRecordFactory {
     }
   }
 
+  /// A `TSP.Point` at the path point's coordinates.
+  private static func point(_ pathPoint: AuthoredMotionPath.Point) -> TSP_Point {
+    var tspPoint = TSP_Point()
+    tspPoint.x = Float(pathPoint.x)
+    tspPoint.y = Float(pathPoint.y)
+    return tspPoint
+  }
+
   /// The Action motion-path source.
-  private static func pathSource(for build: AuthoredBuild) -> TSD_PathSourceArchive {
+  private static func pathSource(for build: AuthoredBuild) throws -> TSD_PathSourceArchive {
     guard let path = build.motionPath else {
-      return TSD_PathSourceArchive()
+      // An empty TSD.PathSourceArchive would serialize an action with no
+      // path — a silently broken build rather than a diagnosable error.
+      throw ArchiveSurgeryError.invariantViolation(
+        "action build has no motion path"
+      )
     }
     var subpath = TSD_EditableBezierPathSourceArchive.Subpath()
     subpath.closed = false
-    subpath.nodes = path.points.map { point in
+    subpath.nodes = path.nodes.map { pathNode in
       var node = TSD_EditableBezierPathSourceArchive.Node()
-      var tspPoint = TSP_Point()
-      tspPoint.x = Float(point.x)
-      tspPoint.y = Float(point.y)
-      node.inControlPoint = tspPoint
-      node.nodePoint = tspPoint
-      node.outControlPoint = tspPoint
-      node.type = .sharp
+      let position = point(pathNode.point)
+      node.inControlPoint = pathNode.controlIn.map(point) ?? position
+      node.nodePoint = position
+      node.outControlPoint = pathNode.controlOut.map(point) ?? position
+      node.type = pathNode.controlIn == nil && pathNode.controlOut == nil ? .sharp : .bezier
       return node
     }
     var bezier = TSD_EditableBezierPathSourceArchive()

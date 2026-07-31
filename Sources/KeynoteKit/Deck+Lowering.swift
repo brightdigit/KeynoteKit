@@ -37,9 +37,9 @@ extension Deck {
 
   /// Lowers one slide.
   private func authoredSlide(from slide: Slide) -> AuthoredSlide {
-    let ordered = orderedDrawables(from: slide)
-    touchMagicIdentifiers(in: ordered)
-    let builds = collectedBuilds(from: ordered)
+    let permutation = orderedPermutation(of: slide)
+    let ordered = permutation.map { slide.items[$0] }
+    let builds = collectedBuilds(from: slide, permutation: permutation)
     let transition = slide.slideTransition.map { value in
       AuthoredSlide.Transition(
         effect: value.effect,
@@ -59,7 +59,10 @@ extension Deck {
 
   /// Layer order = drawablesZOrder = build targetIndex. Higher zIndex draws
   /// above; declaration order breaks ties (and is the default when unset).
-  private func orderedDrawables(from slide: Slide) -> [SlideDrawable] {
+  ///
+  /// - Returns: Declaration offsets in z-order — position *p* of the result
+  ///   names the declared item drawn at layer *p*.
+  private func orderedPermutation(of slide: Slide) -> [Int] {
     slide.items
       .enumerated()
       .sorted { left, right in
@@ -70,29 +73,24 @@ extension Deck {
         }
         return left.offset < right.offset
       }
-      .map(\.element)
+      .map(\.offset)
   }
 
-  /// `.magicId` is authoring-time only — Keynote stores no correspondence
-  /// (`magic_move_correspondence.md`). Touch the values so the IR keeps them.
-  private func touchMagicIdentifiers(in drawables: [SlideDrawable]) {
-    for drawable in drawables {
-      switch drawable {
-      case .text(let text): _ = text.magicIdentifier
-      case .image(let image): _ = image.magicIdentifier
-      }
-    }
-  }
-
-  /// Flattens each drawable's builds then action into delivery order.
-  private func collectedBuilds(from drawables: [SlideDrawable]) -> [AuthoredBuild] {
+  /// Flattens builds into delivery order: encounter order walking the slide
+  /// builder (an item's builds in declaration order, then its action) —
+  /// zIndex reorders layers, never the animation timeline. Each build's
+  /// `targetIndex` maps through the permutation into the z-ordered list.
+  private func collectedBuilds(from slide: Slide, permutation: [Int]) -> [AuthoredBuild] {
     var builds: [AuthoredBuild] = []
-    for (index, drawable) in drawables.enumerated() {
-      for configuration in drawable.builds {
-        builds.append(authoredBuild(from: configuration, targetIndex: index))
+    for (offset, drawable) in slide.items.enumerated() {
+      guard let targetIndex = permutation.firstIndex(of: offset) else {
+        continue
       }
-      if let action = drawable.action {
-        builds.append(authoredAction(from: action, targetIndex: index))
+      for configuration in drawable.builds {
+        builds.append(authoredBuild(from: configuration, targetIndex: targetIndex))
+      }
+      for action in drawable.actions {
+        builds.append(authoredAction(from: action, targetIndex: targetIndex))
       }
     }
     return builds
@@ -169,7 +167,13 @@ extension Deck {
       motionPath: AuthoredMotionPath(
         naturalWidth: path.naturalWidth,
         naturalHeight: path.naturalHeight,
-        points: path.points.map { AuthoredMotionPath.Point(x: $0.x, y: $0.y) }
+        nodes: path.nodes.map { node in
+          AuthoredMotionPath.Node(
+            point: AuthoredMotionPath.Point(x: node.position.x, y: node.position.y),
+            controlIn: node.controlIn.map { AuthoredMotionPath.Point(x: $0.x, y: $0.y) },
+            controlOut: node.controlOut.map { AuthoredMotionPath.Point(x: $0.x, y: $0.y) }
+          )
+        }
       ),
       trigger: authoredTrigger(from: path.trigger)
     )

@@ -47,19 +47,47 @@ package struct AuthoredMotionPath: Equatable, Sendable {
     }
   }
 
+  /// One path node; absent control handles coincide with `point` (sharp).
+  package struct Node: Equatable, Sendable {
+    /// The node's position.
+    package var point: Point
+
+    /// The incoming segment's control handle, when curved.
+    package var controlIn: Point?
+
+    /// The outgoing segment's control handle, when curved.
+    package var controlOut: Point?
+
+    /// Creates a node.
+    package init(point: Point, controlIn: Point? = nil, controlOut: Point? = nil) {
+      self.point = point
+      self.controlIn = controlIn
+      self.controlOut = controlOut
+    }
+  }
+
   /// The path's natural width in points.
   package var naturalWidth: Double
 
   /// The path's natural height in points.
   package var naturalHeight: Double
 
-  /// The path's nodes, authored as sharp points.
-  package var points: [Point]
+  /// The path's nodes.
+  package var nodes: [Node]
 
-  /// Creates a motion path.
-  package init(naturalWidth: Double, naturalHeight: Double, points: [Point]) {
+  /// Creates a motion path from full bezier nodes.
+  package init(naturalWidth: Double, naturalHeight: Double, nodes: [Node]) {
     self.naturalWidth = naturalWidth
     self.naturalHeight = naturalHeight
-    self.points = points
+    self.nodes = nodes
+  }
+
+  /// Creates a sharp polyline path.
+  package init(naturalWidth: Double, naturalHeight: Double, points: [Point]) {
+    self.init(
+      naturalWidth: naturalWidth,
+      naturalHeight: naturalHeight,
+      nodes: points.map { Node(point: $0) }
+    )
   }
 }

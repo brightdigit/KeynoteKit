@@ -49,4 +49,19 @@ public enum SlideItemsBuilder {
   public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
     items.flatMap { $0 }
   }
+
+  /// Supports `if` without `else`.
+  public static func buildOptional(_ items: [SlideDrawable]?) -> [SlideDrawable] {
+    items ?? []
+  }
+
+  /// Supports the `if` branch of `if`/`else`.
+  public static func buildEither(first items: [SlideDrawable]) -> [SlideDrawable] {
+    items
+  }
+
+  /// Supports the `else` branch of `if`/`else`.
+  public static func buildEither(second items: [SlideDrawable]) -> [SlideDrawable] {
+    items
+  }
 }

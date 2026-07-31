@@ -69,8 +69,8 @@ public struct TextBox: Sendable {
   /// The item's builds, in declaration (= delivery) order.
   internal var builds: [BuildEffectConfiguration] = []
 
-  /// The item's action, when set.
-  internal var action: MotionPath?
+  /// The item's actions, in declaration (= delivery) order.
+  internal var actions: [MotionPath] = []
 
   /// Styled spans, when the item was built from runs. Empty means the whole
   /// item is one span styled by the item-level fields above.
@@ -174,10 +174,11 @@ public struct TextBox: Sendable {
     return text
   }
 
-  /// Adds an Action build (a motion path) to the item.
+  /// Adds an Action build (a motion path) to the item. Repeated calls
+  /// accumulate in declaration order, like ``build(_:_:)``.
   public func action(_ path: () -> MotionPath) -> TextBox {
     var text = self
-    text.action = path()
+    text.actions.append(path())
     return text
   }
 }

@@ -64,8 +64,8 @@ public struct Image: Sendable {
   /// The item's builds, in declaration (= delivery) order.
   internal var builds: [BuildEffectConfiguration] = []
 
-  /// The item's action, when set.
-  internal var action: MotionPath?
+  /// The item's actions, in declaration (= delivery) order.
+  internal var actions: [MotionPath] = []
 
   /// Creates an image from file bytes.
   ///
@@ -137,10 +137,11 @@ public struct Image: Sendable {
     return image
   }
 
-  /// Adds an Action build (a motion path) to the item.
+  /// Adds an Action build (a motion path) to the item. Repeated calls
+  /// accumulate in declaration order, like ``build(_:_:)``.
   public func action(_ path: () -> MotionPath) -> Image {
     var image = self
-    image.action = path()
+    image.actions.append(path())
     return image
   }
 }

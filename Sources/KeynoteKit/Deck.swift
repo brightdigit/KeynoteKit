@@ -42,10 +42,18 @@ private import IWAFraming
 /// try Deck().write(to: url, basedOn: KeynoteTemplate(contentsOf: myTheme))
 /// ```
 ///
-/// Slide content is not modelled yet — that is the authoring API, tracked
-/// separately. This type currently establishes the write entry point and its
-/// `basedOn:` parameter, which must exist from day one so the primary API does
-/// not change shape once content lands.
+/// Slide content is composed with ``SlideBuilder``: each ``Slide`` holds
+/// ``TextBox`` and ``Image`` drawables with builds, actions, transitions,
+/// and formatting.
+///
+/// ```swift
+/// let deck = Deck {
+///   Slide {
+///     TextBox("Title").build(.in) { Dissolve() }
+///   }
+///   .transition(.magicMove.duration(1))
+/// }
+/// ```
 public struct Deck: Sendable {
   /// The deck's slides, in presentation order.
   internal var slides: [Slide]
@@ -73,13 +81,15 @@ public struct Deck: Sendable {
   ///     location is replaced.
   ///   - template: Base document to author from. Defaults to
   ///     ``KeynoteTemplate/bundled``.
-  /// - Throws: ``TemplateError`` for a missing template, an
+  /// - Throws: ``TemplateError`` for a missing template,
+  ///   ``MagicMoveError`` for an unmatchable `magicId` pairing, an
   ///   `ArchiveSurgeryError` for a base-document mismatch or invariant
   ///   violation, or a `CocoaError` for filesystem failures.
   public func write(
     to url: URL,
     basedOn template: KeynoteTemplate = .bundled
   ) throws {
+    try validateMagicMovePairs()
     guard !slides.isEmpty else {
       try template.data().write(to: url, options: .atomic)
       return

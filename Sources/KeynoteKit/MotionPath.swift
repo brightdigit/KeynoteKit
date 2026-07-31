@@ -31,22 +31,42 @@
 ///
 /// v0.1.0 carries the full editable bezier path source; the default path is
 /// the proven 50 pt two-node horizontal segment
-/// (`research/findings/build_out.md`).
+/// (`research/findings/build_out.md`). Sharp polylines come from
+/// ``init(points:)``; curved segments from ``init(nodes:)`` with control
+/// handles on each ``Node``.
 public struct MotionPath: Sendable {
-  /// One sharp path node.
-  public struct Point: Sendable {
+  /// One point in path coordinates.
+  public struct Point: Sendable, Equatable {
     internal var x: Double
     internal var y: Double
 
-    /// Creates a node at (`x`, `y`).
+    /// Creates a point at (`x`, `y`).
     public init(x: Double, y: Double) {
       self.x = x
       self.y = y
     }
   }
 
+  /// One path node: a position with optional bezier control handles.
+  public struct Node: Sendable, Equatable {
+    internal var position: Point
+    internal var controlIn: Point?
+    internal var controlOut: Point?
+
+    /// Creates a node.
+    ///
+    /// Omitted control handles coincide with `position` — a sharp corner.
+    /// Providing `controlIn`/`controlOut` curves the segments entering and
+    /// leaving the node.
+    public init(at position: Point, controlIn: Point? = nil, controlOut: Point? = nil) {
+      self.position = position
+      self.controlIn = controlIn
+      self.controlOut = controlOut
+    }
+  }
+
   /// The path's nodes.
-  internal var points: [Point]
+  internal var nodes: [Node]
 
   /// The path's natural size.
   internal var naturalWidth: Double
@@ -63,11 +83,21 @@ public struct MotionPath: Sendable {
   /// The start trigger.
   internal var trigger: BuildTrigger = .onClick
 
-  /// Creates a motion path; the default is the proven 50 pt horizontal Move.
+  /// Creates a sharp polyline path; the default is the proven 50 pt
+  /// horizontal Move.
   public init(points: [Point] = [Point(x: 0, y: 0), Point(x: 50, y: 0)]) {
-    self.points = points
-    self.naturalWidth = points.map(\.x).max() ?? 0
-    self.naturalHeight = points.map(\.y).max() ?? 0
+    self.init(nodes: points.map { Node(at: $0) })
+  }
+
+  /// Creates a path from full bezier nodes.
+  public init(nodes: [Node]) {
+    self.nodes = nodes
+    let xs = nodes.flatMap { [$0.position.x, $0.controlIn?.x, $0.controlOut?.x].compactMap { $0 } }
+    let ys = nodes.flatMap { [$0.position.y, $0.controlIn?.y, $0.controlOut?.y].compactMap { $0 } }
+    // Natural size is the path's extent, not its maximum coordinate — a
+    // leftward or offset path would otherwise claim a zero or inflated box.
+    self.naturalWidth = (xs.max() ?? 0) - (xs.min() ?? 0)
+    self.naturalHeight = (ys.max() ?? 0) - (ys.min() ?? 0)
   }
 
   /// Sets the action's duration in seconds.

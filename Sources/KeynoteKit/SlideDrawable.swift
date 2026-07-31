@@ -51,11 +51,19 @@ public enum SlideDrawable: Sendable {
     }
   }
 
-  /// Action build attached to this drawable.
-  internal var action: MotionPath? {
+  /// Action builds attached to this drawable, in declaration order.
+  internal var actions: [MotionPath] {
     switch self {
-    case .text(let text): text.action
-    case .image(let image): image.action
+    case .text(let text): text.actions
+    case .image(let image): image.actions
+    }
+  }
+
+  /// The drawable's Magic Move pairing declaration, when present.
+  internal var magicIdentifier: String? {
+    switch self {
+    case .text(let text): text.magicIdentifier
+    case .image(let image): image.magicIdentifier
     }
   }
 }

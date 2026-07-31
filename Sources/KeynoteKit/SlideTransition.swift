@@ -83,8 +83,12 @@ public struct SlideTransition: Sendable {
     return transition
   }
 
-  /// Sets the transition's direction to a proven ordinal (directional
-  /// effects only).
+  /// Sets the transition's direction to a proven ordinal.
+  ///
+  /// Only directional effects (e.g. ``moveIn``, ``push``) honor the value;
+  /// on a non-directional transition the written ordinal is ignored by
+  /// Keynote. A type-level split restricting this modifier to directional
+  /// effects is tracked as a follow-up.
   public func direction(_ direction: TransitionDirection) -> SlideTransition {
     var transition = self
     transition.directionOrdinal = direction.ordinal
