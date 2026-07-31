@@ -70,28 +70,29 @@ extension KeynoteArchiveSurgeon {
       members[location.memberIndex].records.map(\.info.identifier)
     )
     var pending = PendingRegistrations()
+    // Minted `DataInfo` rows only reach `TSP.PackageMetadata` after this
+    // loop, so the next free data identifier must be threaded through the
+    // items — re-reading committed metadata per mint hands two images on
+    // one slide the same identifier.
+    var nextDataIdentifier = try self.nextDataIdentifier()
     for item in items {
       try appendDrawable(
         item,
         to: &slide,
         at: location,
         nextIdentifier: &nextIdentifier,
+        nextDataIdentifier: &nextDataIdentifier,
         pending: &pending,
         using: &generator
       )
     }
     members[location.memberIndex].records[location.recordIndex].payloads[0] =
       try slide.serializedBytes(partial: true)
-    var uuidEntries: [TSP_ObjectUUIDMapEntry] = []
-    for record in members[location.memberIndex].records
-    where !existingRecordIdentifiers.contains(record.info.identifier) {
-      var entry = TSP_ObjectUUIDMapEntry()
-      entry.identifier = record.info.identifier
-      entry.uuid.lower = UInt64.random(in: .min ... .max, using: &generator)
-      entry.uuid.upper = UInt64.random(in: .min ... .max, using: &generator)
-      uuidEntries.append(entry)
-    }
-    try registerUUIDEntries(uuidEntries, slideIdentifier: location.slideIdentifier)
+    try registerFreshRecordUUIDs(
+      notIn: existingRecordIdentifiers,
+      at: location,
+      using: &generator
+    )
     for entry in pending.data {
       bundle.upsertEntry(body: entry.body, at: entry.path)
     }
@@ -114,6 +115,7 @@ extension KeynoteArchiveSurgeon {
     to slide: inout KN_SlideArchive,
     at location: SlideCatalog.Slide,
     nextIdentifier: inout UInt64,
+    nextDataIdentifier: inout UInt64,
     pending: inout PendingRegistrations,
     using generator: inout some RandomNumberGenerator
   ) throws {
@@ -132,6 +134,7 @@ extension KeynoteArchiveSurgeon {
         imageItem,
         parentSlideIdentifier: location.slideIdentifier,
         nextIdentifier: &nextIdentifier,
+        nextDataIdentifier: &nextDataIdentifier,
         using: &generator
       )
       members[location.memberIndex].records.append(minted.record)
@@ -165,6 +168,7 @@ extension KeynoteArchiveSurgeon {
     _ item: AuthoredSlide.ImageItem,
     parentSlideIdentifier: UInt64,
     nextIdentifier: inout UInt64,
+    nextDataIdentifier: inout UInt64,
     using generator: inout some RandomNumberGenerator
   ) throws -> MintedImage {
     let style = try mediaStyle()
@@ -172,11 +176,12 @@ extension KeynoteArchiveSurgeon {
       object: nextIdentifier,
       titleCaption: nextIdentifier + 1,
       caption: nextIdentifier + 2,
-      data: try nextDataIdentifier(),
+      data: nextDataIdentifier,
       parentSlide: parentSlideIdentifier,
       style: style?.identifier
     )
     nextIdentifier += 3
+    nextDataIdentifier += 1
 
     let uuid = uuidString(using: &generator)
     let ext = item.fileExtension.isEmpty ? "jpg" : item.fileExtension

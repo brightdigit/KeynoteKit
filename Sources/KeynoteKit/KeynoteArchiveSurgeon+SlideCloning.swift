@@ -53,7 +53,9 @@ extension KeynoteArchiveSurgeon {
     map[template.nodeIdentifier] = nodeIdentifier
     nextIdentifier += 1
 
-    let newSlideIdentifier = map[template.slideIdentifier] ?? 0
+    guard let newSlideIdentifier = map[template.slideIdentifier] else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: template.slideIdentifier)
+    }
     let clonedRecords = try RecordCloner.clone(templateMember.records, map: map)
     let newPath = "Index/Slide-\(newSlideIdentifier).iwa"
     members.insert(

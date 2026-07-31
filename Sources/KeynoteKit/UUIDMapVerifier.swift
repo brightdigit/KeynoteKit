@@ -41,7 +41,18 @@ package enum UUIDMapVerifier {
     var chunkIdentifiers: [UInt64] = []
     var chunkBuildUUIDs: [UInt64: TSP_UUID] = [:]
     var lastObjectIdentifier: UInt64?
+    var maximumRecordIdentifier: UInt64 = 0
+    var slideMemberRecords: [(path: String, identifier: UInt64)] = []
   }
+
+  /// Record types that legitimately live in a slide member without an
+  /// `objectUuidMapEntries` row: chunks (only the build id carries the uuid,
+  /// paired with the chunk's `buildId`) and number attachments (the bundled
+  /// template leaves its own unregistered, so clones stay unregistered too).
+  private static let registrationExemptTypes: Set<String> = [
+    "KN.BuildChunkArchive",
+    "TSWP.NumberAttachmentArchive",
+  ]
 
   /// Verifies the invariants over parsed members.
   ///
@@ -50,14 +61,27 @@ package enum UUIDMapVerifier {
   ///    `objectUuidMapEntries`.
   /// 3. Every build has a `KN.BuildChunkArchive` pointing back at it.
   /// 4. The registered uuid equals that chunk's `buildId` exactly.
-  /// 5. `lastObjectIdentifier` is at or above every build/chunk id.
+  /// 5. `lastObjectIdentifier` is at or above every record id.
+  /// 6. Every record minted into a presentation slide's member (identifier
+  ///    at or above `mintedFrom`) is registered in some component's
+  ///    `objectUuidMapEntries` — an unregistered record loads the component
+  ///    blank or crashes with an NSSet-nil exception. Types in
+  ///    ``registrationExemptTypes`` are exempt.
   ///
   /// - Throws: ``ArchiveSurgeryError/invariantViolation(_:)``.
   package static func verify(
     members: [KeynoteArchiveSurgeon.Member],
-    expectedBuildCount: Int
+    expectedBuildCount: Int,
+    mintedFrom firstMintedIdentifier: UInt64 = 0
   ) throws {
-    let scan = try scanned(members: members)
+    let slideMemberIndices = Set(
+      ((try? SlideCatalog(members: members).orderedSlides()) ?? []).map(\.memberIndex)
+    )
+    let scan = try scanned(
+      members: members,
+      slideMemberIndices: slideMemberIndices,
+      firstMintedIdentifier: firstMintedIdentifier
+    )
     guard scan.buildIdentifiers.count == expectedBuildCount else {
       throw ArchiveSurgeryError.invariantViolation(
         "expected \(expectedBuildCount) build archives, found \(scan.buildIdentifiers.count)"
@@ -66,10 +90,16 @@ package enum UUIDMapVerifier {
     for buildIdentifier in scan.buildIdentifiers {
       try checkRegistration(of: buildIdentifier, in: scan)
     }
-    let highest = (scan.buildIdentifiers + scan.chunkIdentifiers).max() ?? 0
-    if let last = scan.lastObjectIdentifier, !scan.buildIdentifiers.isEmpty, last < highest {
+    if let last = scan.lastObjectIdentifier, last < scan.maximumRecordIdentifier {
       throw ArchiveSurgeryError.invariantViolation(
-        "lastObjectIdentifier \(last) is below the highest authored archive id \(highest)"
+        "lastObjectIdentifier \(last) is below the highest record id "
+          + "\(scan.maximumRecordIdentifier)"
+      )
+    }
+    for record in scan.slideMemberRecords where scan.registered[record.identifier] == nil {
+      throw ArchiveSurgeryError.invariantViolation(
+        "minted record \(record.identifier) in slide member \(record.path) has no "
+          + "objectUuidMapEntries row (Keynote loads the slide blank or crashes)"
       )
     }
   }
@@ -93,10 +123,26 @@ package enum UUIDMapVerifier {
     }
   }
 
-  private static func scanned(members: [KeynoteArchiveSurgeon.Member]) throws -> Scan {
+  private static func scanned(
+    members: [KeynoteArchiveSurgeon.Member],
+    slideMemberIndices: Set<Int>,
+    firstMintedIdentifier: UInt64
+  ) throws -> Scan {
     var scan = Scan()
-    for member in members {
+    for (memberIndex, member) in members.enumerated() {
       for record in member.records {
+        scan.maximumRecordIdentifier = max(
+          scan.maximumRecordIdentifier,
+          record.info.identifier
+        )
+        if slideMemberIndices.contains(memberIndex),
+          record.info.identifier >= firstMintedIdentifier,
+          !record.resolvedTypes.contains(where: {
+            registrationExemptTypes.contains(TSPRegistryMapping.messageName(for: $0) ?? "")
+          })
+        {
+          scan.slideMemberRecords.append((path: member.path, record.info.identifier))
+        }
         try collect(record: record, into: &scan)
       }
     }

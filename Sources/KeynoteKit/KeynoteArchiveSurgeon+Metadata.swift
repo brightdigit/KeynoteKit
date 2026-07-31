@@ -47,48 +47,6 @@ extension TSP_ComponentDataReference {
 }
 
 extension KeynoteArchiveSurgeon {
-  /// Appends uuid-map entries to the slide's component.
-  internal mutating func registerUUIDEntries(
-    _ entries: [TSP_ObjectUUIDMapEntry],
-    slideIdentifier: UInt64
-  ) throws {
-    try withPackageMetadata { metadata in
-      guard
-        let componentIndex = metadata.components.firstIndex(where: {
-          $0.identifier == slideIdentifier
-        })
-      else {
-        throw ArchiveSurgeryError.missingSlideComponent(slideIdentifier: slideIdentifier)
-      }
-      let locator = metadata.components[componentIndex].locator
-      guard locator.isEmpty || locator == "Slide-\(slideIdentifier)" else {
-        throw ArchiveSurgeryError.unexpectedComponentLocator(locator)
-      }
-      metadata.components[componentIndex].objectUuidMapEntries.append(contentsOf: entries)
-    }
-  }
-
-  /// Appends uuid-map entries to the component whose locator stem matches
-  /// `componentStem` (e.g. `DocumentStylesheet`).
-  internal mutating func registerUUIDEntries(
-    _ entries: [TSP_ObjectUUIDMapEntry],
-    componentStem: String
-  ) throws {
-    guard !entries.isEmpty else {
-      return
-    }
-    try withPackageMetadata { metadata in
-      guard
-        let componentIndex = metadata.components.firstIndex(where: {
-          $0.preferredLocator == componentStem || $0.locator == componentStem
-        })
-      else {
-        return
-      }
-      metadata.components[componentIndex].objectUuidMapEntries.append(contentsOf: entries)
-    }
-  }
-
   /// Merges one (object → data) usage into a component's data-reference
   /// list, extending the existing row for `dataIdentifier` when present.
   ///
@@ -107,7 +65,7 @@ extension KeynoteArchiveSurgeon {
           $0.preferredLocator == componentStem || $0.locator == componentStem
         })
       else {
-        return
+        throw ArchiveSurgeryError.missingComponent(stem: componentStem)
       }
       var objectReference = TSP_ComponentDataReference.ObjectReference()
       objectReference.objectIdentifier = objectIdentifier
@@ -172,7 +130,9 @@ extension KeynoteArchiveSurgeon {
           let owner = metadata.components.first(where: {
             $0.preferredLocator == reference.ownerStem || $0.locator == reference.ownerStem
           })
-        else { continue }
+        else {
+          throw ArchiveSurgeryError.missingComponent(stem: reference.ownerStem)
+        }
         let alreadyListed = metadata.components[componentIndex].externalReferences.contains {
           $0.componentIdentifier == owner.identifier
             && $0.objectIdentifier == reference.objectIdentifier

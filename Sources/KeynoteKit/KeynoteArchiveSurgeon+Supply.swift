@@ -51,11 +51,15 @@ extension KeynoteArchiveSurgeon {
   internal mutating func expandTextItems(
     to count: Int,
     at location: SlideCatalog.Slide,
-    nextIdentifier: inout UInt64
+    nextIdentifier: inout UInt64,
+    using generator: inout some RandomNumberGenerator
   ) throws {
     var slide = try KN_SlideArchive(
       serializedBytes: members[location.memberIndex].records[location.recordIndex].payloads[0],
       partial: true
+    )
+    let existingRecordIdentifiers = Set(
+      members[location.memberIndex].records.map(\.info.identifier)
     )
     if slide.drawablesZOrder.isEmpty, slide.hasBodyPlaceholder, count > 0 {
       slide.drawablesZOrder.append(slide.bodyPlaceholder)
@@ -72,6 +76,11 @@ extension KeynoteArchiveSurgeon {
     }
     members[location.memberIndex].records[location.recordIndex].payloads[0] =
       try slide.serializedBytes(partial: true)
+    try registerFreshRecordUUIDs(
+      notIn: existingRecordIdentifiers,
+      at: location,
+      using: &generator
+    )
   }
 
   /// Clones the body-placeholder subtree of `slide`, returning the clone's
@@ -109,7 +118,10 @@ extension KeynoteArchiveSurgeon {
       toRecordAt: location
     )
     cloned.removeAll()
-    return map[slide.bodyPlaceholder.identifier] ?? 0
+    guard let clonedIdentifier = map[slide.bodyPlaceholder.identifier] else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: slide.bodyPlaceholder.identifier)
+    }
+    return clonedIdentifier
   }
 
   /// The records reachable from `root` through its header references,

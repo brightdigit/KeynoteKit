@@ -69,6 +69,12 @@ package struct KeynoteArchiveSurgeon {
   ///   - generator: Randomness for build uuids and animation seeds.
   /// - Throws: ``ArchiveSurgeryError`` on a base-document mismatch or
   ///   invariant violation; layer errors otherwise.
+  ///
+  /// - Important: A throw invalidates both this surgeon and `bundle`:
+  ///   mutations are applied in place as slides are authored, so a partially
+  ///   authored bundle may hold empty members and orphan `Data/` blobs.
+  ///   Serializing it writes a corrupt `.key` — discard both and start over
+  ///   from a fresh base.
   package mutating func author(
     _ deck: AuthoredDeck,
     into bundle: inout KeyBundle,
@@ -85,6 +91,16 @@ package struct KeynoteArchiveSurgeon {
     let slides = try SlideCatalog(members: members).orderedSlides()
     guard slides.count == deck.slides.count else {
       throw ArchiveSurgeryError.slideCountMismatch(expected: deck.slides.count, found: slides.count)
+    }
+    // Per-slide surgery caches each slide's member/record indices and does
+    // mid-member inserts; a member holding two slide records would leave the
+    // second slide's cached index silently targeting the wrong record.
+    var slideMemberIndices = Set<Int>()
+    for slide in slides where !slideMemberIndices.insert(slide.memberIndex).inserted {
+      throw ArchiveSurgeryError.invariantViolation(
+        "member \(members[slide.memberIndex].path) holds more than one slide record; "
+          + "surgery assumes one slide per member"
+      )
     }
     var mintedMaximum: UInt64 = 0
     var dirtyPaths = Set<String>()
@@ -104,7 +120,11 @@ package struct KeynoteArchiveSurgeon {
       try bumpLastObjectIdentifier(to: nextIdentifier)
     }
     let buildCount = deck.slides.reduce(0) { $0 + $1.builds.count }
-    try UUIDMapVerifier.verify(members: members, expectedBuildCount: buildCount)
+    try UUIDMapVerifier.verify(
+      members: members,
+      expectedBuildCount: buildCount,
+      mintedFrom: firstIdentifier
+    )
     for member in members
     where dirtyPaths.contains(member.path) || nextIdentifier > firstIdentifier {
       let body = IWAChunkCodec.default.encode(
@@ -127,7 +147,12 @@ package struct KeynoteArchiveSurgeon {
     using generator: inout some RandomNumberGenerator
   ) throws {
     if spec.items.isEmpty {
-      try expandTextItems(to: spec.itemCount, at: location, nextIdentifier: &nextIdentifier)
+      try expandTextItems(
+        to: spec.itemCount,
+        at: location,
+        nextIdentifier: &nextIdentifier,
+        using: &generator
+      )
     } else {
       try expandDrawables(
         spec.items,

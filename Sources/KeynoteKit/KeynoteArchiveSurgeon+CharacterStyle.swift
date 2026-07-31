@@ -105,7 +105,7 @@ extension KeynoteArchiveSurgeon {
     var messageInfo = TSP_MessageInfo()
     messageInfo.type = Self.paragraphStyleArchiveType
     messageInfo.version = BuildRecordFactory.version
-    messageInfo.objectReferences = [parentIdentifier]
+    messageInfo.objectReferences = [parentIdentifier, stylesheetIdentifier]
     var info = TSP_ArchiveInfo()
     info.identifier = identifier
     info.messageInfos = [messageInfo]

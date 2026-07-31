@@ -50,6 +50,13 @@ package enum ArchiveSurgeryError: Error, Equatable, Sendable {
   /// No `TSP.PackageMetadata` component matches the slide.
   case missingSlideComponent(slideIdentifier: UInt64)
 
+  /// No `TSP.PackageMetadata` component matches the locator stem.
+  ///
+  /// Registrations must never silently no-op on a miss: an unregistered
+  /// style edge or data reference loads the component blank or crashes
+  /// Keynote during layout.
+  case missingComponent(stem: String)
+
   /// The component's locator disagrees with the slide identifier.
   case unexpectedComponentLocator(String)
 

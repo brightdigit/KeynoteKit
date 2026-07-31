@@ -114,6 +114,9 @@ package enum RecordCloner {
     for index in slide.drawablesZOrder.indices {
       remap(&slide.drawablesZOrder[index], map: map)
     }
+    for index in slide.ownedDrawables.indices {
+      remap(&slide.ownedDrawables[index], map: map)
+    }
     for index in slide.builds.indices {
       remap(&slide.builds[index], map: map)
     }
@@ -150,8 +153,11 @@ package enum RecordCloner {
     map: [UInt64: UInt64]
   ) throws -> [UInt8] {
     var storage = try TSWP_StorageArchive(serializedBytes: payload, partial: true)
-    for index in storage.tableAttachment.entries.indices {
-      remap(&storage.tableAttachment.entries[index].object, map: map)
+    if storage.hasTableAttachment {
+      for index in storage.tableAttachment.entries.indices
+      where storage.tableAttachment.entries[index].hasObject {
+        remap(&storage.tableAttachment.entries[index].object, map: map)
+      }
     }
     return try storage.serializedBytes(partial: true)
   }

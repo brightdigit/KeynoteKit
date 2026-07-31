@@ -130,7 +130,9 @@ Each new worktree that runs Python research tools needs its own venv setup
 
 ## Phasing (what runs in parallel when)
 
-> **Current position (2026-07-31, post-#41): expanded #24 acceptance in `wt-24-expanded` / `24-expanded-acceptance` — the only active lane.**
+> **Current position (2026-07-31, post-#41): PR #43 author-review fix batches landing as direct commits on `v0.1.x` (A surgeon/cloner → B trap hardening → D test infra → C DSL/lowering → E CI/docs/issues; plan: `~/.claude/plans/let-s-create-a-plan-fancy-stearns.md`), then the expanded #24 human pass.**
+>
+> - Review batch A **landed**: C1 per-slide data-id threading, M1 `ownedDrawables` remap, M2 clone-path uuid registration (+ verifier rule 6: minted slide-member records must be registered, exempting `KN.BuildChunkArchive`/`TSWP.NumberAttachmentArchive`), M3 throwing registration helpers (`missingComponent`), M5 one-slide-per-member assert, M4 invalidation doc, `hasTableAttachment` guard, id-0 fallbacks → throw, paragraph-fork header edge.
 >
 > - PR #39 (`211b956`) **merged** to `v0.1.x`: drawable depth (#3 geometry, #37 text formatting, #38 images) — issues closed; #5 closed (stay vendored); #12 map updated. Lane branch `3-37-38-drawable-depth` deleted local+remote; stale `24-build-acceptance-note` / `zip-storage-finding` deleted (squash-contained in `24f7c40` / `dda22d4`).
 > - PR #41 (`45b8c4f`) **merged** to `v0.1.x` pre-tag: #40 mixed formatting runs (per-run `tableCharStyle` + minted `TSWP_CharacterStyleArchive` type 2021, render-verified by human pass) **plus the DSL rename** `Text`→`TextBox` / `TextRun`→`Text` — merged before the tag because it renames the public v0.1.0 surface. Lane branch `40-mixed-formatting-runs` deleted on remote; `wt-40-runs` can be removed. Catalog is now **9** decks (adds `text_runs`).
