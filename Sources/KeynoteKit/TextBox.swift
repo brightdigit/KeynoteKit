@@ -63,6 +63,9 @@ public struct TextBox: Sendable {
   /// Authored text color; `nil` leaves the template style.
   internal var color: TextColor?
 
+  /// Authored list style; `nil` means plain (the theme's None style).
+  internal var listStyle: TextListStyle?
+
   /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
   internal var magicIdentifier: String?
 
@@ -151,6 +154,14 @@ public struct TextBox: Sendable {
   public func foregroundColor(_ color: TextColor) -> TextBox {
     var text = self
     text.color = color
+    return text
+  }
+
+  /// Sets how paragraphs are labeled (bullet, number, or nothing).
+  /// Unset means plain — authored text boxes never inherit the theme bullet.
+  public func listStyle(_ style: TextListStyle) -> TextBox {
+    var text = self
+    text.listStyle = style
     return text
   }
 

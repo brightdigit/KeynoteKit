@@ -107,6 +107,9 @@ extension AuthoredSlide {
     /// Authored sRGB color; `nil` leaves the template style.
     package var color: TextColor?
 
+    /// Authored list style; `nil` means plain (the theme's None style).
+    package var listStyle: TextListStyle?
+
     /// Styled spans; empty means the whole item is one span styled by the
     /// item-wide fields above.
     package var runs: [Run]
@@ -133,6 +136,7 @@ extension AuthoredSlide {
       isBold: Bool? = nil,
       isItalic: Bool? = nil,
       color: TextColor? = nil,
+      listStyle: TextListStyle? = nil,
       runs: [Run] = []
     ) {
       self.text = text
@@ -145,6 +149,7 @@ extension AuthoredSlide {
       self.isBold = isBold
       self.isItalic = isItalic
       self.color = color
+      self.listStyle = listStyle
       self.runs = runs
     }
   }

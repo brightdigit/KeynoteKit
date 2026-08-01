@@ -112,6 +112,7 @@ extension Deck {
           isBold: text.isBold,
           isItalic: text.isItalic,
           color: text.color,
+          listStyle: text.listStyle,
           runs: text.runs.map { run in
             AuthoredSlide.TextItem.Run(
               text: run.content,
