@@ -113,6 +113,7 @@ extension Deck {
           isItalic: text.isItalic,
           color: text.color,
           listStyle: text.listStyle,
+          rotation: text.rotation,
           runs: text.runs.map { run in
             AuthoredSlide.TextItem.Run(
               text: run.content,

@@ -66,6 +66,9 @@ public struct TextBox: Sendable {
   /// Authored list style; `nil` means plain (the theme's None style).
   internal var listStyle: TextListStyle?
 
+  /// Authored rotation; `nil` leaves the box unrotated.
+  internal var rotation: Angle?
+
   /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
   internal var magicIdentifier: String?
 
@@ -162,6 +165,14 @@ public struct TextBox: Sendable {
   public func listStyle(_ style: TextListStyle) -> TextBox {
     var text = self
     text.listStyle = style
+    return text
+  }
+
+  /// Rotates the box about its center. Positive angles rotate clockwise on
+  /// screen, matching SwiftUI.
+  public func rotationEffect(_ angle: Angle) -> TextBox {
+    var text = self
+    text.rotation = angle
     return text
   }
 

@@ -81,6 +81,13 @@ extension KeynoteArchiveSurgeon {
     if let height = item.height {
       placeholder.super.super.super.geometry.size.height = Float(height)
     }
+    if let rotation = item.rotation {
+      // The archive field is degrees, counterclockwise-positive
+      // (research/findings/drawable_geometry.md); the DSL is SwiftUI-style
+      // clockwise-positive, so the sign flips here.
+      placeholder.super.super.super.geometry.angle = Float(-rotation.degrees)
+      placeholder.super.super.super.geometry.flags = 3
+    }
     members[placeholderLocation.memberIndex].records[placeholderLocation.recordIndex]
       .payloads[placeholderLocation.payloadIndex] = try placeholder.serializedBytes(partial: true)
   }

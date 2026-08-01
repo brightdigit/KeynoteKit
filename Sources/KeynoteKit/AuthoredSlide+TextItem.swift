@@ -110,6 +110,9 @@ extension AuthoredSlide {
     /// Authored list style; `nil` means plain (the theme's None style).
     package var listStyle: TextListStyle?
 
+    /// Authored rotation, clockwise-positive; `nil` leaves the box unrotated.
+    package var rotation: Angle?
+
     /// Styled spans; empty means the whole item is one span styled by the
     /// item-wide fields above.
     package var runs: [Run]
@@ -137,6 +140,7 @@ extension AuthoredSlide {
       isItalic: Bool? = nil,
       color: TextColor? = nil,
       listStyle: TextListStyle? = nil,
+      rotation: Angle? = nil,
       runs: [Run] = []
     ) {
       self.text = text
@@ -150,6 +154,7 @@ extension AuthoredSlide {
       self.isItalic = isItalic
       self.color = color
       self.listStyle = listStyle
+      self.rotation = rotation
       self.runs = runs
     }
   }
