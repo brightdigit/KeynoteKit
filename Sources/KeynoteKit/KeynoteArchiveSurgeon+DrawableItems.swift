@@ -141,6 +141,7 @@ extension KeynoteArchiveSurgeon {
       characterRuns: runStyles.map {
         CharacterRunEntry(characterIndex: $0.characterIndex, styleIdentifier: $0.identifier)
       },
+      listStyleIdentifier: try themeListStyleIdentifier(suffix: ThemeListStyleSuffix.none),
       toStorage: storageIdentifier
     )
     var styles = mintedStyle.map { [$0] } ?? []

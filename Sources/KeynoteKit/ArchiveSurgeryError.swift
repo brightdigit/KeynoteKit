@@ -63,4 +63,7 @@ package enum ArchiveSurgeryError: Error, Equatable, Sendable {
   /// The document violates a write invariant; opening it would crash
   /// Keynote (`research/findings/write_backend_bisect.md`).
   case invariantViolation(String)
+
+  /// The theme ships no list style whose identifier ends in `suffix`.
+  case missingThemeListStyle(suffix: String)
 }

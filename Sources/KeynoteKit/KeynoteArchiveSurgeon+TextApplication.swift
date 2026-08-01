@@ -47,10 +47,16 @@ extension KeynoteArchiveSurgeon {
   /// object-attribute entries, each added to the record header's references —
   /// an unlisted cross-record reference resolves to nil at load and the run
   /// silently renders plain.
+  ///
+  /// The storage's `tableListStyle` is always repointed at
+  /// `listStyleIdentifier` — the cloned body placeholder inherits the theme's
+  /// bullet list style, so leaving the table untouched renders every authored
+  /// text box bulleted.
   internal mutating func applyText(
     _ text: String,
     paragraphStyle: (identifier: UInt64, parent: UInt64)?,
     characterRuns: [CharacterRunEntry] = [],
+    listStyleIdentifier: UInt64,
     toStorage identifier: UInt64
   ) throws {
     let catalog = SlideCatalog(members: members)
@@ -69,6 +75,7 @@ extension KeynoteArchiveSurgeon {
       partial: true
     )
     storage.text = [text]
+    applyListStyle(listStyleIdentifier, to: &storage, at: location)
     if let paragraphStyle {
       if storage.tableParaStyle.entries.isEmpty {
         var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
@@ -97,6 +104,22 @@ extension KeynoteArchiveSurgeon {
     }
     members[location.memberIndex].records[location.recordIndex]
       .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
+  }
+
+  /// Repoints the storage's `tableListStyle` (and the record header
+  /// reference to the outgoing style) at `listStyleIdentifier`.
+  private mutating func applyListStyle(
+    _ listStyleIdentifier: UInt64,
+    to storage: inout TSWP_StorageArchive,
+    at location: SlideCatalog.Location
+  ) {
+    let previous =
+      storage.tableListStyle.entries.first?.object.identifier ?? listStyleIdentifier
+    var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
+    entry.characterIndex = 0
+    entry.object.identifier = listStyleIdentifier
+    storage.tableListStyle.entries = [entry]
+    replaceRecordHeaderReference(previous, with: listStyleIdentifier, at: location)
   }
 
   /// Appends `new` to a record header's object references when absent.
