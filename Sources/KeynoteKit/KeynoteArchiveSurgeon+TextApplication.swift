@@ -40,17 +40,23 @@ extension KeynoteArchiveSurgeon {
     internal var styleIdentifier: UInt64
   }
 
-  /// Writes `text` into a placeholder's owned storage; when a forked
-  /// paragraph style is supplied, swaps the storage's `tableParaStyle` entry
-  /// and the record header reference from the parent style to the fork.
-  /// Character runs, when supplied, become the storage's `tableCharStyle`
-  /// object-attribute entries, each added to the record header's references —
-  /// an unlisted cross-record reference resolves to nil at load and the run
-  /// silently renders plain.
+  /// Writes `text` into a placeholder's owned storage; when forked
+  /// paragraph styles are supplied, rewrites the storage's `tableParaStyle`
+  /// entries and swaps the record header reference from the parent style to
+  /// the forks. Character runs, when supplied, become the storage's
+  /// `tableCharStyle` object-attribute entries, each added to the record
+  /// header's references — an unlisted cross-record reference resolves to
+  /// nil at load and the run silently renders plain.
+  ///
+  /// The storage's `tableListStyle` is always repointed at
+  /// `listStyleIdentifier` — the cloned body placeholder inherits the theme's
+  /// bullet list style, so leaving the table untouched renders every authored
+  /// text box bulleted.
   internal mutating func applyText(
     _ text: String,
-    paragraphStyle: (identifier: UInt64, parent: UInt64)?,
+    paragraphStyles: ParagraphStyleApplication?,
     characterRuns: [CharacterRunEntry] = [],
+    listStyleIdentifier: UInt64,
     toStorage identifier: UInt64
   ) throws {
     let catalog = SlideCatalog(members: members)
@@ -69,20 +75,9 @@ extension KeynoteArchiveSurgeon {
       partial: true
     )
     storage.text = [text]
-    if let paragraphStyle {
-      if storage.tableParaStyle.entries.isEmpty {
-        var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
-        entry.characterIndex = 0
-        entry.object.identifier = paragraphStyle.identifier
-        storage.tableParaStyle.entries = [entry]
-      } else {
-        storage.tableParaStyle.entries[0].object.identifier = paragraphStyle.identifier
-      }
-      replaceRecordHeaderReference(
-        paragraphStyle.parent,
-        with: paragraphStyle.identifier,
-        at: location
-      )
+    applyListStyle(listStyleIdentifier, to: &storage, at: location)
+    if let paragraphStyles {
+      applyParagraphStyles(paragraphStyles, to: &storage, at: location)
     }
     if !characterRuns.isEmpty {
       storage.tableCharStyle.entries = characterRuns.map { run in
@@ -99,6 +94,45 @@ extension KeynoteArchiveSurgeon {
       .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
   }
 
+  /// Rewrites the storage's `tableParaStyle` with one entry per paragraph
+  /// format change, swapping the header reference from the parent style to
+  /// the first fork and appending the rest.
+  private mutating func applyParagraphStyles(
+    _ application: ParagraphStyleApplication,
+    to storage: inout TSWP_StorageArchive,
+    at location: SlideCatalog.Location
+  ) {
+    storage.tableParaStyle.entries = application.entries.map { forkEntry in
+      var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
+      entry.characterIndex = forkEntry.characterIndex
+      entry.object.identifier = forkEntry.identifier
+      return entry
+    }
+    guard let first = application.entries.first else {
+      return
+    }
+    replaceRecordHeaderReference(application.parentIdentifier, with: first.identifier, at: location)
+    for forkEntry in application.entries.dropFirst() {
+      appendRecordHeaderReference(forkEntry.identifier, at: location)
+    }
+  }
+
+  /// Repoints the storage's `tableListStyle` (and the record header
+  /// reference to the outgoing style) at `listStyleIdentifier`.
+  private mutating func applyListStyle(
+    _ listStyleIdentifier: UInt64,
+    to storage: inout TSWP_StorageArchive,
+    at location: SlideCatalog.Location
+  ) {
+    let previous =
+      storage.tableListStyle.entries.first?.object.identifier ?? listStyleIdentifier
+    var entry = TSWP_ObjectAttributeTable.ObjectAttribute()
+    entry.characterIndex = 0
+    entry.object.identifier = listStyleIdentifier
+    storage.tableListStyle.entries = [entry]
+    replaceRecordHeaderReference(previous, with: listStyleIdentifier, at: location)
+  }
+
   /// Appends `new` to a record header's object references when absent.
   private mutating func appendRecordHeaderReference(
     _ new: UInt64,
@@ -110,7 +144,7 @@ extension KeynoteArchiveSurgeon {
   /// Swaps `old` for `new` on a record header's object references — an
   /// unlisted cross-record reference resolves to nil at load and the style
   /// silently fails to apply.
-  private mutating func replaceRecordHeaderReference(
+  internal mutating func replaceRecordHeaderReference(
     _ old: UInt64,
     with new: UInt64,
     at location: SlideCatalog.Location

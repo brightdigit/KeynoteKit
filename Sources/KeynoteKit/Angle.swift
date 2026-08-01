@@ -1,5 +1,5 @@
 //
-//  TextRunsContent.swift
+//  Angle.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,33 +27,19 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-import KeynoteKit
+/// A rotation angle for ``TextBox/rotationEffect(_:)``, SwiftUI-style:
+/// positive values rotate clockwise on screen.
+public struct Angle: Sendable, Equatable {
+  /// The angle in degrees, clockwise-positive.
+  internal var degrees: Double
 
-/// Mixed formatting inside one text box for the #40 render pass: the pass is
-/// green only when "Bold red" is large bold red, "italic" is italic, and the
-/// spans between them stay plain — all within a single item.
-package struct TextRunsContent: SlideContent {
-  package var body: some SlideContent {
-    Slide {
-      TextBox {
-        Paragraph {
-          Text("Bold red")
-            .bold()
-            .fontSize(56)
-            .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
-          Text(" then plain then ")
-          Text("italic").italic()
-        }
-      }
-      .position(x: 120, y: 220)
-      .frame(width: 720, height: 120)
-      TextBox("Whole-item styled neighbor")
-        .bold()
-        .position(x: 120, y: 380)
-        .frame(width: 600, height: 60)
-    }
+  /// An angle in degrees.
+  public static func degrees(_ value: Double) -> Angle {
+    Angle(degrees: value)
   }
 
-  /// Creates the content.
-  package init() {}
+  /// An angle in radians.
+  public static func radians(_ value: Double) -> Angle {
+    Angle(degrees: value * 180 / .pi)
+  }
 }
