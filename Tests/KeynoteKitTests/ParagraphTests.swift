@@ -76,6 +76,8 @@ internal struct ParagraphTests {
     #expect(Set(entries.map(\.object.identifier)).count == 3)
     let first = try paragraphStyle(entries[0].object.identifier, in: surgeon)
     #expect(first.paraProperties.leftIndent == 10)
+    // .indent(left) defaults the absolute first-line indent to left.
+    #expect(first.paraProperties.firstLineIndent == 10)
     let second = try paragraphStyle(entries[1].object.identifier, in: surgeon)
     #expect(second.paraProperties.leftIndent == 20)
     #expect(second.paraProperties.firstLineIndent == 30)

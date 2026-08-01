@@ -59,6 +59,12 @@ internal enum AcceptanceDecksCommand {
       Mixed runs (#40):
         - text_runs.key — ONE box: "Bold red" large bold red, "italic" italic,
           spans between plain; neighbor box whole-item bold
+      Text layout (#51):
+        - text_layout.key — slide 1: plain / "•" / "→" / numbered lists;
+          slide 2: left, centered, right, indented, first-line-indented
+          paragraphs; slide 3: TOP / MIDDLE / BOTTOM; slides 4-5: 2- and
+          3-column flows with a visible gutter; slide 6: three rotated boxes
+        - Acceptance.key — the three bare boxes stay bullet-free
     Tag v0.1.0 when all decks are green.
     """
 

@@ -82,9 +82,18 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     )
   ]
 
+  /// Text-layout deck for #51 (no goldens).
+  package static let textLayout: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "text_layout",
+      buildCount: 0,
+      deck: Deck { TextLayoutContent() }
+    )
+  ]
+
   /// Every deck `swift run AcceptanceDecks` writes.
   package static let all: [AcceptanceDeck] =
-    goldenBacked + drawableDepth + formattingRuns + [
+    goldenBacked + drawableDepth + formattingRuns + textLayout + [
       AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
     ]
 

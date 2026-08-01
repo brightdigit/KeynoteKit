@@ -61,7 +61,10 @@ public struct Paragraph: Sendable {
     self.runs = runs()
   }
 
-  /// Sets the paragraph's indentation, in points. Unset dimensions inherit.
+  /// Sets the paragraph's indentation, in points. `firstLine` overrides the
+  /// first line and defaults to `left` — the archive's first-line indent is
+  /// absolute, so leaving it unset would keep single-line paragraphs at the
+  /// margin. An unset `right` inherits.
   public func indent(
     _ left: Double,
     firstLine: Double? = nil,
@@ -69,7 +72,7 @@ public struct Paragraph: Sendable {
   ) -> Paragraph {
     var paragraph = self
     paragraph.leftIndent = left
-    paragraph.firstLineIndent = firstLine
+    paragraph.firstLineIndent = firstLine ?? left
     paragraph.rightIndent = right
     return paragraph
   }
