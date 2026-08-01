@@ -204,9 +204,6 @@ jobs:
     name: Linting
     if: ${{ !cancelled() && !failure() && !contains(github.event.head_commit.message, 'ci skip') }}
     needs: [build-ubuntu, build-macos, build-windows, build-android]
-    # SyndiKit lints in an Ubuntu container, but Scripts/lint.sh here ends in
-    # `xcrun swift build --build-tests` against DEVELOPER_DIR, so this runs on
-    # macOS where that Xcode exists.
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@v6
@@ -215,4 +212,3 @@ jobs:
         run: ./Scripts/lint.sh
         env:
           LINT_MODE: STRICT
-          DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer

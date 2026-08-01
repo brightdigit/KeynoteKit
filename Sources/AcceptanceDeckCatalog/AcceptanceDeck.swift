@@ -83,7 +83,10 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
   ]
 
   /// Every deck `swift run AcceptanceDecks` writes.
-  package static let all: [AcceptanceDeck] = goldenBacked + drawableDepth + formattingRuns
+  package static let all: [AcceptanceDeck] =
+    goldenBacked + drawableDepth + formattingRuns + [
+      AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
+    ]
 
   /// The stem used for the output filename (`<name>.key`).
   package let name: String
