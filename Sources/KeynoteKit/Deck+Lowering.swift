@@ -102,7 +102,6 @@ extension Deck {
     case .text(let text):
       .text(
         AuthoredSlide.TextItem(
-          text: text.content,
           x: text.x,
           y: text.y,
           width: text.width,
@@ -114,16 +113,8 @@ extension Deck {
           color: text.color,
           listStyle: text.listStyle,
           rotation: text.rotation,
-          runs: text.runs.map { run in
-            AuthoredSlide.TextItem.Run(
-              text: run.content,
-              fontName: run.fontName,
-              fontSize: run.fontSize,
-              isBold: run.isBold,
-              isItalic: run.isItalic,
-              color: run.color
-            )
-          }
+          textAlignment: text.textAlignment,
+          paragraphs: text.paragraphs.map(authoredParagraph(from:))
         )
       )
     case .image(let image):
@@ -140,6 +131,28 @@ extension Deck {
         )
       )
     }
+  }
+
+  /// Lowers one paragraph.
+  private func authoredParagraph(
+    from paragraph: Paragraph
+  ) -> AuthoredSlide.TextItem.ParagraphItem {
+    AuthoredSlide.TextItem.ParagraphItem(
+      runs: paragraph.runs.map { run in
+        AuthoredSlide.TextItem.Run(
+          text: run.content,
+          fontName: run.fontName,
+          fontSize: run.fontSize,
+          isBold: run.isBold,
+          isItalic: run.isItalic,
+          color: run.color
+        )
+      },
+      alignment: paragraph.alignment,
+      leftIndent: paragraph.leftIndent,
+      firstLineIndent: paragraph.firstLineIndent,
+      rightIndent: paragraph.rightIndent
+    )
   }
 
   /// Lowers one In/Out build.

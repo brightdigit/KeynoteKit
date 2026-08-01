@@ -77,8 +77,56 @@ extension AuthoredSlide {
       }
     }
 
-    /// The string content.
-    package var text: String
+    /// One paragraph: spans plus per-paragraph alignment and indentation.
+    package struct ParagraphItem: Equatable, Sendable {
+      /// The paragraph's spans, concatenated in order.
+      package var runs: [Run]
+
+      /// Per-paragraph alignment; `nil` inherits the item-wide default.
+      package var alignment: TextAlignment?
+
+      /// Left indent in points; `nil` inherits.
+      package var leftIndent: Double?
+
+      /// First-line indent in points; `nil` inherits.
+      package var firstLineIndent: Double?
+
+      /// Right indent in points; `nil` inherits.
+      package var rightIndent: Double?
+
+      /// The paragraph's string: its spans joined.
+      package var text: String {
+        runs.map(\.text).joined()
+      }
+
+      /// Whether any per-paragraph layout field is set.
+      package var hasParagraphFormatting: Bool {
+        alignment != nil || leftIndent != nil || firstLineIndent != nil || rightIndent != nil
+      }
+
+      /// Creates a paragraph.
+      package init(
+        runs: [Run],
+        alignment: TextAlignment? = nil,
+        leftIndent: Double? = nil,
+        firstLineIndent: Double? = nil,
+        rightIndent: Double? = nil
+      ) {
+        self.runs = runs
+        self.alignment = alignment
+        self.leftIndent = leftIndent
+        self.firstLineIndent = firstLineIndent
+        self.rightIndent = rightIndent
+      }
+    }
+
+    /// The item's paragraphs, joined by `"\n"` into the storage text.
+    package var paragraphs: [ParagraphItem]
+
+    /// The string content: paragraphs joined by newlines.
+    package var text: String {
+      paragraphs.map(\.text).joined(separator: "\n")
+    }
 
     /// The x position.
     package var x: Double
@@ -113,9 +161,8 @@ extension AuthoredSlide {
     /// Authored rotation, clockwise-positive; `nil` leaves the box unrotated.
     package var rotation: Angle?
 
-    /// Styled spans; empty means the whole item is one span styled by the
-    /// item-wide fields above.
-    package var runs: [Run]
+    /// Item-wide paragraph alignment; per-paragraph alignment overrides it.
+    package var textAlignment: TextAlignment?
 
     /// Whether any item-wide formatting field is set.
     package var hasFormatting: Bool {
@@ -124,12 +171,16 @@ extension AuthoredSlide {
 
     /// Whether any span carries its own style overrides.
     package var hasRunFormatting: Bool {
-      runs.contains(where: \.hasFormatting)
+      paragraphs.contains { $0.runs.contains(where: \.hasFormatting) }
+    }
+
+    /// Whether the item-wide alignment or any paragraph's layout is set.
+    package var hasParagraphFormatting: Bool {
+      textAlignment != nil || paragraphs.contains(where: \.hasParagraphFormatting)
     }
 
     /// Creates a text item.
     package init(
-      text: String,
       x: Double,
       y: Double,
       width: Double? = nil,
@@ -141,9 +192,9 @@ extension AuthoredSlide {
       color: TextColor? = nil,
       listStyle: TextListStyle? = nil,
       rotation: Angle? = nil,
-      runs: [Run] = []
+      textAlignment: TextAlignment? = nil,
+      paragraphs: [ParagraphItem]
     ) {
-      self.text = text
       self.x = x
       self.y = y
       self.width = width
@@ -155,7 +206,8 @@ extension AuthoredSlide {
       self.color = color
       self.listStyle = listStyle
       self.rotation = rotation
-      self.runs = runs
+      self.textAlignment = textAlignment
+      self.paragraphs = paragraphs
     }
   }
 }

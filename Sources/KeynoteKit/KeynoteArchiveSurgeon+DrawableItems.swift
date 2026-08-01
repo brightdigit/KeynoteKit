@@ -117,7 +117,7 @@ extension KeynoteArchiveSurgeon {
     }
     try writePlaceholderGeometry(item, at: placeholderLocation)
     let storageIdentifier = try ownedStorageIdentifier(at: placeholderLocation)
-    let mintedStyle = try mintedParagraphFork(
+    let paragraphStyles = try mintedParagraphForks(
       for: item,
       storageIdentifier: storageIdentifier,
       nextIdentifier: &nextIdentifier,
@@ -134,9 +134,7 @@ extension KeynoteArchiveSurgeon {
     )
     try applyText(
       item.text,
-      paragraphStyle: mintedStyle.flatMap { style in
-        style.parentIdentifier.map { (style.identifier, $0) }
-      },
+      paragraphStyles: paragraphStyles,
       characterRuns: runStyles.map {
         CharacterRunEntry(characterIndex: $0.characterIndex, styleIdentifier: $0.identifier)
       },
@@ -144,37 +142,9 @@ extension KeynoteArchiveSurgeon {
       toStorage: storageIdentifier
     )
     return collectedStyles(
-      paragraphFork: mintedStyle,
+      paragraphForks: paragraphStyles?.forks ?? [],
       runStyles: runStyles,
       listMint: listStyle.mintedStyle
-    )
-  }
-
-  /// Mints the paragraph-style fork carrying the item-wide formatting, when
-  /// any is set.
-  private mutating func mintedParagraphFork(
-    for item: AuthoredSlide.TextItem,
-    storageIdentifier: UInt64,
-    nextIdentifier: inout UInt64,
-    minted: inout MintedSlide
-  ) throws -> MintedTextStyle? {
-    guard item.hasFormatting,
-      let parentIdentifier = try currentParagraphStyleIdentifier(ofStorage: storageIdentifier)
-    else {
-      return nil
-    }
-    let styleIdentifier = nextIdentifier
-    nextIdentifier += 1
-    let record = try paragraphStyleRecord(
-      for: item,
-      identifier: styleIdentifier,
-      parentIdentifier: parentIdentifier
-    )
-    minted.maximumIdentifier = max(minted.maximumIdentifier, styleIdentifier)
-    return MintedTextStyle(
-      record: record,
-      identifier: styleIdentifier,
-      parentIdentifier: parentIdentifier
     )
   }
 }

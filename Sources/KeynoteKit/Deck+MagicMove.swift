@@ -110,9 +110,8 @@ extension Deck {
     }
   }
 
-  /// The string Keynote's matcher sees: joined runs when present, else the
-  /// box's plain content.
+  /// The string Keynote's matcher sees: the box's paragraphs joined.
   private func effectiveText(of text: TextBox) -> String {
-    text.runs.isEmpty ? text.content : text.runs.map(\.content).joined()
+    text.content
   }
 }

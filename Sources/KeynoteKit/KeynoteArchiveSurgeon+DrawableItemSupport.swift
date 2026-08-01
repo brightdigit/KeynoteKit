@@ -30,14 +30,14 @@
 package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
-  /// Flattens an item's minted styles: the paragraph fork, per-run
+  /// Flattens an item's minted styles: the paragraph forks, per-run
   /// character styles, and the list-style variation, when present.
   internal func collectedStyles(
-    paragraphFork: MintedTextStyle?,
+    paragraphForks: [MintedTextStyle],
     runStyles: [MintedRunStyle],
     listMint: MintedTextStyle?
   ) -> [MintedTextStyle] {
-    var styles = paragraphFork.map { [$0] } ?? []
+    var styles = paragraphForks
     styles.append(
       contentsOf: runStyles.map {
         MintedTextStyle(record: $0.record, identifier: $0.identifier, parentIdentifier: nil)
