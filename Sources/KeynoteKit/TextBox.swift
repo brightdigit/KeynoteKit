@@ -29,8 +29,13 @@
 
 /// A text item on a slide.
 public struct TextBox: Sendable {
-  /// The item's string content.
-  internal var content: String
+  /// The item's paragraphs, in declaration order.
+  internal var paragraphs: [Paragraph]
+
+  /// The item's string content: paragraphs joined by newlines.
+  internal var content: String {
+    paragraphs.map { $0.runs.map(\.content).joined() }.joined(separator: "\n")
+  }
 
   /// The item's x position (Python-parity default 200).
   internal var x: Double = 200
@@ -63,6 +68,25 @@ public struct TextBox: Sendable {
   /// Authored text color; `nil` leaves the template style.
   internal var color: TextColor?
 
+  /// Authored list style; `nil` means plain (the theme's None style).
+  internal var listStyle: TextListStyle?
+
+  /// Authored rotation; `nil` leaves the box unrotated.
+  internal var rotation: Angle?
+
+  /// Item-wide paragraph alignment; per-paragraph
+  /// ``Paragraph/alignment(_:)`` overrides it.
+  internal var textAlignment: TextAlignment?
+
+  /// Vertical alignment within the box; `nil` leaves the template's.
+  internal var verticalAlignment: VerticalTextAlignment?
+
+  /// Column count; `nil` leaves the template's single column.
+  internal var columnCount: Int?
+
+  /// Column gutter in points; `nil` inherits the template's gutter.
+  internal var columnGap: Double?
+
   /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
   internal var magicIdentifier: String?
 
@@ -72,25 +96,24 @@ public struct TextBox: Sendable {
   /// The item's actions, in declaration (= delivery) order.
   internal var actions: [MotionPath] = []
 
-  /// Styled spans, when the item was built from runs. Empty means the whole
-  /// item is one span styled by the item-level fields above.
-  internal var runs: [Text] = []
-
-  /// Creates a text item.
+  /// Creates a text item. Newlines split the string into unstyled
+  /// paragraphs.
   ///
   /// - Parameter content: The string to display.
   public init(_ content: String) {
-    self.content = content
+    self.paragraphs =
+      content
+      .split(separator: "\n", omittingEmptySubsequences: false)
+      .map { Paragraph(String($0)) }
   }
 
-  /// Creates a text item from styled runs. Runs concatenate in declaration
-  /// order; item-level modifiers (``font(_:size:)``, ``bold(_:)``, …) style
-  /// the whole item, and each run's own style fields override them for that
-  /// span only.
-  public init(@TextRunsBuilder _ runs: () -> [Text]) {
-    let built = runs()
-    self.content = built.map(\.content).joined()
-    self.runs = built
+  /// Creates a text item from paragraphs. Each bare ``Text`` becomes its
+  /// own paragraph; multi-span paragraphs are written explicitly with
+  /// ``Paragraph``. Item-level modifiers (``font(_:size:)``, ``bold(_:)``,
+  /// …) style the whole item; each span's own style fields override them
+  /// for that span only.
+  public init(@ParagraphsBuilder _ paragraphs: () -> [Paragraph]) {
+    self.paragraphs = paragraphs()
   }
 
   /// Positions the item on the slide.

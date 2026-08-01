@@ -31,12 +31,12 @@ package import KeynoteKitProtobuf
 
 extension KeynoteArchiveSurgeon {
   /// One style minted for a formatted text item: a paragraph-style fork
-  /// (item-wide formatting, with a parent) or a per-run character style
-  /// (span overrides, parentless).
-  private struct MintedTextStyle {
-    var record: TSPArchiveRecord
-    var identifier: UInt64
-    var parentIdentifier: UInt64?
+  /// (item-wide formatting, with a parent), a per-run character style
+  /// (span overrides, parentless), or a list-style variation.
+  internal struct MintedTextStyle {
+    internal var record: TSPArchiveRecord
+    internal var identifier: UInt64
+    internal var parentIdentifier: UInt64?
   }
 
   /// Writes each drawable's content into `drawablesZOrder` slots.
@@ -103,27 +103,21 @@ extension KeynoteArchiveSurgeon {
     nextIdentifier: inout UInt64,
     minted: inout MintedSlide
   ) throws -> [MintedTextStyle] {
-    guard slideArchive.drawablesZOrder.indices.contains(index) else {
-      throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
-    }
-    let drawableIdentifier = slideArchive.drawablesZOrder[index].identifier
-    guard
-      let placeholderLocation = try catalog.locate(
-        recordIdentifier: drawableIdentifier,
-        named: "KN.PlaceholderArchive"
-      )
-    else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: drawableIdentifier)
-    }
-    try writePlaceholderGeometry(item, at: placeholderLocation)
-    let placeholder = try KN_PlaceholderArchive(
-      serializedBytes: members[placeholderLocation.memberIndex]
-        .records[placeholderLocation.recordIndex]
-        .payloads[placeholderLocation.payloadIndex],
-      partial: true
+    let placeholderLocation = try placeholderLocation(
+      at: index,
+      slideArchive: slideArchive,
+      catalog: catalog,
+      slideIndex: slideIndex
     )
-    let storageIdentifier = placeholder.super.ownedStorage.identifier
-    let mintedStyle = try mintedParagraphFork(
+    try writePlaceholderGeometry(item, at: placeholderLocation)
+    let shapeStyle = try applyShapeStyle(
+      for: item,
+      at: placeholderLocation,
+      nextIdentifier: &nextIdentifier,
+      minted: &minted
+    )
+    let storageIdentifier = try ownedStorageIdentifier(at: placeholderLocation)
+    let paragraphStyles = try mintedParagraphForks(
       for: item,
       storageIdentifier: storageIdentifier,
       nextIdentifier: &nextIdentifier,
@@ -133,73 +127,50 @@ extension KeynoteArchiveSurgeon {
     if let last = runStyles.last {
       minted.maximumIdentifier = max(minted.maximumIdentifier, last.identifier)
     }
+    let listStyle = try resolvedListStyle(
+      for: item.listStyle,
+      nextIdentifier: &nextIdentifier,
+      minted: &minted
+    )
     try applyText(
       item.text,
-      paragraphStyle: mintedStyle.flatMap { style in
-        style.parentIdentifier.map { (style.identifier, $0) }
-      },
+      paragraphStyles: paragraphStyles,
       characterRuns: runStyles.map {
         CharacterRunEntry(characterIndex: $0.characterIndex, styleIdentifier: $0.identifier)
       },
+      listStyleIdentifier: listStyle.identifier,
       toStorage: storageIdentifier
     )
-    var styles = mintedStyle.map { [$0] } ?? []
-    styles.append(
-      contentsOf: runStyles.map {
-        MintedTextStyle(record: $0.record, identifier: $0.identifier, parentIdentifier: nil)
-      }
+    var styles = collectedStyles(
+      paragraphForks: paragraphStyles?.forks ?? [],
+      runStyles: runStyles,
+      listMint: listStyle.mintedStyle
     )
+    if let shapeStyle {
+      styles.append(shapeStyle)
+    }
     return styles
   }
 
-  /// Mints the paragraph-style fork carrying the item-wide formatting, when
-  /// any is set.
-  private mutating func mintedParagraphFork(
-    for item: AuthoredSlide.TextItem,
-    storageIdentifier: UInt64,
-    nextIdentifier: inout UInt64,
-    minted: inout MintedSlide
-  ) throws -> MintedTextStyle? {
-    guard item.hasFormatting,
-      let parentIdentifier = try currentParagraphStyleIdentifier(ofStorage: storageIdentifier)
+  /// The placeholder record location for the drawable at `index`.
+  private func placeholderLocation(
+    at index: Int,
+    slideArchive: KN_SlideArchive,
+    catalog: SlideCatalog,
+    slideIndex: Int
+  ) throws -> SlideCatalog.Location {
+    guard slideArchive.drawablesZOrder.indices.contains(index) else {
+      throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
+    }
+    let drawableIdentifier = slideArchive.drawablesZOrder[index].identifier
+    guard
+      let location = try catalog.locate(
+        recordIdentifier: drawableIdentifier,
+        named: "KN.PlaceholderArchive"
+      )
     else {
-      return nil
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: drawableIdentifier)
     }
-    let styleIdentifier = nextIdentifier
-    nextIdentifier += 1
-    let record = try paragraphStyleRecord(
-      for: item,
-      identifier: styleIdentifier,
-      parentIdentifier: parentIdentifier
-    )
-    minted.maximumIdentifier = max(minted.maximumIdentifier, styleIdentifier)
-    return MintedTextStyle(
-      record: record,
-      identifier: styleIdentifier,
-      parentIdentifier: parentIdentifier
-    )
-  }
-
-  /// Writes authored position and optional size onto a placeholder.
-  private mutating func writePlaceholderGeometry(
-    _ item: AuthoredSlide.TextItem,
-    at placeholderLocation: SlideCatalog.Location
-  ) throws {
-    var placeholder = try KN_PlaceholderArchive(
-      serializedBytes: members[placeholderLocation.memberIndex]
-        .records[placeholderLocation.recordIndex]
-        .payloads[placeholderLocation.payloadIndex],
-      partial: true
-    )
-    placeholder.super.super.super.geometry.position.x = Float(item.x)
-    placeholder.super.super.super.geometry.position.y = Float(item.y)
-    if let width = item.width {
-      placeholder.super.super.super.geometry.size.width = Float(width)
-    }
-    if let height = item.height {
-      placeholder.super.super.super.geometry.size.height = Float(height)
-    }
-    members[placeholderLocation.memberIndex].records[placeholderLocation.recordIndex]
-      .payloads[placeholderLocation.payloadIndex] = try placeholder.serializedBytes(partial: true)
+    return location
   }
 }

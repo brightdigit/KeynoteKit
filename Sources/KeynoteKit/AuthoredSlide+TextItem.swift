@@ -32,53 +32,56 @@ extension AuthoredSlide {
   /// in order. Empty means "leave the base slide's items untouched" (the
   /// golden differential path).
   package struct TextItem: Equatable, Sendable {
-    /// One styled span of the item's text. Spans concatenate in order into
-    /// ``TextItem/text``; style fields override the item-wide formatting for
-    /// that span only.
-    package struct Run: Equatable, Sendable {
-      /// The span's string.
-      package var text: String
+    /// One paragraph: spans plus per-paragraph alignment and indentation.
+    package struct ParagraphItem: Equatable, Sendable {
+      /// The paragraph's spans, concatenated in order.
+      package var runs: [Run]
 
-      /// Authored font family; `nil` inherits the item / template style.
-      package var fontName: String?
+      /// Per-paragraph alignment; `nil` inherits the item-wide default.
+      package var alignment: TextAlignment?
 
-      /// Authored font size; `nil` inherits the item / template style.
-      package var fontSize: Double?
+      /// Left indent in points; `nil` inherits.
+      package var leftIndent: Double?
 
-      /// Authored bold; `nil` inherits the item / template style.
-      package var isBold: Bool?
+      /// First-line indent in points; `nil` inherits.
+      package var firstLineIndent: Double?
 
-      /// Authored italic; `nil` inherits the item / template style.
-      package var isItalic: Bool?
+      /// Right indent in points; `nil` inherits.
+      package var rightIndent: Double?
 
-      /// Authored sRGB color; `nil` inherits the item / template style.
-      package var color: TextColor?
-
-      /// Whether any style field is set on this span.
-      package var hasFormatting: Bool {
-        fontName != nil || fontSize != nil || isBold != nil || isItalic != nil || color != nil
+      /// The paragraph's string: its spans joined.
+      package var text: String {
+        runs.map(\.text).joined()
       }
 
-      /// Creates a span.
+      /// Whether any per-paragraph layout field is set.
+      package var hasParagraphFormatting: Bool {
+        alignment != nil || leftIndent != nil || firstLineIndent != nil || rightIndent != nil
+      }
+
+      /// Creates a paragraph.
       package init(
-        text: String,
-        fontName: String? = nil,
-        fontSize: Double? = nil,
-        isBold: Bool? = nil,
-        isItalic: Bool? = nil,
-        color: TextColor? = nil
+        runs: [Run],
+        alignment: TextAlignment? = nil,
+        leftIndent: Double? = nil,
+        firstLineIndent: Double? = nil,
+        rightIndent: Double? = nil
       ) {
-        self.text = text
-        self.fontName = fontName
-        self.fontSize = fontSize
-        self.isBold = isBold
-        self.isItalic = isItalic
-        self.color = color
+        self.runs = runs
+        self.alignment = alignment
+        self.leftIndent = leftIndent
+        self.firstLineIndent = firstLineIndent
+        self.rightIndent = rightIndent
       }
     }
 
-    /// The string content.
-    package var text: String
+    /// The item's paragraphs, joined by `"\n"` into the storage text.
+    package var paragraphs: [ParagraphItem]
+
+    /// The string content: paragraphs joined by newlines.
+    package var text: String {
+      paragraphs.map(\.text).joined(separator: "\n")
+    }
 
     /// The x position.
     package var x: Double
@@ -107,9 +110,23 @@ extension AuthoredSlide {
     /// Authored sRGB color; `nil` leaves the template style.
     package var color: TextColor?
 
-    /// Styled spans; empty means the whole item is one span styled by the
-    /// item-wide fields above.
-    package var runs: [Run]
+    /// Authored list style; `nil` means plain (the theme's None style).
+    package var listStyle: TextListStyle?
+
+    /// Authored rotation, clockwise-positive; `nil` leaves the box unrotated.
+    package var rotation: Angle?
+
+    /// Item-wide paragraph alignment; per-paragraph alignment overrides it.
+    package var textAlignment: TextAlignment?
+
+    /// Vertical alignment within the box; `nil` leaves the template's.
+    package var verticalAlignment: VerticalTextAlignment?
+
+    /// Column count; `nil` leaves the template's single column.
+    package var columnCount: Int?
+
+    /// Column gutter in points; `nil` inherits the template's gutter.
+    package var columnGap: Double?
 
     /// Whether any item-wide formatting field is set.
     package var hasFormatting: Bool {
@@ -118,12 +135,16 @@ extension AuthoredSlide {
 
     /// Whether any span carries its own style overrides.
     package var hasRunFormatting: Bool {
-      runs.contains(where: \.hasFormatting)
+      paragraphs.contains { $0.runs.contains(where: \.hasFormatting) }
+    }
+
+    /// Whether the item-wide alignment or any paragraph's layout is set.
+    package var hasParagraphFormatting: Bool {
+      textAlignment != nil || paragraphs.contains(where: \.hasParagraphFormatting)
     }
 
     /// Creates a text item.
     package init(
-      text: String,
       x: Double,
       y: Double,
       width: Double? = nil,
@@ -133,9 +154,14 @@ extension AuthoredSlide {
       isBold: Bool? = nil,
       isItalic: Bool? = nil,
       color: TextColor? = nil,
-      runs: [Run] = []
+      listStyle: TextListStyle? = nil,
+      rotation: Angle? = nil,
+      textAlignment: TextAlignment? = nil,
+      verticalAlignment: VerticalTextAlignment? = nil,
+      columnCount: Int? = nil,
+      columnGap: Double? = nil,
+      paragraphs: [ParagraphItem]
     ) {
-      self.text = text
       self.x = x
       self.y = y
       self.width = width
@@ -145,7 +171,13 @@ extension AuthoredSlide {
       self.isBold = isBold
       self.isItalic = isItalic
       self.color = color
-      self.runs = runs
+      self.listStyle = listStyle
+      self.rotation = rotation
+      self.textAlignment = textAlignment
+      self.verticalAlignment = verticalAlignment
+      self.columnCount = columnCount
+      self.columnGap = columnGap
+      self.paragraphs = paragraphs
     }
   }
 }

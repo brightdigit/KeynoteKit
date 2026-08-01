@@ -159,8 +159,19 @@ now waits only on the expanded #24 human pass — checklist in
 **Mixed formatting runs (#40):** landed 2026-07-31 via PR #41 (`45b8c4f`),
 merged pre-tag because it also renames the public DSL surface
 (`Text`→`TextBox`, `TextRun`→`Text`; no bare strings in builders). Per-run
-character styles render-verified by human pass (`text_runs.key`). The
-acceptance catalog is now **9** decks.
+character styles render-verified by human pass (`text_runs.key`).
+
+**Text layout (#51):** implemented 2026-07-31 on branch `text-layout-51`
+(six gated commits): plain-by-default list style, `TextListStyle`
+(bullet/custom/numbered/indent), `Paragraph` + `textAlignment` +
+per-paragraph indents, `.rotationEffect(Angle)` (angle unit pinned:
+degrees, CCW-positive), `.verticalAlignment` + `.columns(count, gap:)`
+(gap pinned: fraction of layout width; `research/findings/text_columns.md`),
+and the six-slide `text_layout` acceptance deck — render-verified by
+scripted slide-image export; the human pass is the remaining gate. Latent
+placeholder layout-width behavior filed as #52. The acceptance catalog is
+now **11** decks (`Acceptance`/CustomDeck landed with `0fdee10`,
+`text_layout` with #51).
 
 **Prior open-pass note:** Human Keynote 15.3 open pass is **5/5 green** for the
 original five decks (`bisect_in`, `bisect_out`, `bisect_action`,

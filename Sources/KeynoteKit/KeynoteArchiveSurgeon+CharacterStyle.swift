@@ -79,6 +79,33 @@ extension KeynoteArchiveSurgeon {
     return (properties, count)
   }
 
+  /// Paragraph-property bag for an effective paragraph format, plus the
+  /// number of overridden properties. Empty formats yield a present-but-empty
+  /// bag, matching the pre-#51 single fork byte-for-byte.
+  private static func paragraphProperties(
+    for format: ParagraphFormat
+  ) -> (bag: TSWP_ParagraphStylePropertiesArchive, count: UInt32) {
+    var bag = TSWP_ParagraphStylePropertiesArchive()
+    var count: UInt32 = 0
+    if let alignment = format.alignment {
+      bag.alignment = alignment.archiveValue
+      count += 1
+    }
+    if let left = format.leftIndent {
+      bag.leftIndent = Float(left)
+      count += 1
+    }
+    if let firstLine = format.firstLineIndent {
+      bag.firstLineIndent = Float(firstLine)
+      count += 1
+    }
+    if let right = format.rightIndent {
+      bag.rightIndent = Float(right)
+      count += 1
+    }
+    return (bag, count)
+  }
+
   /// Mints the forked paragraph-style variation carrying an item's formatting.
   ///
   /// Matches how Keynote itself styles a whole text item: a
@@ -88,6 +115,7 @@ extension KeynoteArchiveSurgeon {
   /// glyphs with the fill and ignores the legacy color alone.
   internal func paragraphStyleRecord(
     for item: AuthoredSlide.TextItem,
+    format: ParagraphFormat,
     identifier: UInt64,
     parentIdentifier: UInt64
   ) throws -> TSPArchiveRecord {
@@ -95,13 +123,14 @@ extension KeynoteArchiveSurgeon {
       throw ArchiveSurgeryError.missingSlideRecord(identifier: 0)
     }
     let properties = characterStyleProperties(for: item)
+    let paragraph = Self.paragraphProperties(for: format)
     var style = TSWP_ParagraphStyleArchive()
     style.super.isVariation = true
     style.super.parent.identifier = parentIdentifier
     style.super.stylesheet.identifier = stylesheetIdentifier
     style.charProperties = properties.bag
-    style.paraProperties = TSWP_ParagraphStylePropertiesArchive()
-    style.overrideCount = properties.count
+    style.paraProperties = paragraph.bag
+    style.overrideCount = properties.count + paragraph.count
     var messageInfo = TSP_MessageInfo()
     messageInfo.type = Self.paragraphStyleArchiveType
     messageInfo.version = BuildRecordFactory.version
@@ -150,5 +179,19 @@ extension KeynoteArchiveSurgeon {
       isItalic: item.isItalic,
       color: item.color
     )
+  }
+}
+
+extension TextAlignment {
+  /// The archive ordinal: 0 left, 1 right, 2 center, 3 justified, 4 natural
+  /// (`research/findings/` paragraph-properties decode).
+  internal var archiveValue: TSWP_ParagraphStylePropertiesArchive.TextAlignmentType {
+    switch self {
+    case .left: .tatvalue0
+    case .right: .tatvalue1
+    case .center: .tatvalue2
+    case .justified: .tatvalue3
+    case .natural: .tatvalue4
+    }
   }
 }

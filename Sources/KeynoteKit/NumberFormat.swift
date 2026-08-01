@@ -1,5 +1,5 @@
 //
-//  TextRunsContent.swift
+//  NumberFormat.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,33 +27,20 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-import KeynoteKit
+/// Number label formats for ``TextListStyle/numbered(_:)``.
+public enum NumberFormat: Sendable, Equatable {
+  /// `1.` `2.` `3.`
+  case decimal
 
-/// Mixed formatting inside one text box for the #40 render pass: the pass is
-/// green only when "Bold red" is large bold red, "italic" is italic, and the
-/// spans between them stay plain — all within a single item.
-package struct TextRunsContent: SlideContent {
-  package var body: some SlideContent {
-    Slide {
-      TextBox {
-        Paragraph {
-          Text("Bold red")
-            .bold()
-            .fontSize(56)
-            .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
-          Text(" then plain then ")
-          Text("italic").italic()
-        }
-      }
-      .position(x: 120, y: 220)
-      .frame(width: 720, height: 120)
-      TextBox("Whole-item styled neighbor")
-        .bold()
-        .position(x: 120, y: 380)
-        .frame(width: 600, height: 60)
-    }
-  }
+  /// `I.` `II.` `III.`
+  case romanUpper
 
-  /// Creates the content.
-  package init() {}
+  /// `i.` `ii.` `iii.`
+  case romanLower
+
+  /// `A.` `B.` `C.`
+  case alphaUpper
+
+  /// `a.` `b.` `c.`
+  case alphaLower
 }

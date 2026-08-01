@@ -1,5 +1,5 @@
 //
-//  TextRunsContent.swift
+//  VerticalTextAlignment.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,33 +27,15 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-import KeynoteKit
+/// Vertical text alignment within a box, for
+/// ``TextBox/verticalAlignment(_:)``.
+public enum VerticalTextAlignment: Sendable, Equatable {
+  /// Text starts at the top of the box.
+  case top
 
-/// Mixed formatting inside one text box for the #40 render pass: the pass is
-/// green only when "Bold red" is large bold red, "italic" is italic, and the
-/// spans between them stay plain — all within a single item.
-package struct TextRunsContent: SlideContent {
-  package var body: some SlideContent {
-    Slide {
-      TextBox {
-        Paragraph {
-          Text("Bold red")
-            .bold()
-            .fontSize(56)
-            .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
-          Text(" then plain then ")
-          Text("italic").italic()
-        }
-      }
-      .position(x: 120, y: 220)
-      .frame(width: 720, height: 120)
-      TextBox("Whole-item styled neighbor")
-        .bold()
-        .position(x: 120, y: 380)
-        .frame(width: 600, height: 60)
-    }
-  }
+  /// Text centers vertically.
+  case middle
 
-  /// Creates the content.
-  package init() {}
+  /// Text ends at the bottom of the box.
+  case bottom
 }

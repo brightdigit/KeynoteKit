@@ -12,11 +12,13 @@ internal struct TextRunTests {
       Deck {
         Slide {
           TextBox {
-            Text("Styled")
-              .bold()
-              .fontSize(48)
-              .foregroundColor(TextColor(red: 0.9, green: 0.1, blue: 0.1))
-            Text(" plain")
+            Paragraph {
+              Text("Styled")
+                .bold()
+                .fontSize(48)
+                .foregroundColor(TextColor(red: 0.9, green: 0.1, blue: 0.1))
+              Text(" plain")
+            }
           }
           TextBox("Neighbor")
         }
@@ -65,8 +67,10 @@ internal struct TextRunTests {
       Deck {
         Slide {
           TextBox {
-            Text("Slanted").italic().font("Helvetica")
-            Text(" upright")
+            Paragraph {
+              Text("Slanted").italic().font("Helvetica")
+              Text(" upright")
+            }
           }
           TextBox("Neighbor")
         }
@@ -90,8 +94,10 @@ internal struct TextRunTests {
       Deck {
         Slide {
           TextBox {
-            Text("Two ")
-            Text("plain spans")
+            Paragraph {
+              Text("Two ")
+              Text("plain spans")
+            }
           }
           TextBox("Neighbor")
         }
@@ -109,8 +115,10 @@ internal struct TextRunTests {
       Deck {
         Slide {
           TextBox {
-            Text("Red").foregroundColor(TextColor(red: 1, green: 0, blue: 0))
-            Text(" default")
+            Paragraph {
+              Text("Red").foregroundColor(TextColor(red: 1, green: 0, blue: 0))
+              Text(" default")
+            }
           }
           .fontSize(30)
           TextBox("Neighbor")

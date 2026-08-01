@@ -207,11 +207,8 @@ internal struct DSLAndLoweringTests {
         Text(item)
       }
     }
-    #expect(box.runs.count == 5)
-    #expect(box.runs[0].content == "First")
-    #expect(box.runs[1].content == "Second")
-    #expect(box.runs[2].content == "Third-Else")
-    #expect(box.runs[3].content == "A")
-    #expect(box.runs[4].content == "B")
+    #expect(box.paragraphs.count == 5)
+    let contents = box.paragraphs.map { $0.runs.map(\.content).joined() }
+    #expect(contents == ["First", "Second", "Third-Else", "A", "B"])
   }
 }

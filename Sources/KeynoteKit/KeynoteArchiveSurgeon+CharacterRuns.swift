@@ -62,21 +62,26 @@ extension KeynoteArchiveSurgeon {
     }
     var styles: [MintedRunStyle] = []
     var offset: UInt32 = 0
-    for run in item.runs {
-      let identifier = nextIdentifier
-      nextIdentifier += 1
-      styles.append(
-        MintedRunStyle(
-          record: try characterStyleRecord(
-            for: run,
+    for (index, paragraph) in item.paragraphs.enumerated() {
+      if index > 0 {
+        offset += 1  // the "\n" joining paragraphs into the storage text
+      }
+      for run in paragraph.runs {
+        let identifier = nextIdentifier
+        nextIdentifier += 1
+        styles.append(
+          MintedRunStyle(
+            record: try characterStyleRecord(
+              for: run,
+              identifier: identifier,
+              stylesheetIdentifier: stylesheetIdentifier
+            ),
             identifier: identifier,
-            stylesheetIdentifier: stylesheetIdentifier
-          ),
-          identifier: identifier,
-          characterIndex: offset
+            characterIndex: offset
+          )
         )
-      )
-      offset += UInt32(run.text.utf16.count)
+        offset += UInt32(run.text.utf16.count)
+      }
     }
     return styles
   }
