@@ -103,19 +103,19 @@ extension KeynoteArchiveSurgeon {
     nextIdentifier: inout UInt64,
     minted: inout MintedSlide
   ) throws -> [MintedTextStyle] {
-    guard slideArchive.drawablesZOrder.indices.contains(index) else {
-      throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
-    }
-    let drawableIdentifier = slideArchive.drawablesZOrder[index].identifier
-    guard
-      let placeholderLocation = try catalog.locate(
-        recordIdentifier: drawableIdentifier,
-        named: "KN.PlaceholderArchive"
-      )
-    else {
-      throw ArchiveSurgeryError.missingSlideRecord(identifier: drawableIdentifier)
-    }
+    let placeholderLocation = try placeholderLocation(
+      at: index,
+      slideArchive: slideArchive,
+      catalog: catalog,
+      slideIndex: slideIndex
+    )
     try writePlaceholderGeometry(item, at: placeholderLocation)
+    let shapeStyle = try applyShapeStyle(
+      for: item,
+      at: placeholderLocation,
+      nextIdentifier: &nextIdentifier,
+      minted: &minted
+    )
     let storageIdentifier = try ownedStorageIdentifier(at: placeholderLocation)
     let paragraphStyles = try mintedParagraphForks(
       for: item,
@@ -141,10 +141,36 @@ extension KeynoteArchiveSurgeon {
       listStyleIdentifier: listStyle.identifier,
       toStorage: storageIdentifier
     )
-    return collectedStyles(
+    var styles = collectedStyles(
       paragraphForks: paragraphStyles?.forks ?? [],
       runStyles: runStyles,
       listMint: listStyle.mintedStyle
     )
+    if let shapeStyle {
+      styles.append(shapeStyle)
+    }
+    return styles
+  }
+
+  /// The placeholder record location for the drawable at `index`.
+  private func placeholderLocation(
+    at index: Int,
+    slideArchive: KN_SlideArchive,
+    catalog: SlideCatalog,
+    slideIndex: Int
+  ) throws -> SlideCatalog.Location {
+    guard slideArchive.drawablesZOrder.indices.contains(index) else {
+      throw ArchiveSurgeryError.targetOutOfRange(slideIndex: slideIndex, targetIndex: index)
+    }
+    let drawableIdentifier = slideArchive.drawablesZOrder[index].identifier
+    guard
+      let location = try catalog.locate(
+        recordIdentifier: drawableIdentifier,
+        named: "KN.PlaceholderArchive"
+      )
+    else {
+      throw ArchiveSurgeryError.missingSlideRecord(identifier: drawableIdentifier)
+    }
+    return location
   }
 }

@@ -114,6 +114,9 @@ extension Deck {
           listStyle: text.listStyle,
           rotation: text.rotation,
           textAlignment: text.textAlignment,
+          verticalAlignment: text.verticalAlignment,
+          columnCount: text.columnCount,
+          columnGap: text.columnGap,
           paragraphs: text.paragraphs.map(authoredParagraph(from:))
         )
       )

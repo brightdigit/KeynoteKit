@@ -78,6 +78,15 @@ public struct TextBox: Sendable {
   /// ``Paragraph/alignment(_:)`` overrides it.
   internal var textAlignment: TextAlignment?
 
+  /// Vertical alignment within the box; `nil` leaves the template's.
+  internal var verticalAlignment: VerticalTextAlignment?
+
+  /// Column count; `nil` leaves the template's single column.
+  internal var columnCount: Int?
+
+  /// Column gutter in points; `nil` inherits the template's gutter.
+  internal var columnGap: Double?
+
   /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
   internal var magicIdentifier: String?
 
@@ -165,30 +174,6 @@ public struct TextBox: Sendable {
   public func foregroundColor(_ color: TextColor) -> TextBox {
     var text = self
     text.color = color
-    return text
-  }
-
-  /// Sets how paragraphs are labeled (bullet, number, or nothing).
-  /// Unset means plain — authored text boxes never inherit the theme bullet.
-  public func listStyle(_ style: TextListStyle) -> TextBox {
-    var text = self
-    text.listStyle = style
-    return text
-  }
-
-  /// Rotates the box about its center. Positive angles rotate clockwise on
-  /// screen, matching SwiftUI.
-  public func rotationEffect(_ angle: Angle) -> TextBox {
-    var text = self
-    text.rotation = angle
-    return text
-  }
-
-  /// Sets the item-wide paragraph alignment; ``Paragraph/alignment(_:)``
-  /// overrides it per paragraph.
-  public func textAlignment(_ alignment: TextAlignment) -> TextBox {
-    var text = self
-    text.textAlignment = alignment
     return text
   }
 

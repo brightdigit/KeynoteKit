@@ -32,51 +32,6 @@ extension AuthoredSlide {
   /// in order. Empty means "leave the base slide's items untouched" (the
   /// golden differential path).
   package struct TextItem: Equatable, Sendable {
-    /// One styled span of the item's text. Spans concatenate in order into
-    /// ``TextItem/text``; style fields override the item-wide formatting for
-    /// that span only.
-    package struct Run: Equatable, Sendable {
-      /// The span's string.
-      package var text: String
-
-      /// Authored font family; `nil` inherits the item / template style.
-      package var fontName: String?
-
-      /// Authored font size; `nil` inherits the item / template style.
-      package var fontSize: Double?
-
-      /// Authored bold; `nil` inherits the item / template style.
-      package var isBold: Bool?
-
-      /// Authored italic; `nil` inherits the item / template style.
-      package var isItalic: Bool?
-
-      /// Authored sRGB color; `nil` inherits the item / template style.
-      package var color: TextColor?
-
-      /// Whether any style field is set on this span.
-      package var hasFormatting: Bool {
-        fontName != nil || fontSize != nil || isBold != nil || isItalic != nil || color != nil
-      }
-
-      /// Creates a span.
-      package init(
-        text: String,
-        fontName: String? = nil,
-        fontSize: Double? = nil,
-        isBold: Bool? = nil,
-        isItalic: Bool? = nil,
-        color: TextColor? = nil
-      ) {
-        self.text = text
-        self.fontName = fontName
-        self.fontSize = fontSize
-        self.isBold = isBold
-        self.isItalic = isItalic
-        self.color = color
-      }
-    }
-
     /// One paragraph: spans plus per-paragraph alignment and indentation.
     package struct ParagraphItem: Equatable, Sendable {
       /// The paragraph's spans, concatenated in order.
@@ -164,6 +119,15 @@ extension AuthoredSlide {
     /// Item-wide paragraph alignment; per-paragraph alignment overrides it.
     package var textAlignment: TextAlignment?
 
+    /// Vertical alignment within the box; `nil` leaves the template's.
+    package var verticalAlignment: VerticalTextAlignment?
+
+    /// Column count; `nil` leaves the template's single column.
+    package var columnCount: Int?
+
+    /// Column gutter in points; `nil` inherits the template's gutter.
+    package var columnGap: Double?
+
     /// Whether any item-wide formatting field is set.
     package var hasFormatting: Bool {
       fontName != nil || fontSize != nil || isBold != nil || isItalic != nil || color != nil
@@ -193,6 +157,9 @@ extension AuthoredSlide {
       listStyle: TextListStyle? = nil,
       rotation: Angle? = nil,
       textAlignment: TextAlignment? = nil,
+      verticalAlignment: VerticalTextAlignment? = nil,
+      columnCount: Int? = nil,
+      columnGap: Double? = nil,
       paragraphs: [ParagraphItem]
     ) {
       self.x = x
@@ -207,6 +174,9 @@ extension AuthoredSlide {
       self.listStyle = listStyle
       self.rotation = rotation
       self.textAlignment = textAlignment
+      self.verticalAlignment = verticalAlignment
+      self.columnCount = columnCount
+      self.columnGap = columnGap
       self.paragraphs = paragraphs
     }
   }

@@ -144,7 +144,7 @@ extension KeynoteArchiveSurgeon {
   /// Swaps `old` for `new` on a record header's object references — an
   /// unlisted cross-record reference resolves to nil at load and the style
   /// silently fails to apply.
-  private mutating func replaceRecordHeaderReference(
+  internal mutating func replaceRecordHeaderReference(
     _ old: UInt64,
     with new: UInt64,
     at location: SlideCatalog.Location
