@@ -200,8 +200,8 @@ deliverable. Reasoning, risks, and the full critical path are in
 |---|---|
 | Lane 0 spikes (run first) | [#63](https://github.com/brightdigit/KeynoteKit/issues/63) scale, [#64](https://github.com/brightdigit/KeynoteKit/issues/64) monospace |
 | Text layout (#51) | **implemented `e658a69`** — human render pass is the gate. Sub-issues #71–#75 were obsolete and are now closed against that commit. [#52](https://github.com/brightdigit/KeynoteKit/issues/52) remains open |
-| New authoring features | [#65](https://github.com/brightdigit/KeynoteKit/issues/65) layout, [#67](https://github.com/brightdigit/KeynoteKit/issues/67) measurement, [#66](https://github.com/brightdigit/KeynoteKit/issues/66) syntax |
-| Demo + docs | [#56](https://github.com/brightdigit/KeynoteKit/issues/56), [#57](https://github.com/brightdigit/KeynoteKit/issues/57), [#58](https://github.com/brightdigit/KeynoteKit/issues/58), [#68](https://github.com/brightdigit/KeynoteKit/issues/68), [#69](https://github.com/brightdigit/KeynoteKit/issues/69), [#70](https://github.com/brightdigit/KeynoteKit/issues/70) |
+| New authoring features | [#65](https://github.com/brightdigit/KeynoteKit/issues/65) layout, [#67](https://github.com/brightdigit/KeynoteKit/issues/67) measurement, [#66](https://github.com/brightdigit/KeynoteKit/issues/66) syntax, [#78](https://github.com/brightdigit/KeynoteKit/issues/78) background fill |
+| Demo + docs | [#56](https://github.com/brightdigit/KeynoteKit/issues/56), [#58](https://github.com/brightdigit/KeynoteKit/issues/58), [#68](https://github.com/brightdigit/KeynoteKit/issues/68), [#69](https://github.com/brightdigit/KeynoteKit/issues/69), [#70](https://github.com/brightdigit/KeynoteKit/issues/70) — [#57](https://github.com/brightdigit/KeynoteKit/issues/57) automated export demoted to `v0.1.1` (the v0.1.0 movie is recorded by hand) |
 | Tag gate | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) expanded pass |
 
 Critical path:
@@ -209,8 +209,9 @@ Critical path:
 ```
 Lane 0 spikes (#63, #64)
   → layout (#65) → measurement (#67, timeboxed)
+  → syntax (#66) + background fill (#78)   ← code slides need both
     → demo (#56) → human render pass (2 cycles)
-      → export (#57, MANUAL) → docs (#68, #58, #69) → tag
+      → export (MANUAL — #57 automation is v0.1.1) → docs (#68, #58, #69) → tag
 ```
 
 **#52 is the riskiest item and must not gate the tag** — timebox the probe and
