@@ -199,7 +199,7 @@ deliverable. Reasoning, risks, and the full critical path are in
 | Lane | Tickets |
 |---|---|
 | Lane 0 spikes (run first) | [#63](https://github.com/brightdigit/KeynoteKit/issues/63) scale, [#64](https://github.com/brightdigit/KeynoteKit/issues/64) monospace |
-| Text layout (#51) | **implemented `e658a69`** — human render pass is the gate. Sub-issues #71–#75 are obsolete; close against that commit. [#52](https://github.com/brightdigit/KeynoteKit/issues/52) remains open |
+| Text layout (#51) | **implemented `e658a69`** — human render pass is the gate. Sub-issues #71–#75 were obsolete and are now closed against that commit. [#52](https://github.com/brightdigit/KeynoteKit/issues/52) remains open |
 | New authoring features | [#65](https://github.com/brightdigit/KeynoteKit/issues/65) layout, [#67](https://github.com/brightdigit/KeynoteKit/issues/67) measurement, [#66](https://github.com/brightdigit/KeynoteKit/issues/66) syntax |
 | Demo + docs | [#56](https://github.com/brightdigit/KeynoteKit/issues/56), [#57](https://github.com/brightdigit/KeynoteKit/issues/57), [#58](https://github.com/brightdigit/KeynoteKit/issues/58), [#68](https://github.com/brightdigit/KeynoteKit/issues/68), [#69](https://github.com/brightdigit/KeynoteKit/issues/69), [#70](https://github.com/brightdigit/KeynoteKit/issues/70) |
 | Tag gate | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) expanded pass |
@@ -530,7 +530,9 @@ than 15.3.
 **Post-v0.1.0 milestones (2026-08-02).** `v0.1.1`: #44 perf, #45 ScriptingBridge
 robustness, #46 input hardening, #47 CI hygiene, #48 DSL/RNG seam, #49
 transactional staging, #50 transition research. `Future`: #2, #4, #6, #8, plus
-#59 markdown, #60 web playground, #61 custom theme API, #62 installed themes.
+#59 markdown, #60 web playground (input format undecided — Markdown, Swift DSL,
+or a no-parser gallery; only #59's route depends on the markdown parser), #61
+custom theme API, #62 installed themes.
 
 ### On #10 and the authoring path
 
