@@ -15,7 +15,7 @@ AppleScript at runtime.
 struct TitleSlide: SlideContent {
   var body: some SlideContent {
     Slide {
-      Text("Title")
+      TextBox("Title")
         .magicId("title")
         .position(x: 200, y: 200)
         .build(.in) {
@@ -48,6 +48,14 @@ rather than by hand in Keynote* — authoring with no template at all is #2.
 **Definition of done for v0.1.0:** a deck authored purely in Swift opens in
 Keynote 15.3 with no crash and no repair warning, and its transitions and builds
 verify structurally against what was specified.
+
+**Release deliverable (scoped 2026-08-02):** a **demo presentation** — a movie
+embedded in the README **and** a downloadable `.key` — that simultaneously
+showcases KeynoteKit's features and teaches how to use them, backed by an
+accurate README and a DocC catalog. Because that deck is code-heavy and 15–20
+slides long, v0.1.0 also gains SwiftUI-style layout (#65) and Swift syntax
+highlighting (#66). Full reasoning, risks, and critical path:
+[`v0.1.0-handoff.md`](v0.1.0-handoff.md).
 
 ## What we already know (from `v0.1.x` research — do not re-derive)
 
@@ -128,6 +136,10 @@ Active v0.1.0 work is filed on GitHub under map
 [#12](https://github.com/brightdigit/KeynoteKit/issues/12) (label `v0.1.0`).
 Claim, block, and close tickets there — not in local scratch files.
 
+Since 2026-08-02 tracking also uses **milestones**: `v0.1.0`, `v0.1.1`, and
+`Future`. Every open issue carries one. `gh issue list --milestone v0.1.0` is
+the authoritative remaining-work list.
+
 Parallel lanes / worktree layout: [`PARALLEL-WORKTREES.md`](PARALLEL-WORKTREES.md).
 
 | PLAN step | Ticket |
@@ -176,6 +188,34 @@ now **11** decks (`Acceptance`/CustomDeck landed with `0fdee10`,
 **Prior open-pass note:** Human Keynote 15.3 open pass is **5/5 green** for the
 original five decks (`bisect_in`, `bisect_out`, `bisect_action`,
 `bisect_direction`, `build_acceptance`).
+
+### v0.1.0 demo lane (scoped 2026-08-02)
+
+The tag no longer waits only on #24 — the release was scoped around the demo
+deliverable. Reasoning, risks, and the full critical path are in
+[`v0.1.0-handoff.md`](v0.1.0-handoff.md); #51's format-level detail is in
+[`text-layout-plan.md`](text-layout-plan.md).
+
+| Lane | Tickets |
+|---|---|
+| Lane 0 spikes (run first) | [#63](https://github.com/brightdigit/KeynoteKit/issues/63) scale, [#64](https://github.com/brightdigit/KeynoteKit/issues/64) monospace |
+| Text layout (#51) | **implemented `e658a69`** — human render pass is the gate. Sub-issues #71–#75 are obsolete; close against that commit. [#52](https://github.com/brightdigit/KeynoteKit/issues/52) remains open |
+| New authoring features | [#65](https://github.com/brightdigit/KeynoteKit/issues/65) layout, [#67](https://github.com/brightdigit/KeynoteKit/issues/67) measurement, [#66](https://github.com/brightdigit/KeynoteKit/issues/66) syntax |
+| Demo + docs | [#56](https://github.com/brightdigit/KeynoteKit/issues/56), [#57](https://github.com/brightdigit/KeynoteKit/issues/57), [#58](https://github.com/brightdigit/KeynoteKit/issues/58), [#68](https://github.com/brightdigit/KeynoteKit/issues/68), [#69](https://github.com/brightdigit/KeynoteKit/issues/69), [#70](https://github.com/brightdigit/KeynoteKit/issues/70) |
+| Tag gate | [#24](https://github.com/brightdigit/KeynoteKit/issues/24) expanded pass |
+
+Critical path:
+
+```
+Lane 0 spikes (#63, #64)
+  → layout (#65) → measurement (#67, timeboxed)
+    → demo (#56) → human render pass (2 cycles)
+      → export (#57, MANUAL) → docs (#68, #58, #69) → tag
+```
+
+**#52 is the riskiest item and must not gate the tag** — timebox the probe and
+fall back to authoring the demo at master body width, documenting the
+limitation.
 
 ## Plan
 
@@ -478,14 +518,19 @@ than 15.3.
 
 | # | Item | Note |
 |---|---|---|
-| [#2](https://github.com/brightdigit/KeynoteKit/issues/2) | Authoring from nothing (no template) | needs theme/master/stylesheet synthesis research |
-| [#3](https://github.com/brightdigit/KeynoteKit/issues/3) | Drawable geometry (w/h, z-order) | unblocks size-changing Magic Move |
-| [#4](https://github.com/brightdigit/KeynoteKit/issues/4) | Shapes and images | Exp 8 proved shape *builds* work; authoring doesn't |
-| [#6](https://github.com/brightdigit/KeynoteKit/issues/6) | Public `Deck(readingKeynoteAt:)` | reading is explicitly not a v0.1.0 feature |
-| [#7](https://github.com/brightdigit/KeynoteKit/issues/7) | Minimal bundled template | **v0.1.0 blocker** — execution ticket is [#21](https://github.com/brightdigit/KeynoteKit/issues/21); see step 4b |
-| [#8](https://github.com/brightdigit/KeynoteKit/issues/8) | Self-hosted macOS runner | Keynote-dependent CI jobs |
-| [#9](https://github.com/brightdigit/KeynoteKit/issues/9) | BrightDigit scaffolding (lint/CI) | SyndiKit is the reference; overlapped by [#13](https://github.com/brightdigit/KeynoteKit/issues/13) |
-| [#10](https://github.com/brightdigit/KeynoteKit/issues/10) | ScriptingBridge escape hatch | **additive only** — not an authoring backend |
+| [#2](https://github.com/brightdigit/KeynoteKit/issues/2) | Authoring from nothing (no template) | needs theme/master/stylesheet synthesis research → `Future` |
+| ~~[#3](https://github.com/brightdigit/KeynoteKit/issues/3)~~ | ~~Drawable geometry (w/h, z-order)~~ | **DONE** — promoted into v0.1.0, landed PR #39 |
+| [#4](https://github.com/brightdigit/KeynoteKit/issues/4) | Shapes (images split to #38) | images **done**; shapes → `Future`. `SlideDrawable` is still `.text`/`.image` only |
+| [#6](https://github.com/brightdigit/KeynoteKit/issues/6) | Public `Deck(readingKeynoteAt:)` | reading is explicitly not a v0.1.0 feature → `Future` |
+| ~~[#7](https://github.com/brightdigit/KeynoteKit/issues/7)~~ | ~~Minimal bundled template~~ | **DONE** via [#21](https://github.com/brightdigit/KeynoteKit/issues/21) (`3ec7c77`) |
+| [#8](https://github.com/brightdigit/KeynoteKit/issues/8) | Self-hosted macOS runner | Keynote-dependent CI jobs → `Future`. Blocks CI coverage of the demo artifacts (#70) |
+| ~~[#9](https://github.com/brightdigit/KeynoteKit/issues/9)~~ | ~~BrightDigit scaffolding (lint/CI)~~ | **DONE** — closed |
+| ~~[#10](https://github.com/brightdigit/KeynoteKit/issues/10)~~ | ~~ScriptingBridge escape hatch~~ | **DONE** — closed 2026-08-02; module shipped `068cefe`. Robustness follow-ups are [#45](https://github.com/brightdigit/KeynoteKit/issues/45) |
+
+**Post-v0.1.0 milestones (2026-08-02).** `v0.1.1`: #44 perf, #45 ScriptingBridge
+robustness, #46 input hardening, #47 CI hygiene, #48 DSL/RNG seam, #49
+transactional staging, #50 transition research. `Future`: #2, #4, #6, #8, plus
+#59 markdown, #60 web playground, #61 custom theme API, #62 installed themes.
 
 ### On #10 and the authoring path
 
