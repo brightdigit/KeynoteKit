@@ -92,10 +92,6 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
   ]
 
   /// Every deck `swift run AcceptanceDecks` writes.
-  ///
-  /// `Acceptance` is the plain-text regression deck: its bare ``TextBox`` items
-  /// carry no list styling, so they are the proof that text renders plain by
-  /// default rather than bulleted.
   package static let all: [AcceptanceDeck] =
     goldenBacked + drawableDepth + formattingRuns + textLayout + [
       AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
