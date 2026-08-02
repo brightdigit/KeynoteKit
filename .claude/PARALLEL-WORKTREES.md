@@ -1,10 +1,13 @@
-# Parallel worktrees for v0.1.0 tickets
+# Parallel worktrees for v0.1.0
 
-How to run the [12 tickets](https://github.com/brightdigit/KeynoteKit/issues/12)
-(#13–#24) across **git worktrees** without stepping on each other. Integration
-branch: **`v0.1.x`**. (The old `feature/swift-package` branch was squashed into
-`v0.1.x` and no longer exists — if you find it referenced anywhere, read it as
-`v0.1.x`.)
+How to run the remaining **v0.1.0 demo lane** across **git worktrees** without
+stepping on each other. Integration branch: **`v0.1.x`**. Milestone
+`gh issue list --milestone v0.1.0` is the authoritative remaining-work list;
+map issue [#12](https://github.com/brightdigit/KeynoteKit/issues/12) tracks the
+original package tickets.
+
+The original #13–#24 package tickets are **complete** — their lanes and phasing
+are archived at the bottom of this file for history.
 
 This repo lives as a worktree of the bare clone `../KeynoteKit.git`. Add sibling
 worktrees at the repo root, not nested inside another worktree.
@@ -12,60 +15,72 @@ worktrees at the repo root, not nested inside another worktree.
 ## Principles
 
 1. **One worktree ↔ one parallel lane** (not one ticket). A lane is a chain that
-   can move without waiting on another lane’s *code*.
-2. **Merge into `v0.1.x` when a ticket’s gate is green** — don’t
-   stack long-lived lane branches past their join points.
-3. **Rebase or merge from integration before starting the next ticket** in that
-   lane so product seams (`Snappy`, `IWAFraming`, …) stay aligned.
-4. **#13 is the fan-out gate.** Until it lands on integration, only lanes
-   that don’t need `Package.swift` (#15 survey, #19 goldens) should run in
-   parallel with it.
+   can move without waiting on another lane's *code*.
+2. **Merge into `v0.1.x` when a ticket's gate is green** — don't stack
+   long-lived lane branches past their join points.
+3. **Rebase from integration before starting the next ticket** in that lane so
+   product seams stay aligned.
+4. **Spikes gate the fan-out.** #63 (scale) and #64 (monospace) are cheap and
+   de-risk everything downstream — run both before committing to the demo's
+   slide count or its code-slide premise.
 5. **Prefer fine-grained products** — lanes should mostly touch different
-   products; if two lanes must edit the same target, serialize or land one first.
+   targets; if two lanes must edit the same file, serialize or land one first.
+6. **Only one Keynote-bound lane at a time** on a given Mac — render passes take
+   over the app.
 
-## Lanes
+## Lanes (v0.1.0 demo)
 
 ```mermaid
 flowchart LR
-  subgraph phase0 [Phase 0 — fan-out]
-    L0[Lane 0: #13 scaffold]
-    L3[Lane S: #15 survey]
-    L7[Lane G: #19 goldens]
+  subgraph phase0 [Phase 0 — spikes, run first]
+    K1[Lane K: #63 scale spike]
+    K2[Lane K: #64 monospace probe]
   end
-  subgraph phase1 [Phase 1 — after #13]
-    LP[Lane P: #14 protobuf]
-    LN[Lane N: #16 snappy]
-    LT[Lane T: #21 template]
+  subgraph phase1 [Phase 1 — authoring features, parallel]
+    LL[Lane L: #65 layout → #67 measurement]
+    LC[Lane C: #66 syntax highlighting]
+    LF[Lane F: #78 background fill]
   end
-  subgraph phase2 [Phase 2 — join]
-    LI[Lane I: #17 then #18]
+  subgraph phase2 [Phase 2 — the deck]
+    LD[Lane D: #56 demo authoring → render pass]
   end
-  subgraph phase3 [Phase 3 — authoring]
-    LW[Lane W: #20 then #22 then #23 then #24]
+  subgraph phase3 [Phase 3 — docs, parallel with D]
+    LX[Lane X: #68 DocC · #69 README · #70 release proc]
   end
-  L0 --> LP
-  L0 --> LN
-  L0 --> LT
-  L3 --> LN
-  LP --> LI
-  LN --> LI
-  LI --> LW
-  L7 --> LW
-  LT --> LW
+  subgraph phase4 [Phase 4 — tag gate]
+    LT[#24 expanded acceptance → tag]
+  end
+  K1 --> LL
+  K1 --> LD
+  K2 --> LC
+  LL --> LD
+  LC --> LD
+  LF --> LD
+  LD --> LT
+  LX --> LT
 ```
 
-| Lane | Tickets (in order) | Primary products / artifacts | Needs Keynote? |
+| Lane | Tickets (in order) | Primary files / targets | Needs Keynote? |
 |---|---|---|---|
-| **0 — Scaffold** | #13 | `Package.swift`, all five product stubs, CI/lint | No |
-| **S — Survey** | #15 | PLAN decision log only (docs) | No |
-| **G — Goldens** | #19 | Committed `.key` goldens / samples policy | **Yes** (takes over the app) |
-| **P — Protobuf** | #14 | `KeynoteKitProtobuf` | No |
-| **N — Snappy** | #16 *(after #13+#15)* | `Snappy` | No |
-| **T — Template** | #21 *(after #13)* | Bundled `.key` resource on `KeynoteKit` | Hand-author in Keynote once |
-| **I — IWA** | #17 → #18 *(after #14+#16)* | `IWAFraming`, navigation/tests | No |
-| **W — Writer+API** | #20 → #22 → #23 → #24 *(after #18+#19+#21)* | `KeynoteKit` | #24 yes (human open) |
+| **K — Spikes** | #63, #64 | throwaway probes; findings only | **Yes** (both) |
+| **L — Layout** | #65 → #67 | new `LayoutNode` + resolve pass in `KeynoteKit`; compile-time only | No (#67 verify: yes) |
+| **C — Code color** | #66 | **new** `KeynoteKitSyntax` target + `swift-syntax` dep | No |
+| **F — Fill** | #78 | `KeynoteArchiveSurgeon+ShapeStyle.swift`, `TextBox` | **Yes** (render pass) |
+| **D — Demo** | #56 → render pass → manual movie | `Sources/` demo target, `Package.swift` | **Yes** (2 cycles) |
+| **X — Docs** | #68, #69, #70 | `.docc`, `README.md`, `docs/` | No |
+| **T — Tag gate** | #24 | acceptance checklist | **Yes** |
 
-`KeynoteKitScripting` stays empty until GitHub #10 — no lane.
+**Why C and F are separate lanes.** Both feed the code slides, but #66 adds a
+new target and touches no core files, while #78 edits the surgeon's shape-style
+fork and `TextBox`. Zero file overlap, so they run concurrently and join before
+#56.
+
+**Why L chains.** #67 is an explicit follow-up to #65 (it needs the resolve
+pass), and #67 is timeboxed with a documented fallback — if it fails, ship #65
+alone and the demo uses explicit sizes.
+
+**#52 does not gate anything.** It is the riskiest open item; if the probe
+fails, author the demo at master body width and document the limitation.
 
 ## Suggested worktree layout
 
@@ -74,18 +89,13 @@ From the KeynoteKit repo root:
 ```text
 KeynoteKit/
   KeynoteKit.git          # bare — never modify directly
-  wt-scaffold/            # lane 0 — #13
-  wt-survey/              # lane S — #15
-  wt-goldens/             # lane G — #19 (Keynote machine)
-  wt-protobuf/            # lane P — #14
-  wt-snappy/              # lane N — #16
-  wt-template/            # lane T — #21
-  wt-iwa/                 # lane I — #17–#18
-  wt-authoring/           # lane W — #20–#24
+  wt-spikes/              # lane K — #63, #64
+  wt-layout/              # lane L — #65 → #67
+  wt-syntax/              # lane C — #66
+  wt-fill/                # lane F — #78
+  wt-demo/                # lane D — #56 (Keynote machine)
+  wt-docs/                # lane X — #68, #69, #70
 ```
-
-You do **not** need every worktree at once. Create a worktree when that lane
-starts; remove it when the lane’s tickets are merged.
 
 ### Create / remove
 
@@ -98,20 +108,19 @@ upstream and silently pushing to integration.
 ```bash
 git fetch origin
 
-git worktree add --no-track -b 13-package-skeleton ../wt-scaffold origin/v0.1.x
-git worktree add --no-track -b 15-snappy-survey    ../wt-survey   origin/v0.1.x
-git worktree add --no-track -b 19-goldens          ../wt-goldens  origin/v0.1.x
+# Phase 0 — spikes first (both Keynote-bound; run serially on one Mac):
+git worktree add --no-track -b 63-scale-spike ../wt-spikes origin/v0.1.x
 
-# After #13 is on v0.1.x:
-git worktree add --no-track -b 14-protobuf ../wt-protobuf origin/v0.1.x
-git worktree add --no-track -b 16-snappy   ../wt-snappy   origin/v0.1.x
-git worktree add --no-track -b 21-template ../wt-template origin/v0.1.x
+# Phase 1 — authoring features, all three in parallel:
+git worktree add --no-track -b 65-layout-primitives ../wt-layout origin/v0.1.x
+git worktree add --no-track -b 66-syntax-highlight  ../wt-syntax origin/v0.1.x
+git worktree add --no-track -b 78-background-fill   ../wt-fill   origin/v0.1.x
 
-# After #14+#16 merged:
-git worktree add --no-track -b 17-iwa-framing ../wt-iwa origin/v0.1.x
+# Docs lane — start any time, no code dependency:
+git worktree add --no-track -b 68-docc-catalog ../wt-docs origin/v0.1.x
 
-# After #18+#19+#21 merged:
-git worktree add --no-track -b 20-writer ../wt-authoring origin/v0.1.x
+# Phase 2 — after #65/#66/#78 land on v0.1.x:
+git worktree add --no-track -b 56-demo-deck ../wt-demo origin/v0.1.x
 ```
 
 Branch naming: standard GitHub issue branching — `<issue>-<slug>`, no slashes
@@ -121,12 +130,47 @@ after the first issue in the chain (e.g. `17-iwa-framing` for #17→#18).
 Remove when done:
 
 ```bash
-git worktree remove ../wt-scaffold
-git branch -d 13-package-skeleton   # after merge
+git worktree remove ../wt-layout
+git branch -d 65-layout-primitives   # after merge
 ```
 
 Each new worktree that runs Python research tools needs its own venv setup
 (`mise trust`, `ensurepip`, `keynote-parser` install) — see PLAN Toolchain.
+
+## Phasing (what runs in parallel when)
+
+> **Current position (2026-08-02):** v0.1.0 scoped around the demo deliverable.
+> #51 text layout shipped in `e658a69` (render pass still queued). Remaining
+> milestone work: #63, #64, #65, #66, #67, #78, #56, #68, #69, #70, plus #24
+> tag gate, #52 (non-blocking) and #12 map. #57 movie export demoted to v0.1.1;
+> the v0.1.0 movie is recorded by hand.
+
+### Phase 0 — spikes (do these first)
+
+Lane K only. #63 validates the surgeon at 15–20 slides; #64 confirms a
+monospace family renders. Both are Keynote-bound, so run them serially on one
+Mac. Their outcomes can resize the whole demo — do not start Phase 1 features
+speculatively if #63 shows a scale problem.
+
+### Phase 1 — authoring features (three lanes in parallel)
+
+Lanes L (#65→#67), C (#66), F (#78) run concurrently — different targets, no
+file overlap. Lane X (docs) can start any time. Land each into `v0.1.x` as its
+gate goes green.
+
+### Phase 2 — the deck
+
+Lane D (#56) starts once #65, #66, and #78 are on `v0.1.x`. Budget **two**
+human render cycles. Movie + screenshots are captured manually here.
+
+### Phase 3 — tag
+
+#24 expanded acceptance pass, then tag `v0.1.0`.
+
+## Archived — original #13–#24 package lanes (complete)
+
+<details>
+<summary>Historical lane map, phasing, and merge order for the completed package tickets</summary>
 
 ## Phasing (what runs in parallel when)
 
@@ -187,16 +231,18 @@ with #17.
 Single lane: each ticket needs the previous gate. #24 is human + Keynote;
 don’t overlap with #19’s Keynote sessions.
 
+
+</details>
+
 ## Merge order at join points
 
 Land in this order when multiple PRs are ready:
 
-1. **#13** before anything that edits package layout
-2. **#15** before **#16** (decision must be on the branch #16 builds from)
-3. **#14** and **#16** before **#17** (either order vs each other)
-4. **#17** before **#18**
-5. **#18**, **#19**, **#21** before **#20** (any order among those three)
-6. **#20** → **#22** → **#23** → **#24**
+1. **#63** and **#64** before committing to demo scope (spikes inform it)
+2. **#65** before **#67** (measurement needs the resolve pass)
+3. **#65**, **#66**, **#78** before **#56** (any order among the three)
+4. **#56** before the manual movie capture and **#58**
+5. **#24** last — the tag gate
 
 Prefer small PRs into `v0.1.x`, not lane-to-lane merges.
 
@@ -204,8 +250,11 @@ Prefer small PRs into `v0.1.x`, not lane-to-lane merges.
 
 | Kind | Good for agents in parallel worktrees | Prefer human / HITL |
 |---|---|---|
-| AFK | #13, #14, #15, #16, #17, #18, #20, #22, #23 | — |
-| Keynote-bound | — | #19 (regen), #21 (author blank template), #24 (open five decks) |
+| AFK | #65, #66, #67, #68, #69, #70, and #78's implementation | — |
+| Keynote-bound | — | #63 scale, #64 monospace, #78's render check, #56 render pass, #24 acceptance |
+
+#78 splits: an agent writes the fill into the shape fork and its structural
+test AFK, then a human confirms Keynote draws it behind the text.
 
 Run at most **one** Keynote-bound lane at a time on a given Mac.
 
@@ -213,24 +262,27 @@ Run at most **one** Keynote-bound lane at a time on a given Mac.
 
 | Area | Who touches it | Rule |
 |---|---|---|
-| `Package.swift` | #13 primarily; later tickets add deps sparingly | After #13, only add a dependency in the ticket that owns that product |
-| `KeynoteKit` | #21 (thin), then #20–#24 | Finish #21 before #20 starts if both touch write entry |
-| `.claude/PLAN.md` decision log | #15, #22 | Tiny additive edits; rebase carefully |
-| GitHub issues (#13–#24) | Claim / close / unlock dependents | Source of truth; see map #12 |
-| Goldens / samples | #19 | Don’t let #20 rewrite goldens — only consume them |
+| `Package.swift` | #66 (new target + dep), #56 (demo target) | Land #66's target before #56 adds the demo product |
+| `KeynoteArchiveSurgeon+ShapeStyle.swift` | #78 only | Sole owner — no other demo lane edits the shape fork |
+| `TextBox.swift` | #78 (fill), #65 (padding modifiers) | Both add modifiers; land #78 first or rebase L on it |
+| `Sources/AcceptanceDeckCatalog/` | #56, #78 verification decks | Additive files only — never rewrite an existing deck |
+| `.claude/PLAN.md` / handoff | any lane recording a decision | Tiny additive edits; rebase carefully |
+| GitHub issues + milestones | claim / close / re-milestone | Source of truth; `gh issue list --milestone v0.1.0` |
 
 ## Checklist per lane session
 
 1. Create/update worktree from current `v0.1.x`.
 2. Claim the ticket (`gh issue edit <n> --add-assignee @me`).
-3. Implement until the ticket’s acceptance checklist is green.
-4. Open PR → merge to `v0.1.x`.
-5. Delete lane branch / remove worktree (or reset branch for the next ticket in-lane).
-6. Close the GitHub issue; dependents unblock via native `blocked_by` edges.
+3. Implement until the ticket's acceptance checklist is green.
+4. `swift test` + `LINT_MODE=STRICT ./Scripts/lint.sh` before opening the PR.
+5. Open PR → merge to `v0.1.x`.
+6. Delete lane branch / remove worktree (or reset for the next ticket in-lane).
+7. Close the GitHub issue.
 
 ## What not to do
 
-- Don’t put two lanes in one worktree with uncommitted cross-product edits.
-- Don’t start #17 “early” against unmerged #14/#16 branches — integrate first.
-- Don’t run #19 and #24 (or #21’s Keynote authoring) at the same time on one app.
-- Don’t implement `#10` ScriptingBridge in the authoring lane — separate product, later issue.
+- Don't put two lanes in one worktree with uncommitted cross-product edits.
+- Don't start #56 against unmerged #65/#66/#78 branches — integrate first.
+- Don't run two Keynote-bound lanes at once on one Mac.
+- Don't let #52 block the tag — fall back to master body width and document it.
+- Don't implement #57 movie export automation in the demo lane; it is v0.1.1.
