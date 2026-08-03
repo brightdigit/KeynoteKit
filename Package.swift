@@ -17,10 +17,15 @@ let package = Package(
     .library(name: "KeynoteKitProtobuf", targets: ["KeynoteKitProtobuf"]),
     .library(name: "KeynoteKit", targets: ["KeynoteKit"]),
     .library(name: "KeynoteKitScripting", targets: ["KeynoteKitScripting"]),
-    .library(name: "KeynoteKitSwiftUI", targets: ["KeynoteKitSwiftUI"])
+    .library(name: "KeynoteKitSwiftUI", targets: ["KeynoteKitSwiftUI"]),
+    .library(name: "KeynoteKitSyntax", targets: ["KeynoteKitSyntax"])
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-protobuf", from: "1.38.1")
+    .package(url: "https://github.com/apple/swift-protobuf", from: "1.38.1"),
+    // Syntax highlighting only (#66). Deliberately NOT a dependency of the
+    // `KeynoteKit` target — core must keep its single swift-protobuf
+    // dependency, which `KeynoteKitSyntaxTests` asserts.
+    .package(url: "https://github.com/apple/swift-syntax", from: "603.0.0")
   ],
   targets: [
     // Generic Snappy block codec. Nothing Apple-specific lives here — this is
@@ -75,10 +80,29 @@ let package = Package(
     // works on Linux, Windows, and Android.
     .target(name: "KeynoteKitSwiftUI", dependencies: ["KeynoteKit"]),
 
+    // Swift syntax highlighting for code on slides (#66). Its own target so
+    // that swift-syntax never reaches `KeynoteKit`; authoring a deck must
+    // not pull a parser in.
+    .target(
+      name: "KeynoteKitSyntax",
+      dependencies: [
+        "KeynoteKit",
+        .product(name: "SwiftParser", package: "swift-syntax"),
+        .product(name: "SwiftSyntax", package: "swift-syntax")
+      ]
+    ),
+
     // The five #24 acceptance decks expressed in the public DSL, shared by
     // the acceptance executable and the differential tests. Deliberately not
     // a product: acceptance tooling, not API.
-    .target(name: "AcceptanceDeckCatalog", dependencies: ["KeynoteKit"]),
+    // Depends on `KeynoteKitSyntax` so the #66 render deck can be authored
+    // through the real public API. That puts swift-syntax in the acceptance
+    // and test graph, never in `KeynoteKit` itself — `CoreDependencyTests`
+    // asserts the distinction.
+    .target(
+      name: "AcceptanceDeckCatalog",
+      dependencies: ["KeynoteKit", "KeynoteKitSyntax"]
+    ),
 
     // `swift run AcceptanceDecks [dir]` writes the five decks for the #24
     // human pass, self-checking each (every record decodes, both SIGTRAP
@@ -117,6 +141,10 @@ let package = Package(
       dependencies: ["KeynoteKit", "IWAFraming", "KeynoteKitProtobuf", "AcceptanceDeckCatalog"]
     ),
     .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"]),
+    .testTarget(
+      name: "KeynoteKitSyntaxTests",
+      dependencies: ["KeynoteKitSyntax", "KeynoteKit"]
+    ),
     .testTarget(
       name: "KeynoteKitSwiftUITests",
       dependencies: ["KeynoteKitSwiftUI", "KeynoteKit"]
