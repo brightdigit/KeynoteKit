@@ -104,6 +104,22 @@ predecessor. Fork *records* are still deduped — the dedupe is on records,
 not entries. `applyParagraphStyles` filters identifier-0 entries out of the
 record header references, since 0 is not a record.
 
+**A repeat entry must OMIT `object`, never zero it** (crash, 2026-08-03).
+The first attempt at this fix set `entry.object.identifier = 0` for repeats.
+Keynote **crashed on open**. Reading the identifier back cannot tell the two
+apart — an absent message and a zeroed one both report 0 — but the wire bytes
+do:
+
+```
+template repeat entry:  [08 0f]           <- characterIndex only
+zeroed repeat entry:    [08 0f 12 00]     <- present-but-empty TSP.Reference
+```
+
+An empty reference resolves to nil and crashes, the same trap recorded for
+`RecordCloner` remaps and for plain character spans. Only `hasObject`
+distinguishes the two shapes, so `UUIDMapVerifier` rule 7 now checks it
+across `tableParaStyle`, `tableCharStyle`, and `tableListStyle`.
+
 **Testing note.** Use **three or more** paragraphs. A two-paragraph case
 exercises only the first and last and passes while interior paragraphs stay
 broken — which is how the per-span variant of this bug survived the first

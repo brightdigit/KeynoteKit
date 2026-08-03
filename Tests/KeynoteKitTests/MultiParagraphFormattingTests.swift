@@ -43,6 +43,33 @@ internal struct MultiParagraphFormattingTests {
     #expect(entries[2].object.identifier == 0)
   }
 
+  /// A repeat entry must leave `object` ABSENT, not set to identifier 0.
+  ///
+  /// Setting it materializes a present-but-empty reference, which Keynote
+  /// resolves to nil and **crashes** on — the standing id-0 trap. Asserting
+  /// `identifier == 0` alone does not catch it, because an absent message
+  /// and a zeroed one both read back as 0. The template's own repeat entries
+  /// serialize as `[08 0f]`: character index only.
+  @Test("repeat entries omit the object field rather than zeroing it")
+  internal func repeatEntriesOmitObject() throws {
+    let surgeon = try written(
+      Deck {
+        Slide {
+          TextBox("one\ntwo\nthree").fontSize(48)
+        }
+      }
+    )
+    let storage = try firstStorage(in: surgeon)
+    let entries = storage.archive.tableParaStyle.entries
+    try #require(entries.count == 3)
+    #expect(entries[0].hasObject)
+    #expect(!entries[1].hasObject)
+    #expect(!entries[2].hasObject)
+    // The wire bytes of a repeat carry only the character index.
+    let bytes: [UInt8] = try entries[1].serializedBytes(partial: true)
+    #expect(bytes == [0x08, 0x04])
+  }
+
   /// Writes the deck and reopens it as a surgeon.
   private func written(_ deck: Deck) throws -> KeynoteArchiveSurgeon {
     let url = FileManager.default.temporaryDirectory
