@@ -82,20 +82,23 @@ internal struct DSLAndLoweringTests {
       showImage ? imageBranch : elseBranch,
       optionalItem
     )
+    // The builder now collects `any SlideLayout`; resolving the nodes gives
+    // back the drawables it used to return directly (#65).
+    let drawables = items.flatMap { $0.layoutNode.resolve(in: nil, origin: nil) }
     if showImage {
-      #expect(items.count == 2)
-      if case .text(let box) = items[0] {
+      #expect(drawables.count == 2)
+      if case .text(let box) = drawables[0] {
         #expect(box.content == "always")
       } else {
         Issue.record("Expected text item first")
       }
-      if case .image = items[1] {
+      if case .image = drawables[1] {
         // Correct branch executed
       } else {
         Issue.record("Expected image item second")
       }
     } else {
-      #expect(items.count == 3)
+      #expect(drawables.count == 3)
     }
   }
 

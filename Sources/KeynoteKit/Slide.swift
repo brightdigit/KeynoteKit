@@ -29,6 +29,12 @@
 
 /// One slide: drawables in declaration order, plus an optional transition.
 public struct Slide: SlideContent, Sendable {
+  /// The slide canvas a top-level stack lays out within, in points.
+  ///
+  /// Matches the bundled template's 1920x1080 slide size, so a stack given
+  /// no explicit frame still has bounds for ``Spacer`` to divide.
+  internal static let canvas = LayoutNode.Size(width: 1_920, height: 1_080)
+
   /// The slide's drawables, in declaration order (before z-index sort).
   internal var items: [SlideDrawable]
 
@@ -40,9 +46,21 @@ public struct Slide: SlideContent, Sendable {
     SlideGroup(slides: [self])
   }
 
-  /// Creates a slide from its drawables.
-  public init(@SlideItemsBuilder content: () -> [SlideDrawable]) {
-    self.items = content()
+  /// Creates a slide from its layout elements.
+  ///
+  /// Stacks, spacers, and padding resolve **here**, at build time: the tree
+  /// is walked once and each drawable comes out carrying the absolute
+  /// `x`/`y` the surgeon writes. `items` is therefore the same flat,
+  /// absolutely-positioned list it has always been, and nothing downstream
+  /// — lowering, z-order, builds, the archive — knows layout exists (#65).
+  ///
+  /// The slide canvas is the resolution bounds, so a top-level ``Spacer``
+  /// divides the full slide.
+  public init(@SlideItemsBuilder content: () -> [any SlideLayout]) {
+    let elements = content()
+    self.items = elements.flatMap { element in
+      element.layoutNode.resolve(in: Self.canvas, origin: nil)
+    }
     self.slideTransition = nil
   }
 
