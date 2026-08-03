@@ -76,6 +76,11 @@ let package = Package(
       dependencies: ["AcceptanceDeckCatalog", "IWAFraming", "KeynoteKit", "KeynoteKitProtobuf"]
     ),
 
+    // `swift run ScaleSpike [dir]` — the #63 spike. Times `Deck.write(to:)`
+    // across a ladder of slide counts to separate quadratic growth from
+    // "slow but linear" (issue #44's `SlideCatalog.locate` cost).
+    .executableTarget(name: "ScaleSpike", dependencies: ["KeynoteKit"]),
+
     .testTarget(name: "SnappyTests", dependencies: ["Snappy"]),
     // Internal archive navigation (#18): package-ACL only, deliberately not a
     // product — reading is test infrastructure and writer plumbing, not API (#6).

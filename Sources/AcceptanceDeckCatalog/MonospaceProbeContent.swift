@@ -29,83 +29,102 @@
 
 import KeynoteKit
 
-/// The #64 monospace probe: does a monospaced family actually resolve in
-/// Keynote 15.3, or does Keynote silently substitute a proportional face?
+/// The #64 monospace probe — **round two**.
 ///
-/// Font *family* selection is already proven — `TextBox.font(_:size:)` ships
-/// render-verified as `.font("HelveticaNeue", size: 48)` in
-/// ``TextFormattingContent``. What is unproven is monospace specifically,
-/// which gates the code-on-slide demo design (#66, #56).
+/// Round one failed, but not the way it looked. All four families rendered
+/// at the template's default size *and* default proportional face, including
+/// `Courier New`, which unquestionably exists and is unquestionably
+/// monospaced. A font-availability problem cannot explain that.
 ///
-/// **How to read each family slide.** The three ruler lines `iiii` / `MMMM` /
-/// `1111` are the signal. In a genuinely monospaced face all three are the
-/// **same width**, so their right edges line up in a column. Under a
-/// proportional substitute `MMMM` is dramatically wider than `iiii` and the
-/// edges are ragged. This is legible at a glance — no measuring required.
+/// An archive probe confirmed KeynoteKit writes the authored values
+/// correctly: `fontName=Menlo fontSize=96.0` lands in a
+/// `TSWP.ParagraphStyleArchive` variation, identically for single-line and
+/// multi-line boxes. So the bytes are right and Keynote ignored them.
 ///
-/// The final slide checks that leading-space indentation holds its columns,
-/// which is what #66 actually depends on: syntax-highlighted code is worthless
-/// if the indentation drifts.
+/// The one structural difference from `TextFormattingContent` — the deck
+/// that *does* render its authored font — is paragraph count. That deck is
+/// a **single** paragraph; every round-one probe box was
+/// **multi**-paragraph (`"iiii\nMMMM\n1111"`).
+///
+/// This round isolates that variable. Slides 1–3 hold paragraph count fixed
+/// at one and vary only the family; slides 4–5 hold the family fixed and
+/// vary paragraph count and styling route. Read them together:
+///
+/// - **Slides 1–3 render monospaced, slide 4 does not** → the whole-item
+///   paragraph-style variation is only honored for single-paragraph items.
+///   That is a KeynoteKit bug, not a font problem, and it needs its own
+///   issue before #66 can rely on `.font()`.
+/// - **Slide 4 fails but slide 5 renders** → the per-paragraph route is the
+///   workaround, and #66 should emit spans rather than item-level styling.
+/// - **Nothing renders monospaced, including slide 1** → the earlier
+///   `TextFormattingContent` render evidence is stale and whole-item font
+///   selection regressed generally.
+/// - **Everything renders monospaced** → round one's failure was an export
+///   artifact; re-run round one before trusting it.
 package struct MonospaceProbeContent: SlideContent {
-  /// The candidate families, in preference order for the demo deck.
+  /// The equal-width ruler as a single paragraph: identical widths mean a
+  /// real monospaced face, ragged ones mean a proportional substitute.
   ///
-  /// `Menlo` and `Monaco` ship with macOS. `SF Mono` is present but was
-  /// historically not exposed to the font picker in some releases, so it is
-  /// the one most likely to substitute. `Courier New` is the conservative
-  /// fallback that should always resolve.
-  private static let families = ["Menlo", "SF Mono", "Courier New", "Monaco"]
-
-  /// The equal-width ruler: identical widths mean a real monospaced face.
-  private static let ruler = "iiii\nMMMM\n1111"
-
-  /// Nested leading-space lines whose left edges must form clean columns.
-  private static let indented = """
-    func render() {
-      for slide in deck {
-        slide.draw()
-      }
-    }
-    """
+  /// Round one stacked these three groups on separate lines, which is
+  /// exactly the multi-paragraph shape now under suspicion — so round one
+  /// could not distinguish "font ignored" from "font substituted".
+  private static let ruler = "iiii MMMM 1111"
 
   package var body: some SlideContent {
-    for family in Self.families {
-      familySlide(family)
-    }
-    indentationSlide
+    singleParagraphSlide("Menlo", index: 1)
+    singleParagraphSlide("Courier New", index: 2)
+    singleParagraphSlide("Monaco", index: 3)
+    multiParagraphSlide
+    perParagraphSlide
   }
 
-  /// Leading-space indentation in the first candidate family.
-  ///
-  /// Uses `Menlo` specifically — if the ruler slides show `Menlo`
-  /// substituting, this slide's result is meaningless and should be re-run
-  /// against whichever family did survive.
-  private var indentationSlide: Slide {
+  /// Slide 4: three lines in one box, styled at the item level — the shape
+  /// that failed in round one.
+  private var multiParagraphSlide: Slide {
     Slide {
-      TextBox("indentation — Menlo")
+      TextBox("4 - multi-paragraph, item-level font")
         .position(x: 120, y: 100)
-        .frame(width: 1_200, height: 80)
-        .fontSize(44)
-      TextBox(Self.indented)
-        .font("Menlo", size: 40)
-        .position(x: 120, y: 260)
+        .frame(width: 1_600, height: 80)
+        .fontSize(40)
+      TextBox("iiii\nMMMM\n1111")
+        .font("Menlo", size: 96)
+        .position(x: 120, y: 280)
         .frame(width: 1_400, height: 600)
+    }
+  }
+
+  /// Slide 5: the same three lines as explicit ``Paragraph`` values, each
+  /// carrying its own styled ``Text`` span.
+  private var perParagraphSlide: Slide {
+    Slide {
+      TextBox("5 - per-paragraph Text spans")
+        .position(x: 120, y: 100)
+        .frame(width: 1_600, height: 80)
+        .fontSize(40)
+      TextBox {
+        Paragraph { Text("iiii").font("Menlo", size: 96) }
+        Paragraph { Text("MMMM").font("Menlo", size: 96) }
+        Paragraph { Text("1111").font("Menlo", size: 96) }
+      }
+      .position(x: 120, y: 280)
+      .frame(width: 1_400, height: 600)
     }
   }
 
   /// Creates the content.
   package init() {}
 
-  /// One family under test: its name, then the equal-width ruler.
-  private func familySlide(_ family: String) -> Slide {
+  /// One family on a **single** paragraph — the shape known to render.
+  private func singleParagraphSlide(_ family: String, index: Int) -> Slide {
     Slide {
-      TextBox(family)
+      TextBox("\(index) - \(family), single paragraph")
         .position(x: 120, y: 100)
-        .frame(width: 1_200, height: 90)
-        .fontSize(56)
+        .frame(width: 1_400, height: 90)
+        .fontSize(40)
       TextBox(Self.ruler)
         .font(family, size: 96)
-        .position(x: 120, y: 280)
-        .frame(width: 1_200, height: 600)
+        .position(x: 120, y: 300)
+        .frame(width: 1_600, height: 200)
     }
   }
 }
