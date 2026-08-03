@@ -91,9 +91,20 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     )
   ]
 
+  /// Monospace font probe for #64 (no goldens). Spike evidence, not a
+  /// feature gate — remove once the working family is recorded in
+  /// `research/findings/monospace_probe.md` and pinned in the demo deck.
+  package static let monospaceProbe: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "monospace_probe",
+      buildCount: 0,
+      deck: Deck { MonospaceProbeContent() }
+    )
+  ]
+
   /// Every deck `swift run AcceptanceDecks` writes.
   package static let all: [AcceptanceDeck] =
-    goldenBacked + drawableDepth + formattingRuns + textLayout + [
+    goldenBacked + drawableDepth + formattingRuns + textLayout + monospaceProbe + [
       AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
     ]
 

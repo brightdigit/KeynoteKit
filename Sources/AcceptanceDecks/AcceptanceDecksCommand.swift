@@ -65,6 +65,13 @@ internal enum AcceptanceDecksCommand {
           paragraphs; slide 3: TOP / MIDDLE / BOTTOM; slides 4-5: 2- and
           3-column flows with a visible gutter; slide 6: three rotated boxes
         - Acceptance.key — the three bare boxes stay bullet-free
+      Monospace probe (#64) — spike evidence, NOT a tag gate:
+        - monospace_probe.key — slides 1-4 (Menlo, SF Mono, Courier New,
+          Monaco): iiii / MMMM / 1111 must be the SAME WIDTH — right edges
+          form a clean column. Ragged edges = Keynote substituted a
+          proportional face; that family is rejected.
+        - slide 5 — leading-space indentation holds its columns.
+        - Record results in research/findings/monospace_probe.md.
     Tag v0.1.0 when all decks are green.
     """
 
