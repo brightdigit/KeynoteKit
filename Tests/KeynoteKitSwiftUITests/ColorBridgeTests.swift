@@ -27,7 +27,7 @@ internal struct ColorBridgeTests {
         blue: 0.75,
         opacity: 0.5
       )
-      let color = KeynoteColor(source)
+      let color = KeynoteKit.Color(source)
       #expect(abs(color.red - 0.25) < 0.01)
       #expect(abs(color.green - 0.5) < 0.01)
       #expect(abs(color.blue - 0.75) < 0.01)
@@ -40,7 +40,7 @@ internal struct ColorBridgeTests {
     @Test("mid-grey encodes back to mid-grey, not its linear value")
     @available(macOS 14, iOS 17, tvOS 17, watchOS 10, visionOS 1, *)
     internal func midGreyRoundTrips() {
-      let grey = KeynoteColor(SwiftUI.Color(.sRGB, white: 0.5, opacity: 1))
+      let grey = KeynoteKit.Color(SwiftUI.Color(.sRGB, white: 0.5, opacity: 1))
       #expect(abs(grey.red - 0.5) < 0.02)
       #expect(grey.red > 0.3)
     }
@@ -48,7 +48,7 @@ internal struct ColorBridgeTests {
     @Test("opaque SwiftUI colors stay opaque")
     @available(macOS 14, iOS 17, tvOS 17, watchOS 10, visionOS 1, *)
     internal func opaqueStaysOpaque() {
-      #expect(KeynoteColor(SwiftUI.Color.black).opacity == 1)
+      #expect(KeynoteKit.Color(SwiftUI.Color.black).opacity == 1)
     }
   #endif
 

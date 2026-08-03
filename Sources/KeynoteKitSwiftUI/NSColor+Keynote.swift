@@ -38,11 +38,11 @@
     /// pattern color. Dynamic system colors (`.labelColor` and friends)
     /// resolve against the appearance active at the moment this is called;
     /// a deck is a static document, so that resolution is final.
-    public var keynoteColor: KeynoteColor? {
+    public var keynoteColor: KeynoteKit.Color? {
       guard let converted = usingColorSpace(.sRGB) else {
         return nil
       }
-      return KeynoteColor(
+      return KeynoteKit.Color(
         red: Double(converted.redComponent),
         green: Double(converted.greenComponent),
         blue: Double(converted.blueComponent),

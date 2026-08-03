@@ -37,7 +37,7 @@
     /// `nil` when the color has no component representation, such as a
     /// pattern color. Dynamic colors resolve against the current trait
     /// collection when this is called.
-    public var keynoteColor: KeynoteColor? {
+    public var keynoteColor: KeynoteKit.Color? {
       var red: CGFloat = 0
       var green: CGFloat = 0
       var blue: CGFloat = 0
@@ -45,7 +45,7 @@
       guard getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
         return nil
       }
-      return KeynoteColor(
+      return KeynoteKit.Color(
         red: Double(red),
         green: Double(green),
         blue: Double(blue),

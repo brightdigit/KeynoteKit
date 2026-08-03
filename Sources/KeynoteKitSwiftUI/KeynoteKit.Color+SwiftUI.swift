@@ -1,5 +1,5 @@
 //
-//  KeynoteColor+SwiftUI.swift
+//  KeynoteKit.Color+SwiftUI.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -31,7 +31,7 @@
   public import KeynoteKit
   public import SwiftUI
 
-  extension KeynoteColor {
+  extension KeynoteKit.Color {
     /// Creates an authoring color from a SwiftUI color, converted to sRGB.
     ///
     /// Because a `.key` is a static document, a dynamic color is resolved
@@ -42,7 +42,7 @@
     /// ```swift
     /// import KeynoteKitSwiftUI
     ///
-    /// TextBox("hello").background(KeynoteColor(.blue))
+    /// TextBox("hello").background(KeynoteKit.Color(.blue))
     /// ```
     @available(macOS 14, iOS 17, tvOS 17, watchOS 10, visionOS 1, *)
     public init(_ color: SwiftUI.Color) {
