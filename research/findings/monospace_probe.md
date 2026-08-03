@@ -8,8 +8,9 @@ Round two confirms it by render. A single-paragraph box renders Menlo at
 96pt correctly; the *same family at the same size* across three paragraphs
 renders at the template default in a proportional face.
 
-**Per-span styling is only a partial workaround** — it fixes the first and
-last paragraphs and leaves the middle one unstyled. #66 must wait on #81.
+Once #81 landed, all styling routes render correctly. The one apparent
+straggler — a condensed `MMMM` — turned out to be Keynote's own font
+fallback for capital M at large sizes, not a KeynoteKit defect.
 
 ## Round one — result and diagnosis (2026-08-03)
 
@@ -121,19 +122,27 @@ same deck, same run. Slide 1 renders correctly; slide 4 renders at the
 template default in a proportional face. That is the one-`tableParaStyle`-
 entry bug, now confirmed visually as well as structurally.
 
-### Per-span styling is a PARTIAL workaround, not a fix
+### The `MMMM` line was a BAD PROBE, not a second bug (corrected 2026-08-03)
 
-Slide 5 styles each paragraph's own `Text` span. Paragraphs **1 and 3**
-(`iiii`, `1111`) render Menlo 96. Paragraph **2** (`MMMM`) renders
-proportional and condensed.
+Slide 5's middle line (`MMMM`) rendered condensed while `iiii` and `1111`
+rendered correctly, which looked like a second off-by-one in the per-span
+route. It is not. An isolation probe settles it:
 
-So the per-span route fixes the first and last paragraphs but not the
-middle — a *different* off-by-one in the run table from the item-level bug,
-not simply the same defect reappearing. Whatever fix #81 lands must cover
-both routes, and the acceptance test needs **at least three** paragraphs:
-a two-paragraph case would have passed and hidden this.
+| Probe | Result |
+|---|---|
+| `iiii` / **`xxxx`** / `1111` | interior line renders Menlo — **fine** |
+| **`MMMM`** / `iiii` / `1111` | `MMMM` fails in FIRST position |
+| **`MMMM` alone**, single paragraph | still condensed |
 
-**#66 cannot rely on per-span styling as a workaround.** Fix #81 first.
+`MMMM` fails wherever it appears, including alone on a slide with no
+multi-paragraph involvement at all. Any other interior line renders
+correctly. **This is Keynote substituting a condensed face for capital M in
+Menlo at 90pt** — its shrink-to-fit behavior on a wide glyph run — and has
+nothing to do with KeynoteKit's write path.
+
+The ruler was badly chosen: `MMMM` was picked *because* it is the widest
+glyph, which is exactly what triggers the substitution. A width comparison
+needs glyphs that do not provoke fallback (`iiii` vs `xxxx` vs `1111`).
 
 ## Cleanup
 
