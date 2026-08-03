@@ -14,7 +14,7 @@ internal struct TextFormattingTests {
           .font("HelveticaNeue", size: 36)
           .bold()
           .italic()
-          .foregroundColor(TextColor(red: 0.1, green: 0.2, blue: 0.8))
+          .foregroundColor(Color(red: 0.1, green: 0.2, blue: 0.8))
           .position(x: 160, y: 220)
           .frame(width: 480, height: 100)
         TextBox("Plain")

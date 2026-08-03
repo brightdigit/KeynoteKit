@@ -34,9 +34,14 @@ internal struct KeynoteKitTests {
 
   // MARK: - Initialization Tests
 
+  /// Asserts against a real public type rather than a version constant.
+  /// The former `KeynoteKit` namespace enum held only a placeholder version
+  /// and shadowed the module name, which made `KeynoteKit.Color`
+  /// unresolvable for downstream targets importing both this module and
+  /// SwiftUI.
   @Test("module is linkable")
   internal func moduleIsLinkable() {
-    #expect(KeynoteKit.version == "0.1.0")
+    #expect(Color.white.opacity == 1)
   }
 
   // MARK: - Bundled Resource Tests

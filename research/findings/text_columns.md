@@ -16,6 +16,31 @@ full 6-edge registration). Mirrors the theme's own forks: the TSWP-level
 `shapeProperties` carries the overrides; the TSD-level super carries a
 present-but-empty bag and the same `overrideCount`.
 
+### `overrideCount` is a shared total, not a per-bag count (verified 2026-08-03, #78)
+
+The sentence above is easy to misread as "the TSD bag is *always* empty, and
+its count merely echoes the TSWP one." It is not. Background fill (#78) writes
+`TSD.ShapeStylePropertiesArchive.fill` into that same super bag, so the two
+bags can both be populated — and when they are, **both `overrideCount` fields
+still carry the same number: the total across both bags.**
+
+Method: enumerated every `TSWP.ShapeStyleArchive` in `build_action_B.key`
+(29 styles, theme + variations). All 29 satisfy
+`overrideCount == super.overrideCount`. The decisive case is variation
+**2651764**, which sets a TSD fill *plus* TSWP vertical alignment and padding
+— three populated properties across both levels — and writes **4/4**, not the
+1/3 a per-bag reading predicts. (The 4th is a TSD property this survey did not
+break out.)
+
+Practical consequence for the surgeon: `shapeStyleRecord` keeps a single
+`count` incremented once per property set, regardless of which bag it lands
+in, and assigns it to both fields. Splitting it into independent counters
+would diverge from every style Keynote itself writes.
+
+Note also that theme text boxes carry a **present-but-colorless** fill
+(`fill.hasColor == false` on 2651764) — which is why an unfilled placeholder
+draws no background even though a fill message exists.
+
 ## The gap unit (empirically pinned)
 
 `equal_columns.gap` is a **dimensionless fraction of the text layout

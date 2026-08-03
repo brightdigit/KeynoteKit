@@ -110,10 +110,19 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     )
   ]
 
+  /// Background fill deck for #78 (no goldens).
+  package static let backgroundFill: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "background_fill",
+      buildCount: 0,
+      deck: Deck { BackgroundFillContent() }
+    )
+  ]
+
   /// Every deck `swift run AcceptanceDecks` writes.
   package static let all: [AcceptanceDeck] =
     goldenBacked + drawableDepth + formattingRuns + textLayout + monospaceProbe
-    + multiParagraph + [
+    + multiParagraph + backgroundFill + [
       AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
     ]
 

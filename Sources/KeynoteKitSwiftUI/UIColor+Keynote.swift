@@ -1,5 +1,5 @@
 //
-//  TextColor.swift
+//  UIColor+Keynote.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,25 +27,30 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// An sRGB text color for authored ``TextBox`` formatting.
-public struct TextColor: Equatable, Sendable {
-  /// Red channel in 0...1.
-  public var red: Double
+#if canImport(UIKit)
+  public import KeynoteKit
+  public import UIKit
 
-  /// Green channel in 0...1.
-  public var green: Double
-
-  /// Blue channel in 0...1.
-  public var blue: Double
-
-  /// Alpha channel in 0...1.
-  public var alpha: Double
-
-  /// Creates an sRGB color.
-  public init(red: Double, green: Double, blue: Double, alpha: Double = 1) {
-    self.red = red
-    self.green = green
-    self.blue = blue
-    self.alpha = alpha
+  extension UIColor {
+    /// This color as a KeynoteKit authoring color.
+    ///
+    /// `nil` when the color has no component representation, such as a
+    /// pattern color. Dynamic colors resolve against the current trait
+    /// collection when this is called.
+    public var keynoteColor: KeynoteKit.Color? {
+      var red: CGFloat = 0
+      var green: CGFloat = 0
+      var blue: CGFloat = 0
+      var alpha: CGFloat = 0
+      guard getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
+        return nil
+      }
+      return KeynoteKit.Color(
+        red: Double(red),
+        green: Double(green),
+        blue: Double(blue),
+        opacity: Double(alpha)
+      )
+    }
   }
-}
+#endif

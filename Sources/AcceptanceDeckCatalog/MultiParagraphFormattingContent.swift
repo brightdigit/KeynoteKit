@@ -51,7 +51,7 @@ import KeynoteKit
 ///   then two more left lines
 package struct MultiParagraphFormattingContent: SlideContent {
   /// Light text for the dark panels.
-  private static let ink = TextColor(red: 0.85, green: 0.12, blue: 0.1)
+  private static let ink = Color(red: 0.85, green: 0.12, blue: 0.1)
 
   package var body: some SlideContent {
     monospaceSlide

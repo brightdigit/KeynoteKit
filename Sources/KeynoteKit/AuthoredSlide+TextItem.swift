@@ -108,7 +108,7 @@ extension AuthoredSlide {
     package var isItalic: Bool?
 
     /// Authored sRGB color; `nil` leaves the template style.
-    package var color: TextColor?
+    package var color: Color?
 
     /// Authored list style; `nil` means plain (the theme's None style).
     package var listStyle: TextListStyle?
@@ -128,7 +128,14 @@ extension AuthoredSlide {
     /// Column gutter in points; `nil` inherits the template's gutter.
     package var columnGap: Double?
 
+    /// Authored background fill; `nil` leaves the template style.
+    package var background: Color?
+
     /// Whether any item-wide formatting field is set.
+    ///
+    /// Deliberately excludes ``background``: this predicate gates the
+    /// *character*-style fork, and a fill is a shape-level property carried
+    /// by the shape-style fork instead.
     package var hasFormatting: Bool {
       fontName != nil || fontSize != nil || isBold != nil || isItalic != nil || color != nil
     }
@@ -153,13 +160,14 @@ extension AuthoredSlide {
       fontSize: Double? = nil,
       isBold: Bool? = nil,
       isItalic: Bool? = nil,
-      color: TextColor? = nil,
+      color: Color? = nil,
       listStyle: TextListStyle? = nil,
       rotation: Angle? = nil,
       textAlignment: TextAlignment? = nil,
       verticalAlignment: VerticalTextAlignment? = nil,
       columnCount: Int? = nil,
       columnGap: Double? = nil,
+      background: Color? = nil,
       paragraphs: [ParagraphItem]
     ) {
       self.x = x
@@ -177,6 +185,7 @@ extension AuthoredSlide {
       self.verticalAlignment = verticalAlignment
       self.columnCount = columnCount
       self.columnGap = columnGap
+      self.background = background
       self.paragraphs = paragraphs
     }
   }

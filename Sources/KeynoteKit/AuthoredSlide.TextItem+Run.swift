@@ -48,7 +48,7 @@ extension AuthoredSlide.TextItem {
     package var isItalic: Bool?
 
     /// Authored sRGB color; `nil` inherits the item / template style.
-    package var color: TextColor?
+    package var color: Color?
 
     /// Whether any style field is set on this span.
     package var hasFormatting: Bool {
@@ -62,7 +62,7 @@ extension AuthoredSlide.TextItem {
       fontSize: Double? = nil,
       isBold: Bool? = nil,
       isItalic: Bool? = nil,
-      color: TextColor? = nil
+      color: Color? = nil
     ) {
       self.text = text
       self.fontName = fontName

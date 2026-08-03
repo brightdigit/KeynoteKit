@@ -27,7 +27,7 @@ internal struct MultiParagraphFormattingTests {
         Slide {
           TextBox("iiii\nMMMM\n1111")
             .font("Menlo", size: 96)
-            .foregroundColor(TextColor(red: 0.9, green: 0.9, blue: 0.9))
+            .foregroundColor(Color(red: 0.9, green: 0.9, blue: 0.9))
         }
       }
     )

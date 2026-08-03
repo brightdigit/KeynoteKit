@@ -1,5 +1,5 @@
 //
-//  KeynoteKit.swift
+//  Color+Platform.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,12 +27,35 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// Namespace for the public Keynote authoring API.
-///
-/// This module must never import or link `ScriptingBridge`; authoring a deck
-/// cannot depend on a running copy of Keynote. The AppleScript escape hatch
-/// lives in `KeynoteKitScripting` instead.
-public enum KeynoteKit {
-  /// Placeholder version, replaced when the write path lands.
-  public static let version = "0.1.0"
-}
+#if canImport(CoreGraphics)
+  public import CoreGraphics
+
+  extension Color {
+    /// Creates a color from a `CGColor`, converting to sRGB.
+    ///
+    /// Returns `nil` when the color cannot be represented in sRGB — a
+    /// pattern color has no components to convert, and conversion from an
+    /// exotic space can fail outright. Prefer failing visibly over writing
+    /// a color that renders differently than the caller intended.
+    public init?(cgColor: CGColor) {
+      guard
+        let space = CGColorSpace(name: CGColorSpace.sRGB),
+        let converted = cgColor.converted(
+          to: space,
+          intent: .defaultIntent,
+          options: nil
+        ),
+        let components = converted.components,
+        components.count >= 3
+      else {
+        return nil
+      }
+      self.init(
+        red: Double(components[0]),
+        green: Double(components[1]),
+        blue: Double(components[2]),
+        opacity: components.count >= 4 ? Double(components[3]) : 1
+      )
+    }
+  }
+#endif
