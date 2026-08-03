@@ -1,9 +1,15 @@
 # Monospace font probe (#64)
 
-**Round one FAILED — but not because monospace is unavailable.** All four
-families rendered at the template's default size *and* a proportional face,
-including `Courier New`, which certainly exists and is certainly monospaced.
-Round two is authored and awaiting a render pass.
+**RESOLVED. Monospace works — use `Menlo`.** Round one's failure was not a
+font problem at all: it was #81, which drops item-level formatting on
+multi-paragraph text boxes.
+
+Round two confirms it by render. A single-paragraph box renders Menlo at
+96pt correctly; the *same family at the same size* across three paragraphs
+renders at the template default in a proportional face.
+
+**Per-span styling is only a partial workaround** — it fixes the first and
+last paragraphs and leaves the middle one unstyled. #66 must wait on #81.
 
 ## Round one — result and diagnosis (2026-08-03)
 
@@ -92,28 +98,42 @@ groups as separate lines.
 - **Everything renders** → round one's failure was an export artifact. Re-run
   round one before trusting either result.
 
-## Results — round two
+## Results — round two (2026-08-03, rendered by Leo)
 
-| Slide | Monospaced? | At 96pt? | Notes |
+| Slide | Shape | Monospaced? | At 96pt? |
 |---|---|---|---|
-| 1 Menlo (single para) | | | |
-| 2 Courier New (single para) | | | |
-| 3 Monaco (single para) | | | |
-| 4 multi-para, item font | | | |
-| 5 multi-para, per-span font | | | |
+| 1 | Menlo, single paragraph | **yes** | **yes** |
+| 2 | Courier New, single paragraph | yes | yes |
+| 3 | Monaco, single paragraph | yes | yes |
+| 4 | Menlo, 3 paragraphs, item-level `.font()` | **no** | **no** |
+| 5 | Menlo, 3 paragraphs, per-span `Text.font()` | **partial** | **partial** |
 
-**Chosen family for the demo deck:** ______
+### Monospace itself is fine
 
-**Styling route #66 should emit:** item-level / per-span — ______
+Slide 1 renders Menlo at 96pt, unmistakably monospaced — `iiii`, `MMMM`, and
+`1111` are equal width. **`Menlo` is the family to use.** Round one's failure
+had nothing to do with font availability.
 
-## Outcome
+### #81 confirmed by render
 
-The winning family becomes the default in `CodeTheme` (#66), which carries it
-as a property rather than a constant — so recording it here is a one-line
-default change.
+Slides 1 and 4 differ *only* in paragraph count — same family, same size,
+same deck, same run. Slide 1 renders correctly; slide 4 renders at the
+template default in a proportional face. That is the one-`tableParaStyle`-
+entry bug, now confirmed visually as well as structurally.
 
-If slide 4 fails, file the multi-paragraph font bug before #66 lands: code
-blocks are inherently multi-line, so #66 would ship broken otherwise.
+### Per-span styling is a PARTIAL workaround, not a fix
+
+Slide 5 styles each paragraph's own `Text` span. Paragraphs **1 and 3**
+(`iiii`, `1111`) render Menlo 96. Paragraph **2** (`MMMM`) renders
+proportional and condensed.
+
+So the per-span route fixes the first and last paragraphs but not the
+middle — a *different* off-by-one in the run table from the item-level bug,
+not simply the same defect reappearing. Whatever fix #81 lands must cover
+both routes, and the acceptance test needs **at least three** paragraphs:
+a two-paragraph case would have passed and hidden this.
+
+**#66 cannot rely on per-span styling as a workaround.** Fix #81 first.
 
 ## Cleanup
 
