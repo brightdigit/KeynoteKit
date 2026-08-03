@@ -44,7 +44,12 @@ internal import SwiftSyntax
 /// Spans come out in source order and concatenate back to the exact input,
 /// which the round-trip test asserts. That property matters: a highlighter
 /// that silently drops a character would corrupt the code on a slide.
-internal enum SwiftHighlighter {
+///
+/// A `struct` with a `private init` and a shared ``default`` instance, per
+/// the repo's convention for a helper that could plausibly grow
+/// configuration — language selection beyond Swift is the obvious one. The
+/// knobs do not exist yet, so neither does a public initializer.
+internal struct SwiftHighlighter {
   /// One contiguous run of source sharing a role.
   internal struct Span: Equatable, Sendable {
     /// The source text.
@@ -54,8 +59,14 @@ internal enum SwiftHighlighter {
     internal var role: TokenRole
   }
 
+  /// The shared highlighter.
+  internal static let `default` = SwiftHighlighter()
+
+  /// Creates a highlighter. Private until there is something to configure.
+  private init() {}
+
   /// Tags `source` into spans, in source order.
-  internal static func spans(of source: String) -> [Span] {
+  internal func spans(of source: String) -> [Span] {
     let tree = Parser.parse(source: source)
     var spans: [Span] = []
     for token in tree.tokens(viewMode: .sourceAccurate) {
@@ -68,7 +79,7 @@ internal enum SwiftHighlighter {
   }
 
   /// The role a token plays, using its parent for context.
-  private static func role(of token: TokenSyntax) -> TokenRole {
+  private func role(of token: TokenSyntax) -> TokenRole {
     switch token.tokenKind {
     case .stringSegment, .stringQuote, .multilineStringQuote,
       .rawStringPoundDelimiter, .singleQuote:
@@ -91,7 +102,7 @@ internal enum SwiftHighlighter {
   }
 
   /// Appends trivia, tagging comments and passing whitespace through.
-  private static func append(trivia: Trivia, to spans: inout [Span]) {
+  private func append(trivia: Trivia, to spans: inout [Span]) {
     for piece in trivia {
       switch piece {
       case .lineComment(let text), .blockComment(let text),
@@ -111,7 +122,7 @@ internal enum SwiftHighlighter {
   /// Merging keeps the span count near the number of *visible* colour
   /// changes rather than the token count, which matters because every span
   /// becomes its own styled run in the archive.
-  private static func appendText(_ text: String, role: TokenRole, to spans: inout [Span]) {
+  private func appendText(_ text: String, role: TokenRole, to spans: inout [Span]) {
     guard !text.isEmpty else {
       return
     }

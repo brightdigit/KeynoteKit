@@ -1,6 +1,6 @@
-import KeynoteKit
 import Testing
 
+@testable import KeynoteKit
 @testable import KeynoteKitSyntax
 
 /// ``CodeBlock`` lowering (#66).

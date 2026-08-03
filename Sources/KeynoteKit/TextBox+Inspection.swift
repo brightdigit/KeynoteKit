@@ -31,25 +31,31 @@ extension TextBox {
   /// The number of paragraphs the box holds.
   ///
   /// Test support: multi-paragraph structure is what #81 got wrong, and it
-  /// is invisible from the public surface otherwise.
-  package var paragraphCount: Int { paragraphs.count }
+  /// is invisible from the public surface otherwise. `internal` rather than
+  /// `package` — the repo's `package` declarations are whole-type lowering
+  /// DTOs shared across targets, not per-property test accessors, so tests
+  /// reach these through `@testable import` instead. `internal` rather than
+  /// `package` — the repo's `package` declarations are whole-type lowering
+  /// DTOs shared across targets, not per-property test accessors, so tests
+  /// reach these through `@testable import` instead.
+  internal var paragraphCount: Int { paragraphs.count }
 
   /// Each paragraph's plain text, in order.
-  package var paragraphTexts: [String] {
+  internal var paragraphTexts: [String] {
     paragraphs.map { $0.runs.map(\.content).joined() }
   }
 
   /// The box's text with paragraphs rejoined by newlines.
-  package var plainText: String { content }
+  internal var plainText: String { content }
 
   /// The item-level font family, when set.
-  package var itemFontName: String? { fontName }
+  internal var itemFontName: String? { fontName }
 
   /// The item-level font size, when set.
-  package var itemFontSize: Double? { fontSize }
+  internal var itemFontSize: Double? { fontSize }
 
   /// The number of styled spans in the paragraph at `index`.
-  package func styledRunCount(inParagraph index: Int) -> Int {
+  internal func styledRunCount(inParagraph index: Int) -> Int {
     guard paragraphs.indices.contains(index) else {
       return 0
     }

@@ -23,38 +23,38 @@ internal struct SwiftHighlighterTests {
     ]
   )
   internal func spansRoundTrip(source: String) {
-    let joined = SwiftHighlighter.spans(of: source).map(\.text).joined()
+    let joined = SwiftHighlighter.default.spans(of: source).map(\.text).joined()
     #expect(joined == source)
   }
 
   @Test("keywords are tagged")
   internal func keywordsTagged() {
-    let spans = SwiftHighlighter.spans(of: "let x = 1")
+    let spans = SwiftHighlighter.default.spans(of: "let x = 1")
     #expect(role(of: "let", in: spans) == .keyword)
   }
 
   @Test("string literals include their quotes")
   internal func stringsTagged() {
-    let spans = SwiftHighlighter.spans(of: "let s = \"hi\"")
+    let spans = SwiftHighlighter.default.spans(of: "let s = \"hi\"")
     let stringText = spans.filter { $0.role == .string }.map(\.text).joined()
     #expect(stringText == "\"hi\"")
   }
 
   @Test("numeric literals are tagged")
   internal func numbersTagged() {
-    let spans = SwiftHighlighter.spans(of: "let n = 42")
+    let spans = SwiftHighlighter.default.spans(of: "let n = 42")
     #expect(role(of: "42", in: spans) == .number)
   }
 
   @Test("line comments are tagged even though they are trivia")
   internal func lineCommentsTagged() {
-    let spans = SwiftHighlighter.spans(of: "let x = 1 // why\n")
+    let spans = SwiftHighlighter.default.spans(of: "let x = 1 // why\n")
     #expect(role(of: "// why", in: spans) == .comment)
   }
 
   @Test("block comments are tagged")
   internal func blockCommentsTagged() {
-    let spans = SwiftHighlighter.spans(of: "/* note */ let x = 1")
+    let spans = SwiftHighlighter.default.spans(of: "/* note */ let x = 1")
     #expect(role(of: "/* note */", in: spans) == .comment)
   }
 
@@ -62,16 +62,16 @@ internal struct SwiftHighlighterTests {
   /// in one position and a plain identifier in another.
   @Test("an identifier in type position is a type, elsewhere it is plain")
   internal func typePositionDistinguished() {
-    let typed = SwiftHighlighter.spans(of: "let value: Duration = x")
+    let typed = SwiftHighlighter.default.spans(of: "let value: Duration = x")
     #expect(role(of: "Duration", in: typed) == .type)
 
-    let called = SwiftHighlighter.spans(of: "let value = Duration()")
+    let called = SwiftHighlighter.default.spans(of: "let value = Duration()")
     #expect(role(of: "Duration", in: called) != .type)
   }
 
   @Test("adjacent spans of the same role merge")
   internal func adjacentSpansMerge() {
-    let spans = SwiftHighlighter.spans(of: "a b c")
+    let spans = SwiftHighlighter.default.spans(of: "a b c")
     // Identifiers and the spaces between them are all plain, so the whole
     // line collapses to one span rather than five.
     #expect(spans.count == 1)

@@ -78,7 +78,6 @@ package struct SyntaxHighlightContent: SlideContent {
         .frame(width: 1_700, height: 70)
         .fontSize(32)
       CodeBlock(Self.sample)
-        .textBox
         .position(x: 100, y: 200)
         .frame(width: 1_700, height: 700)
     }
@@ -92,7 +91,6 @@ package struct SyntaxHighlightContent: SlideContent {
         .frame(width: 1_700, height: 70)
         .fontSize(32)
       CodeBlock(Self.sample)
-        .textBox
         .background(CodeTheme.midnightBackground)
         .position(x: 100, y: 200)
         .frame(width: 1_700, height: 700)
@@ -107,7 +105,6 @@ package struct SyntaxHighlightContent: SlideContent {
         .frame(width: 1_700, height: 70)
         .fontSize(32)
       CodeBlock(Self.indented)
-        .textBox
         .background(CodeTheme.midnightBackground)
         .position(x: 100, y: 200)
         .frame(width: 1_700, height: 700)

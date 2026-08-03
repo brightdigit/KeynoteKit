@@ -52,20 +52,26 @@ public import KeynoteKit
 /// the template default — invisible to every structural check. Code blocks
 /// are inherently multi-line, so this type would have shipped broken; the
 /// tests here use three-plus-line samples for exactly that reason.
-public struct CodeBlock {
+public struct CodeBlock: SlideLayout {
   /// The source to highlight.
   private let source: String
 
   /// The theme colouring it.
   private let theme: CodeTheme
 
+  /// Modifiers to apply to the generated box, in declaration order.
+  ///
+  /// Held as a transform rather than mirrored fields so every ``TextBox``
+  /// modifier stays reachable without restating each one here.
+  private let transform: @Sendable (TextBox) -> TextBox
+
   /// The highlighted text box.
   ///
-  /// Call this to place the block on a slide; every ``TextBox`` modifier is
-  /// available on the result.
+  /// The escape hatch for any ``TextBox`` modifier this type does not
+  /// forward; placing a block on a slide no longer needs it.
   public var textBox: TextBox {
-    let lines = Self.lines(of: SwiftHighlighter.spans(of: source))
-    return TextBox {
+    let lines = Self.lines(of: SwiftHighlighter.default.spans(of: source))
+    let box = TextBox {
       for line in lines {
         Paragraph {
           for span in line {
@@ -75,6 +81,16 @@ public struct CodeBlock {
       }
     }
     .font(theme.fontName, size: theme.fontSize)
+    return transform(box)
+  }
+
+  /// The layout node this block contributes — its generated text box.
+  ///
+  /// Conforming to ``SlideLayout`` is what lets a `CodeBlock` sit directly
+  /// in a `Slide` builder next to a `TextBox` or a stack, instead of the
+  /// caller reaching through ``textBox`` first.
+  public var layoutNode: any LayoutNode {
+    LeafNode(drawable: textBox)
   }
 
   /// Creates a highlighted code block.
@@ -83,8 +99,18 @@ public struct CodeBlock {
   ///   - source: Swift source. Parsed, never executed.
   ///   - theme: Colours and font. Defaults to ``CodeTheme/midnight``.
   public init(_ source: String, theme: CodeTheme = .midnight) {
+    self.init(source: source, theme: theme, transform: { $0 })
+  }
+
+  /// Creates a block carrying an accumulated box transform.
+  private init(
+    source: String,
+    theme: CodeTheme,
+    transform: @escaping @Sendable (TextBox) -> TextBox
+  ) {
     self.source = source
     self.theme = theme
+    self.transform = transform
   }
 
   /// Splits spans at newlines so each source line becomes one paragraph.
@@ -115,6 +141,26 @@ public struct CodeBlock {
     return lines
   }
 
+  /// Positions the block on the slide.
+  public func position(x: Double, y: Double) -> CodeBlock {
+    modified { $0.position(x: x, y: y) }
+  }
+
+  /// Sets the block's size.
+  public func frame(width: Double, height: Double) -> CodeBlock {
+    modified { $0.frame(width: width, height: height) }
+  }
+
+  /// Fills the panel behind the code.
+  public func background(_ color: Color) -> CodeBlock {
+    modified { $0.background(color) }
+  }
+
+  /// Sets the block's layer order.
+  public func zIndex(_ index: Int) -> CodeBlock {
+    modified { $0.zIndex(index) }
+  }
+
   /// One span as a styled ``Text``.
   private func styled(_ span: SwiftHighlighter.Span) -> Text {
     let text = Text(span.text).font(theme.fontName, size: theme.fontSize)
@@ -122,5 +168,17 @@ public struct CodeBlock {
       return text
     }
     return text.foregroundColor(color)
+  }
+
+  /// Returns a copy with `modifier` appended to the box transform.
+  private func modified(
+    _ modifier: @escaping @Sendable (TextBox) -> TextBox
+  ) -> CodeBlock {
+    let existing = transform
+    return CodeBlock(
+      source: source,
+      theme: theme,
+      transform: { modifier(existing($0)) }
+    )
   }
 }
