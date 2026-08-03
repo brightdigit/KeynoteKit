@@ -94,9 +94,14 @@ extension KeynoteArchiveSurgeon {
       .payloads[location.payloadIndex] = try storage.serializedBytes(partial: true)
   }
 
-  /// Rewrites the storage's `tableParaStyle` with one entry per paragraph
-  /// format change, swapping the header reference from the parent style to
-  /// the first fork and appending the rest.
+  /// Rewrites the storage's `tableParaStyle` with one entry per paragraph,
+  /// swapping the header reference from the parent style to the first fork
+  /// and appending the rest.
+  ///
+  /// Entries whose identifier is 0 mean "same style as the preceding entry"
+  /// (see ``paragraphEntries(of:identifiers:)``). They still occupy a slot
+  /// in the table — Keynote needs a boundary marker per paragraph — but they
+  /// reference no record, so they contribute no header reference.
   private mutating func applyParagraphStyles(
     _ application: ParagraphStyleApplication,
     to storage: inout TSWP_StorageArchive,
@@ -108,11 +113,12 @@ extension KeynoteArchiveSurgeon {
       entry.object.identifier = forkEntry.identifier
       return entry
     }
-    guard let first = application.entries.first else {
+    let referenced = application.entries.filter { $0.identifier != 0 }
+    guard let first = referenced.first else {
       return
     }
     replaceRecordHeaderReference(application.parentIdentifier, with: first.identifier, at: location)
-    for forkEntry in application.entries.dropFirst() {
+    for forkEntry in referenced.dropFirst() {
       appendRecordHeaderReference(forkEntry.identifier, at: location)
     }
   }

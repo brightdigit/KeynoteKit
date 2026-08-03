@@ -100,7 +100,7 @@ extension KeynoteArchiveSurgeon {
     }
     return ParagraphStyleApplication(
       parentIdentifier: parentIdentifier,
-      entries: collapsedEntries(of: item, identifiers: identifiers),
+      entries: paragraphEntries(of: item, identifiers: identifiers),
       forks: forks
     )
   }
@@ -118,10 +118,21 @@ extension KeynoteArchiveSurgeon {
     )
   }
 
-  /// `tableParaStyle` entries at each paragraph's UTF-16 start offset in
-  /// the joined text, with runs of adjacent identical forks collapsed into
-  /// the first paragraph's entry.
-  private func collapsedEntries(
+  /// `tableParaStyle` entries — **one per paragraph**, at each paragraph's
+  /// UTF-16 start offset in the joined text.
+  ///
+  /// Every paragraph gets an entry even when its format repeats the
+  /// previous one; a repeat carries **identifier 0**, meaning "same style as
+  /// the preceding entry". That is the shape Keynote itself writes: a
+  /// human-authored 5-paragraph body storage in `build_action_B.key` holds
+  /// five entries — `char 0 -> 2651127` then `char 15/30/47/63 -> 0`.
+  ///
+  /// Dropping the repeats instead (collapsing runs into one entry at offset
+  /// 0) is what caused #81: Keynote applied the style to the first
+  /// paragraph only and rendered the rest at the template default, silently.
+  /// The archive was otherwise valid, so nothing failed until a human looked
+  /// at the slide.
+  private func paragraphEntries(
     of item: AuthoredSlide.TextItem,
     identifiers: [UInt64]
   ) -> [(characterIndex: UInt32, identifier: UInt64)] {
@@ -131,9 +142,8 @@ extension KeynoteArchiveSurgeon {
       if index > 0 {
         offset += 1  // the "\n" joining paragraphs into the storage text
       }
-      if entries.last?.identifier != identifiers[index] {
-        entries.append((characterIndex: offset, identifier: identifiers[index]))
-      }
+      let repeatsPrevious = index > 0 && identifiers[index] == identifiers[index - 1]
+      entries.append((characterIndex: offset, identifier: repeatsPrevious ? 0 : identifiers[index]))
       offset += UInt32(paragraph.text.utf16.count)
     }
     return entries

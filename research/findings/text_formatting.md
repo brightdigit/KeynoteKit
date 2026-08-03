@@ -69,3 +69,42 @@ registration edges and `tsdFill`. With the full edge set above, per-run
 Style-only morphs between matched `.magicId` pairs are expressible the same
 way as geometry: same string/type, different style properties on each slide.
 Correspondence remains a runtime heuristic (`magic_move_correspondence.md`).
+
+## `tableParaStyle` needs one entry per paragraph (verified 2026-08-03, #81)
+
+Item-level formatting reached only the **first** paragraph of a
+multi-paragraph box. The archive was valid and nothing errored — the defect
+was visible only by opening a slide.
+
+**Cause.** The surgeon run-length collapsed adjacent identical paragraph
+formats into a single entry at offset 0. Keynote treats each
+`tableParaStyle` entry as a paragraph boundary marker, so a collapsed table
+left later paragraphs unstyled.
+
+**Keynote's own shape.** A human-authored 5-paragraph body storage in
+`build_action_B.key`:
+
+```
+STORAGE id=2651751  text=Body Level One\nBody Level Two\n…
+  paraEntries=5
+    char=0  -> 2651127
+    char=15 -> 0
+    char=30 -> 0
+    char=47 -> 0
+    char=63 -> 0
+```
+
+One entry per paragraph. The style rides entry 0; every later boundary
+carries **identifier 0**, meaning "same style as the preceding entry". The
+entry must exist even though it references no record.
+
+**Fix.** `paragraphEntries(of:identifiers:)` emits one entry per paragraph,
+writing identifier 0 where a paragraph's effective format repeats its
+predecessor. Fork *records* are still deduped — the dedupe is on records,
+not entries. `applyParagraphStyles` filters identifier-0 entries out of the
+record header references, since 0 is not a record.
+
+**Testing note.** Use **three or more** paragraphs. A two-paragraph case
+exercises only the first and last and passes while interior paragraphs stay
+broken — which is how the per-span variant of this bug survived the first
+#64 probe round.

@@ -36,7 +36,13 @@ internal struct ParagraphTests {
     #expect(try firstStorage(in: surgeon).archive.text == ["one\ntwo"])
   }
 
-  @Test("item-wide alignment mints one deduped fork at offset zero")
+  /// Item-wide formatting mints one deduped fork, but still writes an entry
+  /// for **every** paragraph — the repeat carrying identifier 0, meaning
+  /// "same as the preceding entry".
+  ///
+  /// Collapsing the repeat away is what caused #81: Keynote styled only the
+  /// first paragraph and rendered the rest at the template default.
+  @Test("item-wide alignment writes one entry per paragraph, repeats as id 0")
   internal func itemWideAlignment() throws {
     let surgeon = try written(
       Deck {
@@ -46,10 +52,11 @@ internal struct ParagraphTests {
       }
     )
     let storage = try firstStorage(in: surgeon)
-    try #require(storage.archive.tableParaStyle.entries.count == 1)
-    let entry = storage.archive.tableParaStyle.entries[0]
-    #expect(entry.characterIndex == 0)
-    let fork = try paragraphStyle(entry.object.identifier, in: surgeon)
+    let entries = storage.archive.tableParaStyle.entries
+    try #require(entries.count == 2)
+    #expect(entries.map(\.characterIndex) == [0, 4])
+    #expect(entries[1].object.identifier == 0)
+    let fork = try paragraphStyle(entries[0].object.identifier, in: surgeon)
     #expect(fork.super.isVariation)
     #expect(fork.paraProperties.alignment == .tatvalue2)
     #expect(fork.overrideCount == 1)
@@ -89,8 +96,15 @@ internal struct ParagraphTests {
     }
   }
 
-  @Test("identical formats share a fork and collapse adjacent entries")
-  internal func dedupeCollapsesEntries() throws {
+  /// Identical adjacent formats still share one minted fork — the dedupe is
+  /// on *records*, not entries. The repeated paragraph gets its own entry
+  /// carrying identifier 0.
+  ///
+  /// Three paragraphs on purpose: a two-paragraph case exercises only the
+  /// first and last and would pass while interior paragraphs stayed broken,
+  /// which is exactly how #81's per-span variant hid.
+  @Test("identical adjacent formats share a fork but keep their own entries")
+  internal func dedupeSharesForkNotEntries() throws {
     let surgeon = try written(
       Deck {
         Slide {
@@ -105,10 +119,18 @@ internal struct ParagraphTests {
     )
     let storage = try firstStorage(in: surgeon)
     let entries = storage.archive.tableParaStyle.entries
-    try #require(entries.count == 2)
-    #expect(entries[0].characterIndex == 0)
-    #expect(entries[1].characterIndex == 4)
-    #expect(entries[0].object.identifier != entries[1].object.identifier)
+    try #require(entries.count == 3)
+    #expect(entries.map(\.characterIndex) == [0, 2, 4])
+    // "b" repeats "a"'s centered format, so it references no record.
+    #expect(entries[1].object.identifier == 0)
+    // "c" falls back to the item's .left, a distinct fork.
+    #expect(entries[2].object.identifier != 0)
+    #expect(entries[2].object.identifier != entries[0].object.identifier)
+    // Only real identifiers become header references; 0 is not a record.
+    let references = storage.record.info.messageInfos[0].objectReferences
+    #expect(references.contains(entries[0].object.identifier))
+    #expect(references.contains(entries[2].object.identifier))
+    #expect(!references.contains(0))
   }
 
   @Test("run offsets account for paragraph separators")
