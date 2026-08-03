@@ -33,17 +33,31 @@ extension KeynoteArchiveSurgeon {
   /// Registry type for `TSWP.ShapeStyleArchive`.
   private static let shapeStyleArchiveType: UInt32 = 2_025
 
-  /// Mints and applies the shape-style fork carrying vertical alignment
-  /// and/or columns: a type-2025 variation of the placeholder's current
-  /// style, repointing `TSD.ShapeArchive.style` and the placeholder
-  /// record's header reference. Returns `nil` when neither is set.
+  /// An authored color as the archive's sRGB `TSP.Color`.
+  private static func archiveColor(_ color: TextColor) -> TSP_Color {
+    var archived = TSP_Color()
+    archived.model = .rgb
+    archived.r = Float(color.red)
+    archived.g = Float(color.green)
+    archived.b = Float(color.blue)
+    archived.a = Float(color.alpha)
+    archived.rgbspace = .srgb
+    return archived
+  }
+
+  /// Mints and applies the shape-style fork carrying vertical alignment,
+  /// columns, and/or a background fill: a type-2025 variation of the
+  /// placeholder's current style, repointing `TSD.ShapeArchive.style` and
+  /// the placeholder record's header reference. Returns `nil` when none of
+  /// them is set, which keeps unstyled boxes byte-identical to the template.
   internal mutating func applyShapeStyle(
     for item: AuthoredSlide.TextItem,
     at placeholderLocation: SlideCatalog.Location,
     nextIdentifier: inout UInt64,
     minted: inout MintedSlide
   ) throws -> MintedTextStyle? {
-    guard item.verticalAlignment != nil || item.columnCount != nil else {
+    guard item.verticalAlignment != nil || item.columnCount != nil || item.background != nil
+    else {
       return nil
     }
     guard let stylesheetIdentifier = try documentStylesheetIdentifier() else {
@@ -76,10 +90,17 @@ extension KeynoteArchiveSurgeon {
     )
   }
 
-  /// Mints the type-2025 variation. Mirrors the theme's own vertical
-  /// alignment forks: the TSWP-level `shapeProperties` carries the
-  /// overrides, the TSD-level super carries a present-but-empty property
-  /// bag and the same `overrideCount`.
+  /// Mints the type-2025 variation. Mirrors the theme's own forks: the
+  /// TSWP-level `shapeProperties` carries text-frame overrides (vertical
+  /// alignment, columns) and the TSD-level super carries drawable overrides
+  /// (the background fill).
+  ///
+  /// `overrideCount` is a **shared total across both bags**, written
+  /// identically into both fields — not a per-bag count. Verified against
+  /// every `TSWP.ShapeStyleArchive` in `build_action_B.key`: all 29 have
+  /// `overrideCount == super.overrideCount`, including variation 2651764,
+  /// which sets a TSD fill plus TSWP alignment and padding and writes 4/4
+  /// rather than 1/3. See `research/findings/text_columns.md`.
   private func shapeStyleRecord(
     for item: AuthoredSlide.TextItem,
     identifier: UInt64,
@@ -90,8 +111,15 @@ extension KeynoteArchiveSurgeon {
     style.super.super.isVariation = true
     style.super.super.parent.identifier = parentIdentifier
     style.super.super.stylesheet.identifier = stylesheetIdentifier
-    style.super.shapeProperties = TSD_ShapeStylePropertiesArchive()
     var count: UInt32 = 0
+    var drawableProperties = TSD_ShapeStylePropertiesArchive()
+    if let background = item.background {
+      var fill = TSD_FillArchive()
+      fill.color = Self.archiveColor(background)
+      drawableProperties.fill = fill
+      count += 1
+    }
+    style.super.shapeProperties = drawableProperties
     var properties = TSWP_ShapeStylePropertiesArchive()
     if let alignment = item.verticalAlignment {
       properties.verticalAlignment = alignment.archiveValue

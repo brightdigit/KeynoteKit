@@ -128,7 +128,14 @@ extension AuthoredSlide {
     /// Column gutter in points; `nil` inherits the template's gutter.
     package var columnGap: Double?
 
+    /// Authored background fill; `nil` leaves the template style.
+    package var background: TextColor?
+
     /// Whether any item-wide formatting field is set.
+    ///
+    /// Deliberately excludes ``background``: this predicate gates the
+    /// *character*-style fork, and a fill is a shape-level property carried
+    /// by the shape-style fork instead.
     package var hasFormatting: Bool {
       fontName != nil || fontSize != nil || isBold != nil || isItalic != nil || color != nil
     }
@@ -160,6 +167,7 @@ extension AuthoredSlide {
       verticalAlignment: VerticalTextAlignment? = nil,
       columnCount: Int? = nil,
       columnGap: Double? = nil,
+      background: TextColor? = nil,
       paragraphs: [ParagraphItem]
     ) {
       self.x = x
@@ -177,6 +185,7 @@ extension AuthoredSlide {
       self.verticalAlignment = verticalAlignment
       self.columnCount = columnCount
       self.columnGap = columnGap
+      self.background = background
       self.paragraphs = paragraphs
     }
   }
