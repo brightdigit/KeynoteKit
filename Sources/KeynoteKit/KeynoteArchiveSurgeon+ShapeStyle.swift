@@ -34,13 +34,13 @@ extension KeynoteArchiveSurgeon {
   private static let shapeStyleArchiveType: UInt32 = 2_025
 
   /// An authored color as the archive's sRGB `TSP.Color`.
-  private static func archiveColor(_ color: TextColor) -> TSP_Color {
+  private static func archiveColor(_ color: Color) -> TSP_Color {
     var archived = TSP_Color()
     archived.model = .rgb
     archived.r = Float(color.red)
     archived.g = Float(color.green)
     archived.b = Float(color.blue)
-    archived.a = Float(color.alpha)
+    archived.a = Float(color.opacity)
     archived.rgbspace = .srgb
     return archived
   }

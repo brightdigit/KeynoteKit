@@ -108,7 +108,7 @@ extension AuthoredSlide {
     package var isItalic: Bool?
 
     /// Authored sRGB color; `nil` leaves the template style.
-    package var color: TextColor?
+    package var color: Color?
 
     /// Authored list style; `nil` means plain (the theme's None style).
     package var listStyle: TextListStyle?
@@ -129,7 +129,7 @@ extension AuthoredSlide {
     package var columnGap: Double?
 
     /// Authored background fill; `nil` leaves the template style.
-    package var background: TextColor?
+    package var background: Color?
 
     /// Whether any item-wide formatting field is set.
     ///
@@ -160,14 +160,14 @@ extension AuthoredSlide {
       fontSize: Double? = nil,
       isBold: Bool? = nil,
       isItalic: Bool? = nil,
-      color: TextColor? = nil,
+      color: Color? = nil,
       listStyle: TextListStyle? = nil,
       rotation: Angle? = nil,
       textAlignment: TextAlignment? = nil,
       verticalAlignment: VerticalTextAlignment? = nil,
       columnCount: Int? = nil,
       columnGap: Double? = nil,
-      background: TextColor? = nil,
+      background: Color? = nil,
       paragraphs: [ParagraphItem]
     ) {
       self.x = x

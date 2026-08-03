@@ -66,11 +66,11 @@ public struct TextBox: Sendable {
   internal var isItalic: Bool?
 
   /// Authored text color; `nil` leaves the template style.
-  internal var color: TextColor?
+  internal var color: Color?
 
   /// Authored background fill; `nil` leaves the template style, which for
   /// the bundled blank template means no fill.
-  internal var background: TextColor?
+  internal var background: Color?
 
   /// Authored list style; `nil` means plain (the theme's None style).
   internal var listStyle: TextListStyle?
@@ -175,7 +175,7 @@ public struct TextBox: Sendable {
   }
 
   /// Sets the text color.
-  public func foregroundColor(_ color: TextColor) -> TextBox {
+  public func foregroundColor(_ color: Color) -> TextBox {
     var text = self
     text.color = color
     return text
@@ -189,7 +189,7 @@ public struct TextBox: Sendable {
   /// placeholder's size, which is rarely what a panel wants.
   ///
   /// Gradient and image fills are out of scope for v0.1.0, as is stroke.
-  public func background(_ color: TextColor) -> TextBox {
+  public func background(_ color: Color) -> TextBox {
     var text = self
     text.background = color
     return text

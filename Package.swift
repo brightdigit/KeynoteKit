@@ -16,7 +16,8 @@ let package = Package(
     .library(name: "IWAFraming", targets: ["IWAFraming"]),
     .library(name: "KeynoteKitProtobuf", targets: ["KeynoteKitProtobuf"]),
     .library(name: "KeynoteKit", targets: ["KeynoteKit"]),
-    .library(name: "KeynoteKitScripting", targets: ["KeynoteKitScripting"])
+    .library(name: "KeynoteKitScripting", targets: ["KeynoteKitScripting"]),
+    .library(name: "KeynoteKitSwiftUI", targets: ["KeynoteKitSwiftUI"])
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-protobuf", from: "1.38.1")
@@ -63,6 +64,17 @@ let package = Package(
     // module still compiles (to its pure value types) on non-Apple platforms.
     .target(name: "KeynoteKitScripting"),
 
+    // SwiftUI color interop, deliberately its OWN target rather than a
+    // `canImport(SwiftUI)` block inside `KeynoteKit`.
+    //
+    // SwiftUI conforms `Never` to `View` and `KeynoteKit` conforms `Never`
+    // to `SlideContent` — the primitive terminator the slide DSL needs.
+    // Importing SwiftUI anywhere in the core module makes `Never.body`
+    // ambiguous and the module stops compiling. Splitting it also keeps
+    // `KeynoteKit` linking nothing but swift-protobuf, so authoring still
+    // works on Linux, Windows, and Android.
+    .target(name: "KeynoteKitSwiftUI", dependencies: ["KeynoteKit"]),
+
     // The five #24 acceptance decks expressed in the public DSL, shared by
     // the acceptance executable and the differential tests. Deliberately not
     // a product: acceptance tooling, not API.
@@ -104,6 +116,10 @@ let package = Package(
       name: "KeynoteKitTests",
       dependencies: ["KeynoteKit", "IWAFraming", "KeynoteKitProtobuf", "AcceptanceDeckCatalog"]
     ),
-    .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"])
+    .testTarget(name: "KeynoteKitScriptingTests", dependencies: ["KeynoteKitScripting"]),
+    .testTarget(
+      name: "KeynoteKitSwiftUITests",
+      dependencies: ["KeynoteKitSwiftUI", "KeynoteKit"]
+    )
   ]
 )

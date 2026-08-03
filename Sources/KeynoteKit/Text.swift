@@ -47,7 +47,7 @@ public struct Text: Sendable {
   internal var isItalic: Bool?
 
   /// Authored text color; `nil` inherits the item / template style.
-  internal var color: TextColor?
+  internal var color: Color?
 
   /// Creates a run.
   ///
@@ -88,7 +88,7 @@ public struct Text: Sendable {
   }
 
   /// Sets the run's text color.
-  public func foregroundColor(_ color: TextColor) -> Text {
+  public func foregroundColor(_ color: Color) -> Text {
     var run = self
     run.color = color
     return run

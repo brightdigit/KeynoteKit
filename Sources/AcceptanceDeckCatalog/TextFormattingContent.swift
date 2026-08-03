@@ -37,7 +37,7 @@ package struct TextFormattingContent: SlideContent {
         .font("HelveticaNeue", size: 48)
         .bold()
         .italic()
-        .foregroundColor(TextColor(red: 0.85, green: 0.15, blue: 0.1))
+        .foregroundColor(Color(red: 0.85, green: 0.15, blue: 0.1))
         .position(x: 160, y: 220)
         .frame(width: 480, height: 100)
       TextBox("Plain neighbor")

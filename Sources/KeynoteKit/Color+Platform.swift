@@ -1,5 +1,5 @@
 //
-//  TextColor.swift
+//  Color+Platform.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,25 +27,35 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// An sRGB text color for authored ``TextBox`` formatting.
-public struct TextColor: Equatable, Sendable {
-  /// Red channel in 0...1.
-  public var red: Double
+#if canImport(CoreGraphics)
+  public import CoreGraphics
 
-  /// Green channel in 0...1.
-  public var green: Double
-
-  /// Blue channel in 0...1.
-  public var blue: Double
-
-  /// Alpha channel in 0...1.
-  public var alpha: Double
-
-  /// Creates an sRGB color.
-  public init(red: Double, green: Double, blue: Double, alpha: Double = 1) {
-    self.red = red
-    self.green = green
-    self.blue = blue
-    self.alpha = alpha
+  extension Color {
+    /// Creates a color from a `CGColor`, converting to sRGB.
+    ///
+    /// Returns `nil` when the color cannot be represented in sRGB — a
+    /// pattern color has no components to convert, and conversion from an
+    /// exotic space can fail outright. Prefer failing visibly over writing
+    /// a color that renders differently than the caller intended.
+    public init?(cgColor: CGColor) {
+      guard
+        let space = CGColorSpace(name: CGColorSpace.sRGB),
+        let converted = cgColor.converted(
+          to: space,
+          intent: .defaultIntent,
+          options: nil
+        ),
+        let components = converted.components,
+        components.count >= 3
+      else {
+        return nil
+      }
+      self.init(
+        red: Double(components[0]),
+        green: Double(components[1]),
+        blue: Double(components[2]),
+        opacity: components.count >= 4 ? Double(components[3]) : 1
+      )
+    }
   }
-}
+#endif

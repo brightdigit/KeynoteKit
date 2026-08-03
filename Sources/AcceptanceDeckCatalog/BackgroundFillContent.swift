@@ -45,10 +45,10 @@ import KeynoteKit
 ///   survives the round trip
 package struct BackgroundFillContent: SlideContent {
   /// The panel color: near-black with a blue cast, a typical code theme.
-  private static let panel = TextColor(red: 0.11, green: 0.13, blue: 0.17)
+  private static let panel = Color(red: 0.11, green: 0.13, blue: 0.17)
 
   /// Light text for use on ``panel``.
-  private static let onPanel = TextColor(red: 0.92, green: 0.94, blue: 0.96)
+  private static let onPanel = Color(red: 0.92, green: 0.94, blue: 0.96)
 
   /// Filler long enough to flow across columns.
   private static let filler = Array(
@@ -84,13 +84,13 @@ package struct BackgroundFillContent: SlideContent {
   private var optInSlide: Slide {
     Slide {
       TextBox("filled")
-        .background(TextColor(red: 0.85, green: 0.25, blue: 0.2))
+        .background(Color(red: 0.85, green: 0.25, blue: 0.2))
         .foregroundColor(Self.onPanel)
         .position(x: 100, y: 200)
         .frame(width: 460, height: 260)
         .fontSize(40)
       TextBox("filled")
-        .background(TextColor(red: 0.15, green: 0.45, blue: 0.75))
+        .background(Color(red: 0.15, green: 0.45, blue: 0.75))
         .foregroundColor(Self.onPanel)
         .position(x: 640, y: 200)
         .frame(width: 460, height: 260)
@@ -113,7 +113,7 @@ package struct BackgroundFillContent: SlideContent {
         .frame(width: 700, height: 700)
         .fontSize(36)
       TextBox("FILL + COLUMNS " + Self.filler)
-        .background(TextColor(red: 0.18, green: 0.3, blue: 0.22))
+        .background(Color(red: 0.18, green: 0.3, blue: 0.22))
         .foregroundColor(Self.onPanel)
         .columns(2, gap: 41.25)
         .position(x: 900, y: 100)
@@ -126,12 +126,12 @@ package struct BackgroundFillContent: SlideContent {
   private var alphaSlide: Slide {
     Slide {
       TextBox("opaque")
-        .background(TextColor(red: 0.85, green: 0.7, blue: 0.1))
+        .background(Color(red: 0.85, green: 0.7, blue: 0.1))
         .position(x: 200, y: 250)
         .frame(width: 900, height: 400)
         .fontSize(40)
       TextBox("40% alpha overlapping")
-        .background(TextColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.4))
+        .background(Color(red: 0.1, green: 0.1, blue: 0.1, opacity: 0.4))
         .foregroundColor(Self.onPanel)
         .zIndex(1)
         .position(x: 600, y: 400)

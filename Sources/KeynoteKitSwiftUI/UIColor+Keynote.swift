@@ -1,5 +1,5 @@
 //
-//  TextRunsContent.swift
+//  UIColor+Keynote.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,33 +27,30 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-import KeynoteKit
+#if canImport(UIKit)
+  public import KeynoteKit
+  public import UIKit
 
-/// Mixed formatting inside one text box for the #40 render pass: the pass is
-/// green only when "Bold red" is large bold red, "italic" is italic, and the
-/// spans between them stay plain — all within a single item.
-package struct TextRunsContent: SlideContent {
-  package var body: some SlideContent {
-    Slide {
-      TextBox {
-        Paragraph {
-          Text("Bold red")
-            .bold()
-            .fontSize(56)
-            .foregroundColor(Color(red: 0.85, green: 0.15, blue: 0.1))
-          Text(" then plain then ")
-          Text("italic").italic()
-        }
+  extension UIColor {
+    /// This color as a KeynoteKit authoring color.
+    ///
+    /// `nil` when the color has no component representation, such as a
+    /// pattern color. Dynamic colors resolve against the current trait
+    /// collection when this is called.
+    public var keynoteColor: KeynoteColor? {
+      var red: CGFloat = 0
+      var green: CGFloat = 0
+      var blue: CGFloat = 0
+      var alpha: CGFloat = 0
+      guard getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
+        return nil
       }
-      .position(x: 120, y: 220)
-      .frame(width: 720, height: 120)
-      TextBox("Whole-item styled neighbor")
-        .bold()
-        .position(x: 120, y: 380)
-        .frame(width: 600, height: 60)
+      return KeynoteColor(
+        red: Double(red),
+        green: Double(green),
+        blue: Double(blue),
+        opacity: Double(alpha)
+      )
     }
   }
-
-  /// Creates the content.
-  package init() {}
-}
+#endif

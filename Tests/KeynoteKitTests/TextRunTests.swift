@@ -16,7 +16,7 @@ internal struct TextRunTests {
               Text("Styled")
                 .bold()
                 .fontSize(48)
-                .foregroundColor(TextColor(red: 0.9, green: 0.1, blue: 0.1))
+                .foregroundColor(Color(red: 0.9, green: 0.1, blue: 0.1))
               Text(" plain")
             }
           }
@@ -116,7 +116,7 @@ internal struct TextRunTests {
         Slide {
           TextBox {
             Paragraph {
-              Text("Red").foregroundColor(TextColor(red: 1, green: 0, blue: 0))
+              Text("Red").foregroundColor(Color(red: 1, green: 0, blue: 0))
               Text(" default")
             }
           }

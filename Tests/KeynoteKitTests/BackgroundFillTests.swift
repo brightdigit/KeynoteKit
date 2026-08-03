@@ -18,7 +18,7 @@ internal struct BackgroundFillTests {
       Deck {
         Slide {
           TextBox("Panel")
-            .background(TextColor(red: 0.1, green: 0.12, blue: 0.16))
+            .background(Color(red: 0.1, green: 0.12, blue: 0.16))
             .frame(width: 600, height: 300)
         }
       }
@@ -42,7 +42,7 @@ internal struct BackgroundFillTests {
     let surgeon = try ShapeStyleProbe.written(
       Deck {
         Slide {
-          TextBox("Panel").background(TextColor(red: 0, green: 0, blue: 0))
+          TextBox("Panel").background(Color(red: 0, green: 0, blue: 0))
         }
       }
     )
@@ -60,7 +60,7 @@ internal struct BackgroundFillTests {
       Deck {
         Slide {
           TextBox("Panel")
-            .background(TextColor(red: 0.2, green: 0.2, blue: 0.2))
+            .background(Color(red: 0.2, green: 0.2, blue: 0.2))
             .verticalAlignment(.middle)
         }
       }

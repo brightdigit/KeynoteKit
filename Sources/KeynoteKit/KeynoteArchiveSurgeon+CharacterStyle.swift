@@ -42,7 +42,7 @@ extension KeynoteArchiveSurgeon {
     fontSize: Double?,
     isBold: Bool?,
     isItalic: Bool?,
-    color: TextColor?
+    color: Color?
   ) -> (bag: TSWP_CharacterStylePropertiesArchive, count: UInt32) {
     var properties = TSWP_CharacterStylePropertiesArchive()
     var count: UInt32 = 0
@@ -68,7 +68,7 @@ extension KeynoteArchiveSurgeon {
       tspColor.r = Float(color.red)
       tspColor.g = Float(color.green)
       tspColor.b = Float(color.blue)
-      tspColor.a = Float(color.alpha)
+      tspColor.a = Float(color.opacity)
       tspColor.rgbspace = .srgb
       properties.fontColor = tspColor
       var fill = TSD_FillArchive()
