@@ -65,19 +65,17 @@ internal enum AcceptanceDecksCommand {
           paragraphs; slide 3: TOP / MIDDLE / BOTTOM; slides 4-5: 2- and
           3-column flows with a visible gutter; slide 6: three rotated boxes
         - Acceptance.key — the three bare boxes stay bullet-free
-      Monospace probe (#64) — round two; spike evidence, NOT a tag gate:
-        Round one failed for ALL families incl. Courier New, while the
-        archive held the authored fontName/fontSize correctly — so this
-        probes KeynoteKit's font path, not font availability.
-        - monospace_probe.key slides 1-3 — single-paragraph boxes, one
-          family each: "iiii MMMM 1111" at 96pt. Big + monospaced = the
-          single-paragraph path works.
-        - slide 4 — SAME family, three paragraphs, item-level font. This is
-          round one's shape. If 1-3 render and 4 does not, whole-item font
-          is ignored on multi-paragraph boxes: a KeynoteKit bug.
-        - slide 5 — three paragraphs, per-span font. If 4 fails and 5
-          renders, per-span styling is the workaround for #66.
-        - Record results in research/findings/monospace_probe.md.
+      Monospace probe (#64) — RESOLVED; delete this deck when convenient:
+        - monospace_probe.key — Menlo confirmed working (slides 1-3). The
+          round-one failure was #81, fixed below. Slide 4's condensed MMMM
+          is Keynote's own fallback for capital M at 90pt, not a defect.
+      Multi-paragraph formatting (#81):
+        - multi_paragraph_formatting.key — slide 1: ALL THREE lines Menlo
+          (the MMMM line renders condensed; that is Keynote font fallback,
+          not a bug); slide 2: all five lines bold red; slide 3: the MIDDLE
+          line matches its neighbours — the case per-span styling used to
+          miss; slide 4: left / centre / right / left / left alignment
+          still honored
     Tag v0.1.0 when all decks are green.
     """
 

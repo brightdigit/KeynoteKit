@@ -67,6 +67,12 @@ package enum UUIDMapVerifier {
   ///    `objectUuidMapEntries` — an unregistered record loads the component
   ///    blank or crashes with an NSSet-nil exception. Types in
   ///    ``registrationExemptTypes`` are exempt.
+  /// 7. No `TSWP.StorageArchive` object-attribute entry carries a
+  ///    present-but-empty reference (`hasObject` with identifier 0). Keynote
+  ///    resolves such a reference to nil and crashes on open. An entry that
+  ///    means "same style as the preceding one" must omit `object` entirely
+  ///    rather than zero it — the distinction is invisible when reading the
+  ///    identifier back, since absent and zeroed both read as 0.
   ///
   /// - Throws: ``ArchiveSurgeryError/invariantViolation(_:)``.
   package static func verify(
@@ -101,6 +107,41 @@ package enum UUIDMapVerifier {
         "minted record \(record.identifier) in slide member \(record.path) has no "
           + "objectUuidMapEntries row (Keynote loads the slide blank or crashes)"
       )
+    }
+    try checkStorageReferences(members: members)
+  }
+
+  /// Rule 7: no storage object-attribute entry may carry a present-but-empty
+  /// reference.
+  ///
+  /// `entry.object.identifier = 0` materializes an empty `TSP.Reference`
+  /// that Keynote resolves to nil and crashes on, while omitting `object`
+  /// correctly means "inherit the preceding entry's style". Both read back
+  /// as identifier 0, so only `hasObject` distinguishes them — which is why
+  /// this needs a dedicated check rather than an identifier comparison.
+  private static func checkStorageReferences(
+    members: [KeynoteArchiveSurgeon.Member]
+  ) throws {
+    for member in members {
+      for record in member.records {
+        for (index, type) in record.resolvedTypes.enumerated()
+        where TSPRegistryMapping.messageName(for: type) == "TSWP.StorageArchive" {
+          let storage = try TSWP_StorageArchive(
+            serializedBytes: record.payloads[index],
+            partial: true
+          )
+          let tables = [storage.tableParaStyle, storage.tableCharStyle, storage.tableListStyle]
+          for table in tables {
+            for entry in table.entries where entry.hasObject && entry.object.identifier == 0 {
+              throw ArchiveSurgeryError.invariantViolation(
+                "storage \(record.info.identifier) has an object-attribute entry at "
+                  + "character \(entry.characterIndex) with a present-but-empty reference "
+                  + "(Keynote resolves it to nil and crashes on open)"
+              )
+            }
+          }
+        }
+      }
     }
   }
 

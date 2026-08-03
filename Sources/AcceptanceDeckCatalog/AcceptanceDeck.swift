@@ -92,8 +92,7 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
   ]
 
   /// Monospace font probe for #64 (no goldens). Spike evidence, not a
-  /// feature gate — remove once the working family is recorded in
-  /// `research/findings/monospace_probe.md` and pinned in the demo deck.
+  /// feature gate — RESOLVED (Menlo works); remove when convenient.
   package static let monospaceProbe: [AcceptanceDeck] = [
     AcceptanceDeck(
       name: "monospace_probe",
@@ -102,9 +101,19 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     )
   ]
 
+  /// Multi-paragraph item formatting for #81 (no goldens).
+  package static let multiParagraph: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "multi_paragraph_formatting",
+      buildCount: 0,
+      deck: Deck { MultiParagraphFormattingContent() }
+    )
+  ]
+
   /// Every deck `swift run AcceptanceDecks` writes.
   package static let all: [AcceptanceDeck] =
-    goldenBacked + drawableDepth + formattingRuns + textLayout + monospaceProbe + [
+    goldenBacked + drawableDepth + formattingRuns + textLayout + monospaceProbe
+    + multiParagraph + [
       AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
     ]
 
