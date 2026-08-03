@@ -43,12 +43,14 @@ import KeynoteKit
 /// - slide 1: a dark panel behind light text — the code-panel treatment the
 ///   demo deck (#56) needs; the text is legible, so the fill is painted
 ///   underneath, not on top
-/// - slide 2: a filled box above an unfilled one; the unfilled box shows the
-///   slide background, proving the fill is opt-in
-/// - slide 3: fill plus bottom alignment on one fork
-/// - slide 4: fill plus two columns; the fill covers the whole box including
-///   the gutter, not just the text runs
-/// - slide 5: a semi-transparent fill over a filled neighbour, showing alpha
+/// - slides 2 and 3: the same box filled, then unfilled — slide 3 shows the
+///   slide background, proving the fill is opt-in. Two slides rather than
+///   two boxes because a fill ignores the authored *height* as well as the
+///   width and swallows anything placed below it.
+/// - slide 4: fill plus bottom alignment on one fork
+/// - slide 5: fill plus two columns; the fill covers the whole box, gutter
+///   included, not just the text runs
+/// - slide 6: a semi-transparent fill over a filled neighbour, showing alpha
 ///   survives the round trip
 package struct BackgroundFillContent: SlideContent {
   /// The panel color: near-black with a blue cast, a typical code theme.
@@ -67,6 +69,7 @@ package struct BackgroundFillContent: SlideContent {
   package var body: some SlideContent {
     codePanelSlide
     optInSlide
+    unfilledSlide
     alignmentSlide
     columnsSlide
     alphaSlide
@@ -103,15 +106,23 @@ package struct BackgroundFillContent: SlideContent {
   /// of fill — the slide would then show the opposite of its point.
   private var optInSlide: Slide {
     Slide {
-      TextBox("filled")
+      TextBox("filled - this whole panel is the box")
         .background(Color(red: 0.85, green: 0.25, blue: 0.2))
         .foregroundColor(Self.onPanel)
         .position(x: 100, y: 120)
-        .frame(width: 1_600, height: 300)
+        .frame(width: 1_600, height: 800)
         .fontSize(40)
+    }
+  }
+
+  /// The same box with no fill: compare against ``optInSlide``. Its own
+  /// slide because a filled box's paint ignores the authored height as well
+  /// as the width (#52) and swallows anything placed below it.
+  private var unfilledSlide: Slide {
+    Slide {
       TextBox("NOT filled - slide background shows through")
-        .position(x: 100, y: 700)
-        .frame(width: 1_600, height: 300)
+        .position(x: 100, y: 120)
+        .frame(width: 1_600, height: 800)
         .fontSize(40)
     }
   }
