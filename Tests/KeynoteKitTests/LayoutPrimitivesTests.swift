@@ -1,5 +1,6 @@
-import KeynoteKit
 import Testing
+
+@testable import KeynoteKit
 
 /// Layout primitives (#65): stacks resolve to the absolute positions the
 /// surgeon already writes, entirely at build time.
@@ -14,7 +15,10 @@ internal struct LayoutPrimitivesTests {
         TextBox("c").frame(width: 400, height: 80)
       }
     }
-    #expect(positions(of: slide) == [(0, 0), (0, 120), (0, 200)])
+    #expect(
+      positions(of: slide) == [
+        LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 120), LayoutPoint(x: 0, y: 200),
+      ])
   }
 
   @Test("an HStack advances children right by their widths plus spacing")
@@ -25,7 +29,7 @@ internal struct LayoutPrimitivesTests {
         TextBox("b").frame(width: 200, height: 50)
       }
     }
-    #expect(positions(of: slide) == [(0, 0), (110, 0)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 110, y: 0)])
   }
 
   @Test("a ZStack overlays its children on one origin")
@@ -36,7 +40,7 @@ internal struct LayoutPrimitivesTests {
         TextBox("over").frame(width: 300, height: 200)
       }
     }
-    #expect(positions(of: slide) == [(0, 0), (0, 0)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 0)])
   }
 
   @Test("center alignment offsets children by half the cross-axis slack")
@@ -49,7 +53,7 @@ internal struct LayoutPrimitivesTests {
       .frame(width: 400, height: 100)
     }
     // The narrow child centres in the 400pt frame: (400 - 100) / 2.
-    #expect(positions(of: slide) == [(0, 0), (150, 50)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 150, y: 50)])
   }
 
   @Test("trailing alignment pushes children to the far edge")
@@ -61,7 +65,7 @@ internal struct LayoutPrimitivesTests {
       }
       .frame(width: 400, height: 100)
     }
-    #expect(positions(of: slide) == [(0, 0), (300, 50)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 300, y: 50)])
   }
 
   @Test("nested stacks compose their offsets")
@@ -76,7 +80,10 @@ internal struct LayoutPrimitivesTests {
       }
     }
     // Header at 0; the row starts at 100 + 50 spacing = 150.
-    #expect(positions(of: slide) == [(0, 0), (0, 150), (220, 150)])
+    #expect(
+      positions(of: slide) == [
+        LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 150), LayoutPoint(x: 220, y: 150),
+      ])
   }
 
   @Test("padding insets a child on every edge it names")
@@ -91,7 +98,7 @@ internal struct LayoutPrimitivesTests {
     }
     // First child offsets by its own insets; the second clears the padded
     // child's full height (100 + 30 top inset).
-    #expect(positions(of: slide) == [(40, 30), (0, 130)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 40, y: 30), LayoutPoint(x: 0, y: 130)])
   }
 
   @Test("a Spacer divides a bounded stack's slack")
@@ -105,7 +112,7 @@ internal struct LayoutPrimitivesTests {
       .frame(width: 100, height: 500)
     }
     // 500 - 200 used = 300 of slack to the single spacer.
-    #expect(positions(of: slide) == [(0, 0), (0, 400)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 400)])
   }
 
   @Test("two Spacers split the slack equally")
@@ -119,7 +126,7 @@ internal struct LayoutPrimitivesTests {
       .frame(width: 100, height: 500)
     }
     // 400 of slack halves to 200, centring the child.
-    #expect(positions(of: slide) == [(0, 200)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 200)])
   }
 
   /// A top-level stack inherits the slide canvas as its bounds, so a
@@ -138,7 +145,7 @@ internal struct LayoutPrimitivesTests {
       }
     }
     // 1080 canvas - 200 used = 880 of slack to the single spacer.
-    #expect(positions(of: slide) == [(0, 0), (0, 980)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 980)])
   }
 
   @Test("a Spacer nested in an unframed stack collapses to zero")
@@ -152,7 +159,7 @@ internal struct LayoutPrimitivesTests {
         }
       }
     }
-    #expect(positions(of: slide) == [(0, 0), (0, 100)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 100)])
   }
 
   /// The regression that matters most: every existing deck positions its
@@ -163,7 +170,7 @@ internal struct LayoutPrimitivesTests {
       TextBox("a").position(x: 160, y: 220)
       TextBox("b").position(x: 700, y: 480)
     }
-    #expect(positions(of: slide) == [(160, 220), (700, 480)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 160, y: 220), LayoutPoint(x: 700, y: 480)])
   }
 
   /// An unsized child contributes zero extent, so siblings pile up at the
@@ -177,19 +184,15 @@ internal struct LayoutPrimitivesTests {
         TextBox("after").frame(width: 100, height: 100)
       }
     }
-    #expect(positions(of: slide) == [(0, 0), (0, 0)])
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 0)])
   }
 
   /// The resolved positions of a slide's drawables, in declaration order.
-  private func positions(of slide: Slide) -> [(Double, Double)] {
+  ///
+  /// `LayoutPoint` is `Equatable`, so these assertions compare directly —
+  /// the hand-rolled `==` on `[(Double, Double)]` this file used to carry
+  /// existed only because tuples are not.
+  private func positions(of slide: Slide) -> [LayoutPoint] {
     slide.resolvedPositions
-  }
-}
-
-extension [(Double, Double)] {
-  /// Compares position lists elementwise.
-  internal static func == (lhs: Self, rhs: Self) -> Bool {
-    lhs.count == rhs.count
-      && zip(lhs, rhs).allSatisfy { abs($0.0 - $1.0) < 0.001 && abs($0.1 - $1.1) < 0.001 }
   }
 }

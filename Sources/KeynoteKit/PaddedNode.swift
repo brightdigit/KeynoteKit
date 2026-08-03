@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  PaddedNode.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,38 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+/// A layout node insetting its child on each edge.
+public struct PaddedNode: LayoutNode {
+  /// The insets applied around ``child``.
+  internal var insets: EdgeInsets
+
+  /// The wrapped node.
+  internal var child: any LayoutNode
+
+  /// The child's extent grown by the insets.
+  public var size: LayoutSize {
+    let inner = child.size
+    return LayoutSize(
+      width: inner.width + insets.leading + insets.trailing,
+      height: inner.height + insets.top + insets.bottom
+    )
+  }
+
+  /// Creates a padded node.
+  public init(insets: EdgeInsets, child: any LayoutNode) {
+    self.insets = insets
+    self.child = child
+  }
+
+  /// Shrinks the bounds and offsets the origin by the leading insets.
+  public func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable] {
+    let inner = bounds.map {
+      LayoutSize(
+        width: $0.width - insets.leading - insets.trailing,
+        height: $0.height - insets.top - insets.bottom
+      )
+    }
+    let moved = origin?.offset(deltaX: insets.leading, deltaY: insets.top)
+    return child.resolve(in: inner, origin: moved)
   }
 }

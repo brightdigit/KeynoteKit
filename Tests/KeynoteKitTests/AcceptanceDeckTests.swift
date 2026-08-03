@@ -16,7 +16,7 @@ internal struct AcceptanceDeckTests {
   internal func lowersToSpec(acceptance: AcceptanceDeck) throws {
     let fixture = try golden(for: acceptance)
     let spec = try DeckSpec.load(fixture.specURL)
-    #expect(surgeryModel(of: acceptance) == spec)
+    #expect(try surgeryModel(of: acceptance) == spec)
   }
 
   @Test("the DSL reproduces the golden archive graph", arguments: AcceptanceDeck.goldenBacked)
@@ -26,7 +26,7 @@ internal struct AcceptanceDeckTests {
     var authored = try GoldenSurgeryStripper.stripped(goldenBundle)
     var surgeon = try KeynoteArchiveSurgeon(bundle: authored)
     var generator = SystemRandomNumberGenerator()
-    try surgeon.author(surgeryModel(of: acceptance), into: &authored, using: &generator)
+    try surgeon.author(try surgeryModel(of: acceptance), into: &authored, using: &generator)
 
     let difference = try ArchiveGraphComparer.firstDifference(
       between: authored,
@@ -64,9 +64,9 @@ internal struct AcceptanceDeckTests {
   /// directly and the golden-differential path (which authors into a
   /// stripped golden that already carries its items and base transition)
   /// applies unchanged.
-  private func surgeryModel(of acceptance: AcceptanceDeck) -> AuthoredDeck {
+  private func surgeryModel(of acceptance: AcceptanceDeck) throws -> AuthoredDeck {
     AuthoredDeck(
-      slides: acceptance.deck.authoredDeck().slides.map { slide in
+      slides: try acceptance.deck.authoredDeck().slides.map { slide in
         AuthoredSlide(
           itemCount: slide.itemCount,
           transitionDirection: slide.transitionDirection,

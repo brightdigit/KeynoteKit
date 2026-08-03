@@ -1,5 +1,5 @@
 //
-//  SlideDrawable+Geometry.swift
+//  LayoutPoint.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,29 +27,26 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension SlideDrawable {
-  /// The drawable's authored size, when it declared one.
-  ///
-  /// `nil` in either axis means the drawable inherits the template
-  /// placeholder's size. Stacks cannot lay such a child out — they have no
-  /// number to advance by — so ``LayoutNode`` treats an unsized child as
-  /// zero-extent along the stack's axis and documents the consequence.
-  /// Intrinsic measurement is issue #67.
-  internal var authoredSize: (width: Double?, height: Double?) {
-    switch self {
-    case .text(let text): (text.width, text.height)
-    case .image(let image): (image.width, image.height)
-    }
+/// A position in slide coordinates, in points.
+///
+/// The peer of ``LayoutSize``: the resolve pass takes a size for bounds and
+/// a point for origin, so both are named types rather than one struct and
+/// one tuple.
+public struct LayoutPoint: Equatable, Sendable {
+  /// Distance from the slide's left edge, in points.
+  public var x: Double
+
+  /// Distance from the slide's top edge, in points.
+  public var y: Double
+
+  /// Creates a point.
+  public init(x: Double, y: Double) {
+    self.x = x
+    self.y = y
   }
 
-  /// Returns a copy positioned at `x`, `y` in slide coordinates.
-  ///
-  /// The resolve pass calls this once per drawable after computing absolute
-  /// positions; the surgeon then writes exactly these numbers, unchanged.
-  internal func positioned(x: Double, y: Double) -> SlideDrawable {
-    switch self {
-    case .text(let text): .text(text.position(x: x, y: y))
-    case .image(let image): .image(image.position(x: x, y: y))
-    }
+  /// This point moved by the given deltas.
+  internal func offset(deltaX: Double, deltaY: Double) -> LayoutPoint {
+    LayoutPoint(x: x + deltaX, y: y + deltaY)
   }
 }

@@ -31,12 +31,12 @@ extension Deck {
   /// Lowers the public DSL to the surgeon's model. Delivery order is
   /// encounter order walking each slide's items: an item's builds in
   /// declaration order, then its action.
-  internal func authoredDeck() -> AuthoredDeck {
-    AuthoredDeck(slides: slides.map(authoredSlide(from:)))
+  internal func authoredDeck() throws -> AuthoredDeck {
+    AuthoredDeck(slides: try slides.map(authoredSlide(from:)))
   }
 
   /// Lowers one slide.
-  private func authoredSlide(from slide: Slide) -> AuthoredSlide {
+  private func authoredSlide(from slide: Slide) throws -> AuthoredSlide {
     let permutation = orderedPermutation(of: slide)
     let ordered = permutation.map { slide.items[$0] }
     let builds = collectedBuilds(from: slide, permutation: permutation)
@@ -52,9 +52,21 @@ extension Deck {
       itemCount: ordered.count,
       transitionDirection: slide.slideTransition?.directionOrdinal,
       builds: builds,
-      items: ordered.map(authoredDrawable(from:)),
+      items: try ordered.map { try lowered($0) },
       transition: transition
     )
+  }
+
+  /// One drawable lowered, or a thrown error when the writer has no case
+  /// for its kind.
+  private func lowered(_ drawable: any SlideDrawable) throws -> AuthoredSlide.DrawableItem {
+    guard let item = drawable.loweredItem else {
+      throw ArchiveSurgeryError.invariantViolation(
+        "drawable of type \(type(of: drawable)) cannot be lowered; "
+          + "only TextBox and Image are supported"
+      )
+    }
+    return item
   }
 
   /// Layer order = drawablesZOrder = build targetIndex. Higher zIndex draws
@@ -66,8 +78,8 @@ extension Deck {
     slide.items
       .enumerated()
       .sorted { left, right in
-        let leftIndex = left.element.zIndex
-        let rightIndex = right.element.zIndex
+        let leftIndex = left.element.layerOrder
+        let rightIndex = right.element.layerOrder
         if leftIndex != rightIndex {
           return leftIndex < rightIndex
         }
@@ -86,77 +98,14 @@ extension Deck {
       guard let targetIndex = permutation.firstIndex(of: offset) else {
         continue
       }
-      for configuration in drawable.builds {
+      for configuration in drawable.drawableBuilds {
         builds.append(authoredBuild(from: configuration, targetIndex: targetIndex))
       }
-      for action in drawable.actions {
+      for action in drawable.drawableActions {
         builds.append(authoredAction(from: action, targetIndex: targetIndex))
       }
     }
     return builds
-  }
-
-  /// Lowers one drawable.
-  private func authoredDrawable(from drawable: SlideDrawable) -> AuthoredSlide.DrawableItem {
-    switch drawable {
-    case .text(let text):
-      .text(
-        AuthoredSlide.TextItem(
-          x: text.x,
-          y: text.y,
-          width: text.width,
-          height: text.height,
-          fontName: text.fontName,
-          fontSize: text.fontSize,
-          isBold: text.isBold,
-          isItalic: text.isItalic,
-          color: text.color,
-          listStyle: text.listStyle,
-          rotation: text.rotation,
-          textAlignment: text.textAlignment,
-          verticalAlignment: text.verticalAlignment,
-          columnCount: text.columnCount,
-          columnGap: text.columnGap,
-          background: text.background,
-          paragraphs: text.paragraphs.map(authoredParagraph(from:))
-        )
-      )
-    case .image(let image):
-      .image(
-        AuthoredSlide.ImageItem(
-          data: image.data,
-          fileExtension: image.fileExtension,
-          x: image.x,
-          y: image.y,
-          width: image.width,
-          height: image.height,
-          naturalWidth: image.naturalWidth,
-          naturalHeight: image.naturalHeight
-        )
-      )
-    }
-  }
-
-  /// Lowers one paragraph.
-  private func authoredParagraph(
-    from paragraph: Paragraph
-  ) -> AuthoredSlide.TextItem.ParagraphItem {
-    AuthoredSlide.TextItem.ParagraphItem(
-      runs: paragraph.runs.map { run in
-        AuthoredSlide.TextItem.Run(
-          text: run.content,
-          fontName: run.fontName,
-          fontSize: run.fontSize,
-          isBold: run.isBold,
-          isItalic: run.isItalic,
-          color: run.color
-        )
-      },
-      alignment: paragraph.alignment,
-      leftIndent: paragraph.leftIndent,
-      firstLineIndent: paragraph.firstLineIndent,
-      rightIndent: paragraph.rightIndent
-    )
   }
 
   /// Lowers one In/Out build.

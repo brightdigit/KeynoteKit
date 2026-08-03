@@ -33,10 +33,10 @@ public struct Slide: SlideContent, Sendable {
   ///
   /// Matches the bundled template's 1920x1080 slide size, so a stack given
   /// no explicit frame still has bounds for ``Spacer`` to divide.
-  internal static let canvas = LayoutNode.Size(width: 1_920, height: 1_080)
+  internal static let canvas = LayoutSize(width: 1_920, height: 1_080)
 
   /// The slide's drawables, in declaration order (before z-index sort).
-  internal var items: [SlideDrawable]
+  internal var items: [any SlideDrawable]
 
   /// The slide's transition, when set.
   internal var slideTransition: SlideTransition?

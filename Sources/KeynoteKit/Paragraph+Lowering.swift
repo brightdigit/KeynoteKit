@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  Paragraph+Lowering.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,27 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
+extension Paragraph {
+  /// Lowers this paragraph into the writer's representation.
   ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+  /// Lives on `Paragraph` rather than `Deck` so ``TextBox/lowered()`` can
+  /// call it: the drawable now lowers itself, so its parts must too.
+  internal func lowered() -> AuthoredSlide.TextItem.ParagraphItem {
+    AuthoredSlide.TextItem.ParagraphItem(
+      runs: runs.map { run in
+        AuthoredSlide.TextItem.Run(
+          text: run.content,
+          fontName: run.fontName,
+          fontSize: run.fontSize,
+          isBold: run.isBold,
+          isItalic: run.isItalic,
+          color: run.color
+        )
+      },
+      alignment: alignment,
+      leftIndent: leftIndent,
+      firstLineIndent: firstLineIndent,
+      rightIndent: rightIndent
+    )
   }
 }

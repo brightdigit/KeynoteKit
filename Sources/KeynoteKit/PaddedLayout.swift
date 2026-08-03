@@ -36,8 +36,8 @@ public struct PaddedLayout: SlideLayout {
   internal var child: any SlideLayout
 
   /// The layout node this wrapper contributes.
-  public var layoutNode: LayoutNode {
-    .padded(insets: insets, child: child.layoutNode)
+  public var layoutNode: any LayoutNode {
+    PaddedNode(insets: insets, child: child.layoutNode)
   }
 
   /// Creates a padded wrapper.

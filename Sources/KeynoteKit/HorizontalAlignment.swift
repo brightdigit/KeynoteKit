@@ -43,7 +43,7 @@ public enum HorizontalAlignment: Sendable {
   case trailing
 
   /// The internal node alignment.
-  internal var node: LayoutNode.Alignment {
+  internal var node: LayoutAlignment {
     switch self {
     case .leading: .leading
     case .center: .center

@@ -27,75 +27,30 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The internal layout tree a slide's content builds before it resolves to
-/// absolutely-positioned drawables (#65).
+/// A node in the compile-time layout tree.
 ///
-/// This is a **compile-time** structure. `SlideDrawable` already carries
-/// absolute `x`/`y`, and the surgeon already writes those numbers, so a
-/// stack is a pure source-level convenience: ``resolve(in:origin:)`` walks
-/// the tree once and emits exactly the positions an author could have typed
-/// by hand. Nothing here reaches the archive.
+/// This is a **build-time** structure. Drawables already carry absolute
+/// `x`/`y` and the surgeon already writes those numbers, so a stack is a
+/// pure source-level convenience: the tree resolves once and emits exactly
+/// the positions an author could have typed by hand. Nothing here reaches
+/// the archive.
 ///
-/// Children declare their own sizes with `.frame(width:height:)`. Intrinsic
-/// text measurement — computing a box's natural size from font metrics — is
-/// issue #67, split out because it is coupled to #52 (Keynote lays
-/// placeholder text out at the layout master's width, ignoring the authored
-/// frame).
-public indirect enum LayoutNode: Sendable {
-  /// A positioned drawable.
-  case leaf(SlideDrawable)
+/// A protocol rather than a closed enum so a layout kind can be added
+/// without editing a central switch — the resolve logic lives on each node
+/// type instead of in one dispatcher.
+public protocol LayoutNode: Sendable {
+  /// The node's laid-out extent.
+  var size: LayoutSize { get }
 
-  /// A stack of children along `axis`.
-  case stack(Stack)
-
-  /// Flexible space that divides a stack's slack between its neighbours.
-  case spacer
-
-  /// A child inset on each edge.
-  case padded(insets: EdgeInsets, child: LayoutNode)
-
-  /// A stack's configuration.
-  public struct Stack: Sendable {
-    /// The axis children advance along.
-    public var axis: Axis
-
-    /// Cross-axis alignment.
-    public var alignment: Alignment
-
-    /// Fixed gap between adjacent children, in points.
-    public var spacing: Double
-
-    /// The children, in declaration order.
-    public var children: [LayoutNode]
-
-    /// The stack's declared frame, when it has one.
-    ///
-    /// Bounds the stack for ``Spacer`` distribution and for cross-axis
-    /// alignment. `nil` means the stack sizes to its children.
-    public var frame: Size?
-  }
-
-  /// The axis a stack advances along.
-  public enum Axis: Sendable {
-    /// Children advance downward; `ZStack` overlays them instead.
-    case vertical
-
-    /// Children advance rightward.
-    case horizontal
-
-    /// Children share one origin and stack in z-order.
-    case depth
-  }
-
-  /// Cross-axis alignment within a stack.
-  public enum Alignment: Sendable {
-    /// Leading edge — top for a horizontal stack, left for a vertical one.
-    case leading
-
-    /// Centred on the cross axis.
-    case center
-
-    /// Trailing edge.
-    case trailing
-  }
+  /// Resolves this node into absolutely-positioned drawables.
+  ///
+  /// - Parameters:
+  ///   - bounds: The space to lay out within. Only ``SpacerNode`` consumes
+  ///     it: with no bounds a stack has no slack, so spacers collapse.
+  ///   - origin: The node's top-left corner in slide coordinates, or `nil`
+  ///     when nothing is positioning this node — a drawable declared
+  ///     outside any stack keeps the position it authored.
+  /// - Returns: One drawable per leaf, in declaration order, which the
+  ///   lowering pass relies on to break `zIndex` ties.
+  func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable]
 }

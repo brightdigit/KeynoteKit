@@ -36,15 +36,15 @@
 /// `x`/`y` values, which is why stacks need no archive work at all.
 public protocol SlideLayout: Sendable {
   /// The layout node this value contributes.
-  var layoutNode: LayoutNode { get }
+  var layoutNode: any LayoutNode { get }
 }
 
 extension TextBox: SlideLayout {
   /// A text box is a positioned leaf.
-  public var layoutNode: LayoutNode { .leaf(.text(self)) }
+  public var layoutNode: any LayoutNode { LeafNode(drawable: self) }
 }
 
 extension Image: SlideLayout {
   /// An image is a positioned leaf.
-  public var layoutNode: LayoutNode { .leaf(.image(self)) }
+  public var layoutNode: any LayoutNode { LeafNode(drawable: self) }
 }

@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  SpacerNode.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,17 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+/// A layout node that claims a stack's slack instead of drawing.
+public struct SpacerNode: LayoutNode {
+  /// Zero — a spacer claims slack during distribution rather than
+  /// contributing a fixed extent.
+  public var size: LayoutSize { LayoutSize(width: 0, height: 0) }
+
+  /// Creates a spacer node.
+  public init() {}
+
+  /// Emits nothing; the enclosing stack has already consumed the offset.
+  public func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable] {
+    []
   }
 }

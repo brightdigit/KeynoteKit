@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  DrawableSize.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,22 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+/// A drawable's authored size, where either axis may be unset.
+///
+/// The optional-component sibling of ``LayoutNode/Size``: `nil` in an axis
+/// means the drawable inherits the template placeholder's extent there,
+/// rather than declaring one. A stack has no number to advance by in that
+/// case, so it treats the axis as zero — see ``LayoutNode/Size``.
+public struct DrawableSize: Equatable, Sendable {
+  /// Authored width in points, or `nil` to inherit the template's.
+  public var width: Double?
+
+  /// Authored height in points, or `nil` to inherit the template's.
+  public var height: Double?
+
+  /// Creates an authored size.
+  public init(width: Double?, height: Double?) {
+    self.width = width
+    self.height = height
   }
 }

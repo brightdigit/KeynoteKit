@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  LayoutAxis.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,14 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
-  }
+/// The axis a ``StackNode`` advances along.
+public enum LayoutAxis: Sendable {
+  /// Children advance downward.
+  case vertical
+
+  /// Children advance rightward.
+  case horizontal
+
+  /// Children share one origin and stack in z-order.
+  case depth
 }

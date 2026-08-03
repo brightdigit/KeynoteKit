@@ -87,16 +87,12 @@ internal struct DSLAndLoweringTests {
     let drawables = items.flatMap { $0.layoutNode.resolve(in: nil, origin: nil) }
     if showImage {
       #expect(drawables.count == 2)
-      if case .text(let box) = drawables[0] {
+      if let box = drawables[0] as? TextBox {
         #expect(box.content == "always")
       } else {
         Issue.record("Expected text item first")
       }
-      if case .image = drawables[1] {
-        // Correct branch executed
-      } else {
-        Issue.record("Expected image item second")
-      }
+      #expect(drawables[1] is Image)
     } else {
       #expect(drawables.count == 3)
     }
@@ -169,7 +165,7 @@ internal struct DSLAndLoweringTests {
   }
 
   @Test("M11: Target index in builds tracks declaration order even when zIndex permutes items")
-  internal func zIndexReordersDrawablesWithoutAlteringBuildTargetIndices() {
+  internal func zIndexReordersDrawablesWithoutAlteringBuildTargetIndices() throws {
     // Declarations: Item 0 = box0 (zIndex 10), Item 1 = box1 (zIndex 1)
     let slide = Slide {
       TextBox("item0")
@@ -180,7 +176,7 @@ internal struct DSLAndLoweringTests {
         .build(.in) { Appear() }
     }
     let deck = Deck { slide }
-    let authored = deck.authoredDeck()
+    let authored = try deck.authoredDeck()
     let authoredSlide = authored.slides[0]
 
     // Builds stay in declaration order (builds[0] = item0, builds[1] = item1)

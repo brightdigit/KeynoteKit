@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  LeafNode.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,34 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
+/// A layout node wrapping one drawable.
+public struct LeafNode: LayoutNode {
+  /// The wrapped drawable.
+  internal var drawable: any SlideDrawable
+
+  /// The drawable's authored extent, with an unset axis reported as zero.
   ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+  /// There is no number to advance by until intrinsic measurement (#67), so
+  /// an unsized child contributes nothing along the stack's axis.
+  public var size: LayoutSize {
+    let authored = drawable.authoredSize
+    return LayoutSize(width: authored.width ?? 0, height: authored.height ?? 0)
+  }
+
+  /// Creates a leaf.
+  public init(drawable: any SlideDrawable) {
+    self.drawable = drawable
+  }
+
+  /// Positions the drawable, or leaves it alone when nothing is placing it.
+  ///
+  /// A `nil` origin is what keeps existing decks working: every drawable
+  /// placed with `.position(x:y:)` and no enclosing stack must survive this
+  /// pass untouched.
+  public func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable] {
+    guard let origin else {
+      return [drawable]
+    }
+    return [drawable.positioned(x: origin.x, y: origin.y)]
   }
 }

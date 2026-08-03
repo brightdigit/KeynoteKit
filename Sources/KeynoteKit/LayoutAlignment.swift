@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  LayoutAlignment.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,14 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
-  }
+/// Cross-axis alignment within a ``StackNode``.
+public enum LayoutAlignment: Sendable {
+  /// Leading edge — left in a vertical stack, top in a horizontal one.
+  case leading
+
+  /// Centred on the cross axis.
+  case center
+
+  /// Trailing edge.
+  case trailing
 }

@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  MagicMoveIdentity.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,27 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
+/// What Keynote's Magic Move matcher compares two drawables by.
+///
+/// Splits the comparison into the two failures the DSL reports separately:
+/// a ``kind`` mismatch is a type error, an equal kind with differing
+/// ``content`` is a content error. Keeping them apart preserves the
+/// distinction the pairwise enum switch used to make.
+public struct MagicMoveIdentity: Equatable, Sendable {
+  /// The drawable's type tag — `"text"`, `"image"`.
   ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+  /// A string rather than an enum so a drawable kind added outside this
+  /// module can report one without editing a closed set.
+  public var kind: String
+
+  /// The matchable content: a text box's joined paragraphs, an image's
+  /// bytes. Geometry is deliberately excluded — differing geometry is the
+  /// motion Magic Move animates, not a mismatch.
+  public var content: MagicMoveContent
+
+  /// Creates an identity.
+  public init(kind: String, content: MagicMoveContent) {
+    self.kind = kind
+    self.content = content
   }
 }

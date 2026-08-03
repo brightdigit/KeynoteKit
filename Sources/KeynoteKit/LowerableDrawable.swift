@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  LowerableDrawable.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,28 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
+/// A drawable the writer knows how to lower.
+///
+/// Separate from ``SlideDrawable`` because the result type is package-level:
+/// a public protocol cannot require it. In practice only `TextBox` and
+/// `Image` conform, and ``Deck`` rejects anything else at lowering time
+/// rather than silently dropping it.
+package protocol LowerableDrawable {
+  /// Lowers this drawable into the writer's closed representation.
   ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+  /// Each type builds its own case, keeping the field-by-field construction
+  /// next to the type that owns those fields.
+  func lowered() -> AuthoredSlide.DrawableItem
+}
+
+extension SlideDrawable {
+  /// This drawable lowered, or `nil` when the writer has no case for it.
+  ///
+  /// Only `TextBox` and `Image` conform to ``LowerableDrawable`` today. A
+  /// drawable kind added outside this module would land here as `nil`, and
+  /// ``Deck`` throws rather than dropping it — a silently missing drawable
+  /// is exactly the class of bug the acceptance decks exist to catch.
+  package var loweredItem: AuthoredSlide.DrawableItem? {
+    (self as? any LowerableDrawable)?.lowered()
   }
 }

@@ -39,7 +39,7 @@
 /// Multiple spacers in one stack split the slack equally, as in SwiftUI.
 public struct Spacer: SlideLayout {
   /// The layout node this spacer contributes.
-  public var layoutNode: LayoutNode { .spacer }
+  public var layoutNode: any LayoutNode { SpacerNode() }
 
   /// Creates a spacer.
   public init() {}

@@ -38,7 +38,7 @@
 /// to divide — an unbounded stack has no slack.
 public struct ZStack: SlideLayout {
   /// Cross-axis alignment of the children.
-  internal var alignment: LayoutNode.Alignment
+  internal var alignment: LayoutAlignment
 
   /// Fixed gap between adjacent children, in points.
   internal var spacing: Double
@@ -47,22 +47,21 @@ public struct ZStack: SlideLayout {
   internal var children: [any SlideLayout]
 
   /// The stack's own frame, when declared.
-  internal var frameSize: LayoutNode.Size?
+  internal var frameSize: LayoutSize?
 
   /// The layout node this stack contributes.
   ///
   /// A declared frame becomes the node's own bounds, which is what gives a
   /// nested ``Spacer`` slack to divide. Without one the stack sizes to its
   /// children and spacers collapse.
-  public var layoutNode: LayoutNode {
-    let stack = LayoutNode.Stack(
+  public var layoutNode: any LayoutNode {
+    StackNode(
       axis: .depth,
       alignment: alignment,
       spacing: spacing,
       children: children.map(\.layoutNode),
       frame: frameSize
     )
-    return .stack(stack)
   }
 
   /// Creates a stack.
@@ -80,7 +79,7 @@ public struct ZStack: SlideLayout {
   /// Bounds the stack, which is what lets Spacer claim slack.
   public func frame(width: Double, height: Double) -> ZStack {
     var stack = self
-    stack.frameSize = LayoutNode.Size(width: width, height: height)
+    stack.frameSize = LayoutSize(width: width, height: height)
     return stack
   }
 }

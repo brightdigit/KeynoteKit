@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  LayoutSize.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,13 +27,17 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+/// An extent along both axes, in points.
+public struct LayoutSize: Equatable, Sendable {
+  /// Width in points.
+  public var width: Double
+
+  /// Height in points.
+  public var height: Double
+
+  /// Creates a size.
+  public init(width: Double, height: Double) {
+    self.width = width
+    self.height = height
   }
 }
