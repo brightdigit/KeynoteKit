@@ -76,12 +76,16 @@ internal enum AcceptanceDecksCommand {
           line matches its neighbours — the case per-span styling used to
           miss; slide 4: left / centre / right / left / left alignment
           still honored
-      Background fill (#78):
+      Background fill (#78) — one box per slide; side-by-side boxes overlap
+      under #52 and one fill bleeds under its neighbour:
         - background_fill.key — slide 1: dark panel BEHIND light text (text
-          legible = fill painted underneath, not over); slide 2: two filled
-          boxes + one unfilled showing the slide background; slide 3: fill
-          composed with bottom alignment and with 2 columns; slide 4: a 40%
-          alpha fill overlapping an opaque one
+          legible = fill painted underneath, not over); slide 2: filled box
+          above an unfilled one showing the slide background; slide 3: fill
+          + bottom alignment; slide 4: fill + 2 columns, fill covering the
+          gutter too; slide 5: a 40% alpha fill overlapping an opaque one
+        - slide 1 is single-paragraph ON PURPOSE (#81 drops item formatting
+          on multi-paragraph boxes); restore the multi-line sample when
+          #81 lands
     Tag v0.1.0 when all decks are green.
     """
 
