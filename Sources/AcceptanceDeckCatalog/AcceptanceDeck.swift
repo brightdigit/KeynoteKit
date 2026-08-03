@@ -119,10 +119,20 @@ package struct AcceptanceDeck: CustomStringConvertible, Sendable {
     )
   ]
 
+  /// Syntax-highlighted code decks for #66 (no goldens).
+  package static let syntaxHighlight: [AcceptanceDeck] = [
+    AcceptanceDeck(
+      name: "syntax_highlight",
+      buildCount: 0,
+      deck: Deck { SyntaxHighlightContent() }
+    )
+  ]
+
   /// Every deck `swift run AcceptanceDecks` writes.
   package static let all: [AcceptanceDeck] =
     goldenBacked + drawableDepth + formattingRuns + textLayout + monospaceProbe
-    + multiParagraph + backgroundFill + [
+    + multiParagraph + backgroundFill
+    + syntaxHighlight + [
       AcceptanceDeck(name: "Acceptance", buildCount: 0, deck: Deck { CustomDeck() })
     ]
 
