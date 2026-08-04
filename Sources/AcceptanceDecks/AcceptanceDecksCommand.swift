@@ -87,6 +87,11 @@ internal enum AcceptanceDecksCommand {
         - slide 1 is single-paragraph ON PURPOSE (#81 drops item formatting
           on multi-paragraph boxes); restore the multi-line sample when
           #81 lands
+      Syntax highlighting (#66):
+        - syntax_highlight.key — slide 1: keywords / types / strings /
+          numbers / comment each a DISTINCT colour on EVERY line, not just
+          the first; slide 2: the same code on a dark panel, still legible;
+          slide 3: nested indentation holds its columns
     Tag v0.1.0 when all decks are green.
     """
 
