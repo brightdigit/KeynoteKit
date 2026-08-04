@@ -14,7 +14,17 @@ import Testing
 ///
 /// The value under test is the sRGB *encoding*: SwiftUI resolves to linear
 /// components, and writing those straight through renders washed out.
-@Suite("Platform color bridges")
+///
+/// Disabled on visionOS: `SwiftUI.Color.resolve(in:)` stalls the
+/// `xrsimulator` leg in CI — tests start, then `xcodebuild` never exits
+/// (#86). The suite still compiles there; only running it is skipped.
+#if os(visionOS)
+  private let platformColorBridgesEnabled = false
+#else
+  private let platformColorBridgesEnabled = true
+#endif
+
+@Suite("Platform color bridges", .enabled(if: platformColorBridgesEnabled))
 internal struct ColorBridgeTests {
   #if canImport(SwiftUI)
     @Test("a SwiftUI color converts to sRGB-encoded components")
