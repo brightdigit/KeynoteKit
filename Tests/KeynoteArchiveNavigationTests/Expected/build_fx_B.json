@@ -1,0 +1,21 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_fx_B.key",
+  "builds": [
+    {
+      "kind": "In",
+      "effect": "apple:move in character",
+      "duration": 0.5,
+      "delay": 0.0,
+      "direction": 13,
+      "drawable": "2652601",
+      "options": {
+        "customBounce": true,
+        "customTextDelivery": "kTextDeliveryByCharacter",
+        "customDeliveryOption": "kDeliveryOptionRandom",
+        "delivery": "By Paragraph",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}

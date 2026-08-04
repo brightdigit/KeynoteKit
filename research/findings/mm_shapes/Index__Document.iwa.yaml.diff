@@ -1,0 +1,16 @@
+--- A/Index/Document.iwa.yaml
++++ B/Index/Document.iwa.yaml
+@@ -438,12 +438,12 @@
+       identifier: <vol>
+       messageInfos:
+       - dataReferences:
++        - '16'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
+         - '15'
+-        - '16'
+         fieldInfos:
+         - path:
+             path:

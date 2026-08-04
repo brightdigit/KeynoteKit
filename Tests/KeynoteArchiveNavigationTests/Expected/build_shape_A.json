@@ -1,0 +1,5 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_shape_A.key",
+  "builds": []
+}

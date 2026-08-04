@@ -1,0 +1,378 @@
+--- A/Index/Metadata.iwa.yaml
++++ B/Index/Metadata.iwa.yaml
+@@ -2583,30 +2583,30 @@
+         preferredLocator: DocumentStylesheet
+         saveToken: '2385'
+       - dataReferences:
+-        - dataIdentifier: '5643'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:1766>
+-        - dataIdentifier: '5644'
++        - dataIdentifier: '8023'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:1766>
+         - dataIdentifier: '8022'
+           objectReferenceList:
+           - count: 1
+-            objectIdentifier: <id:1767>
+-        - dataIdentifier: '8023'
++            objectIdentifier: <id:1766>
++        - dataIdentifier: '5643'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:1767>
++        - dataIdentifier: '8048'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:1768>
+         - dataIdentifier: '8049'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:1768>
+-        - dataIdentifier: '8048'
++        - dataIdentifier: '5644'
+           objectReferenceList:
+           - count: 1
+-            objectIdentifier: <id:1768>
++            objectIdentifier: <id:1767>
+         documentReadVersion:
+         - 2
+         - 0
+@@ -2692,7 +2692,7 @@
+           uuid:
+             lower: <id:1804>
+             upper: <id:1805>
+-        - identifier: <id:1767>
++        - identifier: <id:1766>
+           uuid:
+             lower: <id:1806>
+             upper: <id:1807>
+@@ -2720,7 +2720,7 @@
+           uuid:
+             lower: <id:1823>
+             upper: <id:1824>
+-        - identifier: <id:1766>
++        - identifier: <id:1767>
+           uuid:
+             lower: <id:1825>
+             upper: <id:1826>
+@@ -3522,11 +3522,11 @@
+         preferredLocator: TemplateSlide
+         saveToken: '2385'
+       - dataReferences:
+-        - dataIdentifier: '5875'
++        - dataIdentifier: '5876'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2222>
+-        - dataIdentifier: '5876'
++        - dataIdentifier: '5875'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2222>
+@@ -3670,11 +3670,11 @@
+         preferredLocator: TemplateSlide
+         saveToken: '2385'
+       - dataReferences:
+-        - dataIdentifier: '5644'
++        - dataIdentifier: '5643'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2294>
+-        - dataIdentifier: '5643'
++        - dataIdentifier: '5644'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2294>
+@@ -3798,11 +3798,11 @@
+         preferredLocator: TemplateSlide
+         saveToken: '2385'
+       - dataReferences:
+-        - dataIdentifier: '6273'
++        - dataIdentifier: '6274'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2354>
+-        - dataIdentifier: '6274'
++        - dataIdentifier: '6273'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2354>
+@@ -3926,81 +3926,81 @@
+         preferredLocator: TemplateSlide
+         saveToken: '2385'
+       - dataReferences:
++        - dataIdentifier: '9073'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2414>
++        - dataIdentifier: '9069'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2415>
++        - dataIdentifier: '9063'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2416>
++        - dataIdentifier: '9064'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2417>
++        - dataIdentifier: '9074'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2418>
++        - dataIdentifier: '9058'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2419>
++          - count: 1
++            objectIdentifier: <id:2420>
++        - dataIdentifier: '9070'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2421>
++        - dataIdentifier: '9065'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2422>
++        - dataIdentifier: '15'
++          objectReferenceList:
++          - count: 5
++            objectIdentifier: <id:2423>
++        - dataIdentifier: '9061'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2424>
++        - dataIdentifier: '16'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2423>
++        - dataIdentifier: '9068'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2425>
++        - dataIdentifier: '9060'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2426>
++        - dataIdentifier: '9072'
++          objectReferenceList:
++          - count: 1
++            objectIdentifier: <id:2427>
+         - dataIdentifier: '9075'
+           objectReferenceList:
+           - count: 1
+-            objectIdentifier: <id:2414>
+-        - dataIdentifier: '9073'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2415>
++            objectIdentifier: <id:2428>
+         - dataIdentifier: '9066'
+           objectReferenceList:
+           - count: 1
+-            objectIdentifier: <id:2416>
+-        - dataIdentifier: '15'
+-          objectReferenceList:
+-          - count: 5
+-            objectIdentifier: <id:2417>
+-        - dataIdentifier: '9070'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2418>
+-        - dataIdentifier: '9065'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2419>
+-        - dataIdentifier: '9063'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2420>
+-        - dataIdentifier: '9072'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2421>
+-        - dataIdentifier: '9068'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2422>
+-        - dataIdentifier: '9064'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2423>
+-        - dataIdentifier: '9069'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2424>
+-        - dataIdentifier: '9062'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2425>
++            objectIdentifier: <id:2429>
+         - dataIdentifier: '9071'
+           objectReferenceList:
+           - count: 1
+-            objectIdentifier: <id:2426>
+-        - dataIdentifier: '9074'
++            objectIdentifier: <id:2430>
++        - dataIdentifier: '9067'
+           objectReferenceList:
+           - count: 1
+-            objectIdentifier: <id:2427>
+-        - dataIdentifier: '9060'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2428>
+-        - dataIdentifier: '9061'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2429>
+-        - dataIdentifier: '16'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2417>
+-        - dataIdentifier: '9058'
+-          objectReferenceList:
+-          - count: 1
+-            objectIdentifier: <id:2430>
+-          - count: 1
+             objectIdentifier: <id:2431>
+-        - dataIdentifier: '9067'
++        - dataIdentifier: '9062'
+           objectReferenceList:
+           - count: 1
+             objectIdentifier: <id:2432>
+@@ -4943,27 +4943,27 @@
+           uuid:
+             lower: <id:2444>
+             upper: <id:2445>
+-        - identifier: <id:2430>
++        - identifier: <id:2420>
+           uuid:
+             lower: <id:2446>
+             upper: <id:2447>
+-        - identifier: <id:2421>
++        - identifier: <id:2427>
+           uuid:
+             lower: <id:2448>
+             upper: <id:2449>
+-        - identifier: <id:2424>
++        - identifier: <id:2415>
+           uuid:
+             lower: <id:2450>
+             upper: <id:2451>
+-        - identifier: <id:2432>
++        - identifier: <id:2431>
+           uuid:
+             lower: <id:2452>
+             upper: <id:2453>
+-        - identifier: <id:2416>
++        - identifier: <id:2429>
+           uuid:
+             lower: <id:2454>
+             upper: <id:2455>
+-        - identifier: <id:2426>
++        - identifier: <id:2430>
+           uuid:
+             lower: <id:2456>
+             upper: <id:2457>
+@@ -4971,11 +4971,11 @@
+           uuid:
+             lower: <id:2459>
+             upper: <id:2460>
+-        - identifier: <id:2419>
++        - identifier: <id:2422>
+           uuid:
+             lower: <id:2461>
+             upper: <id:2462>
+-        - identifier: <id:2418>
++        - identifier: <id:2421>
+           uuid:
+             lower: <id:2463>
+             upper: <id:2464>
+@@ -4983,19 +4983,19 @@
+           uuid:
+             lower: <id:2465>
+             upper: <id:2466>
+-        - identifier: <id:2414>
++        - identifier: <id:2428>
+           uuid:
+             lower: <id:2467>
+             upper: <id:2468>
+-        - identifier: <id:2415>
++        - identifier: <id:2414>
+           uuid:
+             lower: <id:2469>
+             upper: <id:2470>
+-        - identifier: <id:2420>
++        - identifier: <id:2416>
+           uuid:
+             lower: <id:2471>
+             upper: <id:2472>
+-        - identifier: <id:2425>
++        - identifier: <id:2432>
+           uuid:
+             lower: <id:2473>
+             upper: <id:2474>
+@@ -5003,7 +5003,7 @@
+           uuid:
+             lower: <id:2476>
+             upper: <id:2477>
+-        - identifier: <id:2423>
++        - identifier: <id:2417>
+           uuid:
+             lower: <id:2478>
+             upper: <id:2479>
+@@ -5011,7 +5011,7 @@
+           uuid:
+             lower: <id:2481>
+             upper: <id:2482>
+-        - identifier: <id:2431>
++        - identifier: <id:2419>
+           uuid:
+             lower: <id:2483>
+             upper: <id:2484>
+@@ -5019,7 +5019,7 @@
+           uuid:
+             lower: <id:2486>
+             upper: <id:2487>
+-        - identifier: <id:2429>
++        - identifier: <id:2424>
+           uuid:
+             lower: <id:2488>
+             upper: <id:2489>
+@@ -5035,11 +5035,11 @@
+           uuid:
+             lower: <id:2497>
+             upper: <id:2498>
+-        - identifier: <id:2428>
++        - identifier: <id:2426>
+           uuid:
+             lower: <id:2499>
+             upper: <id:2500>
+-        - identifier: <id:2427>
++        - identifier: <id:2418>
+           uuid:
+             lower: <id:2501>
+             upper: <id:2502>
+@@ -5055,7 +5055,7 @@
+           uuid:
+             lower: <id:2510>
+             upper: <id:2511>
+-        - identifier: <id:2417>
++        - identifier: <id:2423>
+           uuid:
+             lower: <id:2512>
+             upper: <id:2513>
+@@ -5071,7 +5071,7 @@
+           uuid:
+             lower: <id:2521>
+             upper: <id:2522>
+-        - identifier: <id:2422>
++        - identifier: <id:2425>
+           uuid:
+             lower: <id:2523>
+             upper: <id:2524>

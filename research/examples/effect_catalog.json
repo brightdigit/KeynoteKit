@@ -1,0 +1,649 @@
+{
+  "slides": [
+    {
+      "items": [
+        {
+          "text": "magic_move",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "magic_move",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "shimmer",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "shimmer",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "sparkle",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "sparkle",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "swing",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "swing",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "object_cube",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "object_cube",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "object_flip",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "object_flip",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "object_pop",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "object_pop",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "object_push",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "object_push",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "object_revolve",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "object_revolve",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "object_zoom",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "object_zoom",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "perspective",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "perspective",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "clothesline",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "clothesline",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "dissolve",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "dissolve",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "drop",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "drop",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "droplet",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "droplet",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "grid",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "grid",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "iris",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "iris",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "move_in",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "move_in",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "push",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "push",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "reveal",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "reveal",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "switch",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "switch",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "wipe",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "wipe",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "cube",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "cube",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "doorway",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "doorway",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "fall",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "fall",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "flip",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "flip",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "page_flip",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "page_flip",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "pivot",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "pivot",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "scale",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "scale",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "twirl",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "twirl",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "fade_and_move",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "fade_and_move",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "radial_wipe",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "radial_wipe",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "confetti",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "confetti",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "fade_through_color",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "fade_through_color",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "blinds",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "blinds",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "color_planes",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "color_planes",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "flop",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "flop",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "mosaic",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "mosaic",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "reflection",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "reflection",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "revolving_door",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "revolving_door",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "swap",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "swap",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "swoosh",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "swoosh",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    },
+    {
+      "items": [
+        {
+          "text": "twist",
+          "x": 200,
+          "y": 200
+        }
+      ],
+      "transition": {
+        "effect": "twist",
+        "duration": 1.5,
+        "delay": 0.5,
+        "auto_advance": false
+      }
+    }
+  ]
+}

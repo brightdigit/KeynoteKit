@@ -1,0 +1,133 @@
+//
+//  AcceptanceDecksCommand.swift
+//  KeynoteKit
+//
+//  Created by Leo Dion.
+//  Copyright © 2026 BrightDigit.
+//
+//  Permission is hereby granted, free of charge, to any person
+//  obtaining a copy of this software and associated documentation
+//  files (the "Software"), to deal in the Software without
+//  restriction, including without limitation the rights to use,
+//  copy, modify, merge, publish, distribute, sublicense, and/or
+//  sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following
+//  conditions:
+//
+//  The above copyright notice and this permission notice shall be
+//  included in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+//  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+//  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
+//
+
+import AcceptanceDeckCatalog
+import Foundation
+import IWAFraming
+import KeynoteKit
+import KeynoteKitProtobuf
+
+/// Writes the #24 acceptance decks for the human pass:
+/// `swift run AcceptanceDecks [output-directory]` (default `acceptance-decks`).
+///
+/// Each deck is authored through the public DSL from the bundled template and
+/// self-checked before the tool reports it: every record must decode and both
+/// SIGTRAP invariants must hold. The Keynote 15.3 open pass stays human —
+/// structural correctness does not imply Keynote will open the file
+/// (PLAN Step 6).
+@main
+internal enum AcceptanceDecksCommand {
+  /// The per-deck checklist from PLAN Step 6 + drawable depth, printed for
+  /// the human pass.
+  private static let checklist = """
+
+    Human pass (#24) — open each deck in Keynote 15.3 by hand and confirm:
+      Original five:
+        1. no crash
+        2. no repair warning — a silent "repair" is a failure, not a pass
+        3. In/Out/Action builds, ordering, and the transition direction survived
+      Drawable depth:
+        - drawable_geometry.key — Magic Move grows "Alpha" (size + position)
+        - text_formatting.key — "Styled" is large red bold-italic; neighbor plain
+        - image_drawable.key — image present; Dissolve In on the image plays
+      Mixed runs (#40):
+        - text_runs.key — ONE box: "Bold red" large bold red, "italic" italic,
+          spans between plain; neighbor box whole-item bold
+      Text layout (#51):
+        - text_layout.key — slide 1: plain / "•" / "→" / numbered lists;
+          slide 2: left, centered, right, indented, first-line-indented
+          paragraphs; slide 3: TOP / MIDDLE / BOTTOM; slides 4-5: 2- and
+          3-column flows with a visible gutter; slide 6: three rotated boxes
+        - Acceptance.key — the three bare boxes stay bullet-free
+      Monospace probe (#64) — RESOLVED; delete this deck when convenient:
+        - monospace_probe.key — Menlo confirmed working (slides 1-3). The
+          round-one failure was #81, fixed below. Slide 4's condensed MMMM
+          is Keynote's own fallback for capital M at 90pt, not a defect.
+      Multi-paragraph formatting (#81):
+        - multi_paragraph_formatting.key — slide 1: ALL THREE lines Menlo
+          (the MMMM line renders condensed; that is Keynote font fallback,
+          not a bug); slide 2: all five lines bold red; slide 3: the MIDDLE
+          line matches its neighbours — the case per-span styling used to
+          miss; slide 4: left / centre / right / left / left alignment
+          still honored
+      Background fill (#78) — one box per slide; side-by-side boxes overlap
+      under #52 and one fill bleeds under its neighbour:
+        - background_fill.key — slide 1: dark panel BEHIND light text (text
+          legible = fill painted underneath, not over); slides 2 and 3: the
+          same box filled then unfilled, 3 showing the slide background;
+          slide 4: fill + bottom alignment; slide 5: fill + 2 columns, fill
+          covering the gutter too; slide 6: a 40% alpha fill overlapping an
+          opaque one
+        - slide 1 is single-paragraph ON PURPOSE (#81 drops item formatting
+          on multi-paragraph boxes); restore the multi-line sample when
+          #81 lands
+      Syntax highlighting (#66):
+        - syntax_highlight.key — slide 1: keywords / types / strings /
+          numbers / comment each a DISTINCT colour on EVERY line, not just
+          the first; slide 2: the same code on a dark panel, still legible;
+          slide 3: nested indentation holds its columns
+    Tag v0.1.0 when all decks are green.
+    """
+
+  /// Writes and self-checks every acceptance deck, then prints the checklist.
+  internal static func main() throws {
+    let directory = outputDirectory()
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    for acceptance in AcceptanceDeck.all {
+      let url = directory.appending(path: "\(acceptance.name).key")
+      try acceptance.deck.write(to: url)
+      try verify(url: url, buildCount: acceptance.buildCount)
+      print("wrote \(url.path)")
+    }
+    print(checklist)
+  }
+
+  /// The first command-line argument, or `acceptance-decks` in the current
+  /// directory.
+  private static func outputDirectory() -> URL {
+    let arguments = CommandLine.arguments
+    guard arguments.count > 1 else {
+      return URL(filePath: "acceptance-decks", directoryHint: .isDirectory)
+    }
+    return URL(filePath: arguments[1], directoryHint: .isDirectory)
+  }
+
+  /// Reopens a written deck and applies the structural gates: every record
+  /// decodes; the UUID-map invariants hold for the expected build count.
+  private static func verify(url: URL, buildCount: Int) throws {
+    let bundle = try KeyBundle(contentsOfZip: Array(try Data(contentsOf: url)))
+    let surgeon = try KeynoteArchiveSurgeon(bundle: bundle)
+    for member in surgeon.members {
+      for record in member.records {
+        _ = try record.decodedMessages()
+      }
+    }
+    try UUIDMapVerifier.verify(members: surgeon.members, expectedBuildCount: buildCount)
+  }
+}

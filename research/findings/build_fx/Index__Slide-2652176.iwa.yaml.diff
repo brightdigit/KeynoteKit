@@ -1,0 +1,34 @@
+--- A/Index/Slide-2652176.iwa.yaml
++++ B/Index/Slide-2652176.iwa.yaml
+@@ -84,15 +84,17 @@
+         animationAttributes:
+           animationType: In
+           delay: 0.0
+-          duration: 1.0
+-          effect: apple:dissolve character
++          direction: 13
++          duration: 0.5
++          effect: apple:move in character
+           randomNumberSeed: <vol>
+           writingDirectionIsRtl: false
+-        customDeliveryOption: kDeliveryOptionForward
+-        customTextDelivery: kTextDeliveryByObject
++        customBounce: true
++        customDeliveryOption: kDeliveryOptionRandom
++        customTextDelivery: kTextDeliveryByCharacter
+         eventTrigger: 1
+       chunkIdSeed: 1
+-      delivery: All at Once
++      delivery: By Paragraph
+       drawable:
+         identifier: <vol>
+       duration: 0.0
+@@ -119,7 +121,7 @@
+         lower: <id:13>
+         upper: <id:14>
+       delay: 0.0
+-      duration: 1.0
++      duration: 0.5
+       referent: true
+   - header:
+       _pbtype: TSP.ArchiveInfo

@@ -1,0 +1,184 @@
+--- A/Index/DocumentStylesheet.iwa.yaml
++++ B/Index/DocumentStylesheet.iwa.yaml
+@@ -86822,6 +86822,60 @@
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
+       messageInfos:
++      - type: 2021
++        version:
++        - 1
++        - 0
++        - 5
++    objects:
++    - _pbtype: TSWP.CharacterStyleArchive
++      charProperties:
++        bold: true
++      overrideCount: 1
++      super:
++        name: Bold
++        stylesheet:
++          identifier: <vol>
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
++      - type: 2021
++        version:
++        - 1
++        - 0
++        - 5
++    objects:
++    - _pbtype: TSWP.CharacterStyleArchive
++      charProperties:
++        italic: true
++      overrideCount: 1
++      super:
++        name: Italic
++        stylesheet:
++          identifier: <vol>
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
++      - type: 2021
++        version:
++        - 1
++        - 0
++        - 5
++    objects:
++    - _pbtype: TSWP.CharacterStyleArchive
++      charProperties:
++        underline: kSingleUnderline
++      overrideCount: 1
++      super:
++        name: Underline
++        stylesheet:
++          identifier: <vol>
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
+       - fieldInfos:
+         - path:
+             path:
+@@ -86856,60 +86910,6 @@
+       overrideCount: 2
+       super:
+         name: Red Bold
+-        stylesheet:
+-          identifier: <vol>
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+-      - type: 2021
+-        version:
+-        - 1
+-        - 0
+-        - 5
+-    objects:
+-    - _pbtype: TSWP.CharacterStyleArchive
+-      charProperties:
+-        underline: kSingleUnderline
+-      overrideCount: 1
+-      super:
+-        name: Underline
+-        stylesheet:
+-          identifier: <vol>
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+-      - type: 2021
+-        version:
+-        - 1
+-        - 0
+-        - 5
+-    objects:
+-    - _pbtype: TSWP.CharacterStyleArchive
+-      charProperties:
+-        italic: true
+-      overrideCount: 1
+-      super:
+-        name: Italic
+-        stylesheet:
+-          identifier: <vol>
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+-      - type: 2021
+-        version:
+-        - 1
+-        - 0
+-        - 5
+-    objects:
+-    - _pbtype: TSWP.CharacterStyleArchive
+-      charProperties:
+-        bold: true
+-      overrideCount: 1
+-      super:
+-        name: Bold
+         stylesheet:
+           identifier: <vol>
+   - header:
+@@ -86942,29 +86942,6 @@
+       identifier: <vol>
+       messageInfos:
+       - objectReferences:
+-        - <id:473>
+-        type: 2022
+-        version:
+-        - 1
+-        - 0
+-        - 5
+-    objects:
+-    - _pbtype: TSWP.ParagraphStyleArchive
+-      charProperties:
+-        fontSize: 56.0
+-      overrideCount: 1
+-      paraProperties: {}
+-      super:
+-        isVariation: true
+-        parent:
+-          identifier: <vol>
+-        stylesheet:
+-          identifier: <vol>
+-  - header:
+-      _pbtype: TSP.ArchiveInfo
+-      identifier: <vol>
+-      messageInfos:
+-      - objectReferences:
+         - <id:494>
+         type: 2025
+         version:
+@@ -86986,6 +86963,29 @@
+             identifier: <vol>
+           stylesheet:
+             identifier: <vol>
++  - header:
++      _pbtype: TSP.ArchiveInfo
++      identifier: <vol>
++      messageInfos:
++      - objectReferences:
++        - <id:473>
++        type: 2022
++        version:
++        - 1
++        - 0
++        - 5
++    objects:
++    - _pbtype: TSWP.ParagraphStyleArchive
++      charProperties:
++        fontSize: 56.0
++      overrideCount: 1
++      paraProperties: {}
++      super:
++        isVariation: true
++        parent:
++          identifier: <vol>
++        stylesheet:
++          identifier: <vol>
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>

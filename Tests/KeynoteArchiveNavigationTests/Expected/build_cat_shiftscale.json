@@ -1,0 +1,20 @@
+{
+  "_generator": "research/tools/dump_expected_builds.py; keynote-parser 1.14.4.0; deckkit.extract_builds",
+  "fixture": "build_cat_shiftscale.key",
+  "builds": [
+    {
+      "kind": "In",
+      "effect": "apple:shift and scale",
+      "duration": 2.0,
+      "delay": 0.0,
+      "direction": 44,
+      "drawable": "2652614",
+      "options": {
+        "customTextDelivery": "kTextDeliveryByCharacter",
+        "customDeliveryOption": "kDeliveryOptionBackward",
+        "delivery": "All at Once",
+        "eventTrigger": 1
+      }
+    }
+  ]
+}

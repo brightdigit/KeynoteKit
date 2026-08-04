@@ -1,0 +1,225 @@
+//
+//  TextBox.swift
+//  KeynoteKit
+//
+//  Created by Leo Dion.
+//  Copyright © 2026 BrightDigit.
+//
+//  Permission is hereby granted, free of charge, to any person
+//  obtaining a copy of this software and associated documentation
+//  files (the "Software"), to deal in the Software without
+//  restriction, including without limitation the rights to use,
+//  copy, modify, merge, publish, distribute, sublicense, and/or
+//  sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following
+//  conditions:
+//
+//  The above copyright notice and this permission notice shall be
+//  included in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+//  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+//  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+//  OTHER DEALINGS IN THE SOFTWARE.
+//
+
+/// A text item on a slide.
+public struct TextBox: Sendable {
+  /// The item's paragraphs, in declaration order.
+  internal var paragraphs: [Paragraph]
+
+  /// The item's string content: paragraphs joined by newlines.
+  internal var content: String {
+    paragraphs.map { $0.runs.map(\.content).joined() }.joined(separator: "\n")
+  }
+
+  /// The item's x position (Python-parity default 200).
+  internal var x: Double = 200
+
+  /// The item's y position (Python-parity default 200).
+  internal var y: Double = 200
+
+  /// Authored width in points; `nil` leaves the template placeholder size.
+  internal var width: Double?
+
+  /// Authored height in points; `nil` leaves the template placeholder size.
+  internal var height: Double?
+
+  /// Layer order; higher values draw above lower ones. `nil` means 0.
+  /// Declaration order breaks ties. Final order becomes `drawablesZOrder`.
+  internal var zIndex: Int?
+
+  /// Authored font family; `nil` leaves the template style.
+  internal var fontName: String?
+
+  /// Authored font size in points; `nil` leaves the template style.
+  internal var fontSize: Double?
+
+  /// Authored bold; `nil` leaves the template style.
+  internal var isBold: Bool?
+
+  /// Authored italic; `nil` leaves the template style.
+  internal var isItalic: Bool?
+
+  /// Authored text color; `nil` leaves the template style.
+  internal var color: Color?
+
+  /// Authored background fill; `nil` leaves the template style, which for
+  /// the bundled blank template means no fill.
+  internal var background: Color?
+
+  /// Authored list style; `nil` means plain (the theme's None style).
+  internal var listStyle: TextListStyle?
+
+  /// Authored rotation; `nil` leaves the box unrotated.
+  internal var rotation: Angle?
+
+  /// Item-wide paragraph alignment; per-paragraph
+  /// ``Paragraph/alignment(_:)`` overrides it.
+  internal var textAlignment: TextAlignment?
+
+  /// Vertical alignment within the box; `nil` leaves the template's.
+  internal var verticalAlignment: VerticalTextAlignment?
+
+  /// Column count; `nil` leaves the template's single column.
+  internal var columnCount: Int?
+
+  /// Column gutter in points; `nil` inherits the template's gutter.
+  internal var columnGap: Double?
+
+  /// The Magic Move pairing id, when set (compile-time only in v0.1.0).
+  internal var magicIdentifier: String?
+
+  /// The item's builds, in declaration (= delivery) order.
+  internal var builds: [BuildEffectConfiguration] = []
+
+  /// The item's actions, in declaration (= delivery) order.
+  internal var actions: [MotionPath] = []
+
+  /// Creates a text item. Newlines split the string into unstyled
+  /// paragraphs.
+  ///
+  /// - Parameter content: The string to display.
+  public init(_ content: String) {
+    self.paragraphs =
+      content
+      .split(separator: "\n", omittingEmptySubsequences: false)
+      .map { Paragraph(String($0)) }
+  }
+
+  /// Creates a text item from paragraphs. Each bare ``Text`` becomes its
+  /// own paragraph; multi-span paragraphs are written explicitly with
+  /// ``Paragraph``. Item-level modifiers (``font(_:size:)``, ``bold(_:)``,
+  /// …) style the whole item; each span's own style fields override them
+  /// for that span only.
+  public init(@ParagraphsBuilder _ paragraphs: () -> [Paragraph]) {
+    self.paragraphs = paragraphs()
+  }
+
+  /// Positions the item on the slide.
+  public func position(x: Double, y: Double) -> TextBox {
+    var text = self
+    text.x = x
+    text.y = y
+    return text
+  }
+
+  /// Sets the item's size. Unset dimensions leave the template size.
+  public func frame(width: Double, height: Double) -> TextBox {
+    var text = self
+    text.width = width
+    text.height = height
+    return text
+  }
+
+  /// Sets the item's layer order. Higher values draw above lower ones.
+  public func zIndex(_ index: Int) -> TextBox {
+    var text = self
+    text.zIndex = index
+    return text
+  }
+
+  /// Sets the font family and optional size.
+  public func font(_ name: String, size: Double? = nil) -> TextBox {
+    var text = self
+    text.fontName = name
+    if let size {
+      text.fontSize = size
+    }
+    return text
+  }
+
+  /// Sets the font size in points.
+  public func fontSize(_ size: Double) -> TextBox {
+    var text = self
+    text.fontSize = size
+    return text
+  }
+
+  /// Marks the text bold.
+  public func bold(_ isBold: Bool = true) -> TextBox {
+    var text = self
+    text.isBold = isBold
+    return text
+  }
+
+  /// Marks the text italic.
+  public func italic(_ isItalic: Bool = true) -> TextBox {
+    var text = self
+    text.isItalic = isItalic
+    return text
+  }
+
+  /// Sets the text color.
+  public func foregroundColor(_ color: Color) -> TextBox {
+    var text = self
+    text.color = color
+    return text
+  }
+
+  /// Fills the box behind its text with a solid color — the code-panel
+  /// treatment the demo deck needs (#78).
+  ///
+  /// The fill covers the box's whole frame, so pair it with an explicit
+  /// ``frame(width:height:)``; an unsized box takes the template
+  /// placeholder's size, which is rarely what a panel wants.
+  ///
+  /// Gradient and image fills are out of scope for v0.1.0, as is stroke.
+  public func background(_ color: Color) -> TextBox {
+    var text = self
+    text.background = color
+    return text
+  }
+
+  /// Tags the item for Magic Move pairing.
+  public func magicId(_ identifier: String) -> TextBox {
+    var text = self
+    text.magicIdentifier = identifier
+    return text
+  }
+
+  /// Adds builds of `phase` to the item, in declaration order.
+  public func build(
+    _ phase: BuildPhase,
+    @BuildEffectsBuilder _ effects: () -> [BuildEffectConfiguration]
+  ) -> TextBox {
+    var text = self
+    for var configuration in effects() {
+      configuration.phase = phase
+      text.builds.append(configuration)
+    }
+    return text
+  }
+
+  /// Adds an Action build (a motion path) to the item. Repeated calls
+  /// accumulate in declaration order, like ``build(_:_:)``.
+  public func action(_ path: () -> MotionPath) -> TextBox {
+    var text = self
+    text.actions.append(path())
+    return text
+  }
+}

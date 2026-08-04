@@ -1,0 +1,10 @@
+{
+  "slides": [
+    {
+      "items": [{"text": "Build Out", "x": 200, "y": 250}],
+      "builds": [
+        {"kind": "Out", "effect": "dissolve", "duration": 1.0, "target": "item:0"}
+      ]
+    }
+  ]
+}

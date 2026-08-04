@@ -1,0 +1,11 @@
+--- A/Index/Slide.iwa.yaml
++++ B/Index/Slide.iwa.yaml
+@@ -226,7 +226,7 @@
+           object:
+             identifier: <vol>
+       text:
+-      - Alpha
++      - Omega
+   - header:
+       _pbtype: TSP.ArchiveInfo
+       identifier: <vol>
