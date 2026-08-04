@@ -75,10 +75,10 @@ extension Deck {
   private func magicDrawables(
     of slide: Slide,
     slideIndex: Int
-  ) throws -> [String: SlideDrawable] {
-    var drawables: [String: SlideDrawable] = [:]
+  ) throws -> [String: any SlideDrawable] {
+    var drawables: [String: any SlideDrawable] = [:]
     for item in slide.items {
-      guard let identifier = item.magicIdentifier else {
+      guard let identifier = item.drawableMagicIdentifier else {
         continue
       }
       guard drawables.updateValue(item, forKey: identifier) == nil else {
@@ -90,28 +90,24 @@ extension Deck {
   }
 
   /// Requires the pair to be matchable: same type, same content.
+  ///
+  /// Compares ``SlideDrawable/magicMoveIdentity`` rather than switching on
+  /// a pair of enum cases. The identity splits kind from content so the two
+  /// failures stay distinguishable: differing kinds are a type mismatch,
+  /// equal kinds with differing content are a content mismatch.
   private func validatePair(
-    _ first: SlideDrawable,
-    _ second: SlideDrawable,
+    _ first: any SlideDrawable,
+    _ second: any SlideDrawable,
     magicId: String,
     slideIndex: Int
   ) throws {
-    switch (first, second) {
-    case (.text(let outgoing), .text(let incoming)):
-      guard effectiveText(of: outgoing) == effectiveText(of: incoming) else {
-        throw MagicMoveError.contentMismatch(magicId: magicId, slideIndex: slideIndex)
-      }
-    case (.image(let outgoing), .image(let incoming)):
-      guard outgoing.data == incoming.data else {
-        throw MagicMoveError.contentMismatch(magicId: magicId, slideIndex: slideIndex)
-      }
-    default:
+    let outgoing = first.magicMoveIdentity
+    let incoming = second.magicMoveIdentity
+    guard outgoing.kind == incoming.kind else {
       throw MagicMoveError.typeMismatch(magicId: magicId, slideIndex: slideIndex)
     }
-  }
-
-  /// The string Keynote's matcher sees: the box's paragraphs joined.
-  private func effectiveText(of text: TextBox) -> String {
-    text.content
+    guard outgoing.content == incoming.content else {
+      throw MagicMoveError.contentMismatch(magicId: magicId, slideIndex: slideIndex)
+    }
   }
 }

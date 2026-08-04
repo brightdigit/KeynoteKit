@@ -27,43 +27,51 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// A drawable on a slide — text or image — before z-order sorting.
-public enum SlideDrawable: Sendable {
-  /// A text item.
-  case text(TextBox)
+/// Something that can be placed on a slide — text or an image today.
+///
+/// A protocol rather than a closed enum: the authoring surface is open, so
+/// a drawable kind can be added without touching every site that handles
+/// one. The *archive* surface stays closed — ``lowered()`` returns
+/// ``AuthoredSlide/DrawableItem``, a package enum the surgeon switches on
+/// exhaustively, because the writer genuinely must handle every case it can
+/// receive.
+///
+/// Public so a layout node can vend one and a conformer outside this module
+/// can be placed on a slide. Lowering into the writer's representation is
+/// deliberately *not* a requirement here — it needs `AuthoredSlide`, which
+/// is package-level — so it lives in a separate package protocol,
+/// ``LowerableDrawable``, that only `TextBox` and `Image` satisfy.
+public protocol SlideDrawable: Sendable {
+  /// Layer order; higher draws above lower.
+  ///
+  /// Normalized: a drawable that declared none reports 0, so sorting never
+  /// has to unwrap. Declaration order breaks ties.
+  var layerOrder: Int { get }
 
-  /// An image item.
-  case image(Image)
-
-  /// Layer order used for sorting into `drawablesZOrder`.
-  internal var zIndex: Int {
-    switch self {
-    case .text(let text): text.zIndex ?? 0
-    case .image(let image): image.zIndex ?? 0
-    }
-  }
-
-  /// Builds attached to this drawable.
-  internal var builds: [BuildEffectConfiguration] {
-    switch self {
-    case .text(let text): text.builds
-    case .image(let image): image.builds
-    }
-  }
+  /// Builds attached to this drawable, in declaration order.
+  var drawableBuilds: [BuildEffectConfiguration] { get }
 
   /// Action builds attached to this drawable, in declaration order.
-  internal var actions: [MotionPath] {
-    switch self {
-    case .text(let text): text.actions
-    case .image(let image): image.actions
-    }
-  }
+  var drawableActions: [MotionPath] { get }
 
-  /// The drawable's Magic Move pairing declaration, when present.
-  internal var magicIdentifier: String? {
-    switch self {
-    case .text(let text): text.magicIdentifier
-    case .image(let image): image.magicIdentifier
-    }
-  }
+  /// The Magic Move pairing declaration, when present.
+  var drawableMagicIdentifier: String? { get }
+
+  /// The authored size, where either axis may be unset.
+  var authoredSize: DrawableSize { get }
+
+  /// The drawable's current position in slide coordinates.
+  var authoredPosition: LayoutPoint { get }
+
+  /// What Keynote's Magic Move matcher compares two drawables by.
+  ///
+  /// The format stores no object correspondence
+  /// (`research/findings/magic_move_correspondence.md`) — matching is a
+  /// runtime heuristic keyed on type and content. Two drawables can morph
+  /// only if their identities are equal, so this stands in for the
+  /// pairwise type-and-content check a closed enum would switch on.
+  var magicMoveIdentity: MagicMoveIdentity { get }
+
+  /// Returns a copy positioned at `x`, `y` in slide coordinates.
+  func positioned(x: Double, y: Double) -> any SlideDrawable
 }

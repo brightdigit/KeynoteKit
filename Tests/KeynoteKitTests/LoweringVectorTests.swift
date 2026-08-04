@@ -110,7 +110,7 @@ internal struct LoweringVectorTests {
   }
 
   @Test("SlideBuilder lowers if/else and for slides in declaration order")
-  internal func slideBuilderControlFlowLowers() {
+  internal func slideBuilderControlFlowLowers() throws {
     let includeExtra = true
     let deck = Deck {
       if includeExtra {
@@ -125,7 +125,7 @@ internal struct LoweringVectorTests {
         Slide { TextBox("absent") }
       }
     }
-    let authored = deck.authoredDeck()
+    let authored = try deck.authoredDeck()
     #expect(authored.slides.count == 3)
   }
 

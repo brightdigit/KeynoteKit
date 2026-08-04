@@ -27,41 +27,52 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-/// The result builder collecting a slide's ``TextBox`` and ``Image`` items.
+/// The result builder collecting a slide's layout elements — drawables,
+/// stacks, spacers, and padded wrappers.
+///
+/// Collects ``SlideLayout`` rather than `[SlideDrawable]` so a stack can
+/// nest. The tree resolves to absolutely-positioned drawables at build time
+/// (see ``LayoutNode/resolve(in:origin:)``), so the surgeon still receives
+/// the same flat, absolutely-positioned list it always has.
 @resultBuilder
 public enum SlideItemsBuilder {
-  /// Lifts a text item into the builder's drawable list.
-  public static func buildExpression(_ text: TextBox) -> [SlideDrawable] {
-    [.text(text)]
+  /// Lifts a text item into the builder's element list.
+  public static func buildExpression(_ text: TextBox) -> [any SlideLayout] {
+    [text]
   }
 
-  /// Lifts an image item into the builder's drawable list.
-  public static func buildExpression(_ image: Image) -> [SlideDrawable] {
-    [.image(image)]
+  /// Lifts an image item into the builder's element list.
+  public static func buildExpression(_ image: Image) -> [any SlideLayout] {
+    [image]
   }
 
-  /// Combines the block's items.
-  public static func buildBlock(_ items: [SlideDrawable]...) -> [SlideDrawable] {
+  /// Lifts any layout element — stack, spacer, or padded wrapper.
+  public static func buildExpression(_ layout: any SlideLayout) -> [any SlideLayout] {
+    [layout]
+  }
+
+  /// Combines the block's elements.
+  public static func buildBlock(_ items: [any SlideLayout]...) -> [any SlideLayout] {
     items.flatMap { $0 }
   }
 
   /// Supports `for` loops.
-  public static func buildArray(_ items: [[SlideDrawable]]) -> [SlideDrawable] {
+  public static func buildArray(_ items: [[any SlideLayout]]) -> [any SlideLayout] {
     items.flatMap { $0 }
   }
 
   /// Supports `if` without `else`.
-  public static func buildOptional(_ items: [SlideDrawable]?) -> [SlideDrawable] {
+  public static func buildOptional(_ items: [any SlideLayout]?) -> [any SlideLayout] {
     items ?? []
   }
 
   /// Supports the `if` branch of `if`/`else`.
-  public static func buildEither(first items: [SlideDrawable]) -> [SlideDrawable] {
+  public static func buildEither(first items: [any SlideLayout]) -> [any SlideLayout] {
     items
   }
 
   /// Supports the `else` branch of `if`/`else`.
-  public static func buildEither(second items: [SlideDrawable]) -> [SlideDrawable] {
+  public static func buildEither(second items: [any SlideLayout]) -> [any SlideLayout] {
     items
   }
 }

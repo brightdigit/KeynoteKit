@@ -97,7 +97,7 @@ public struct Deck: Sendable {
     var bundle = try KeyBundle(contentsOfZip: Array(template.data()))
     var surgeon = try KeynoteArchiveSurgeon(bundle: bundle)
     var generator = SystemRandomNumberGenerator()
-    try surgeon.author(authoredDeck(), into: &bundle, using: &generator)
+    try surgeon.author(try authoredDeck(), into: &bundle, using: &generator)
     try Data(bundle.serializedZip()).write(to: url, options: .atomic)
   }
 }
