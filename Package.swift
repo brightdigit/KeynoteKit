@@ -18,7 +18,10 @@ let package = Package(
     .library(name: "KeynoteKit", targets: ["KeynoteKit"]),
     .library(name: "KeynoteKitScripting", targets: ["KeynoteKitScripting"]),
     .library(name: "KeynoteKitSwiftUI", targets: ["KeynoteKitSwiftUI"]),
-    .library(name: "KeynoteKitSyntax", targets: ["KeynoteKitSyntax"])
+    .library(name: "KeynoteKitSyntax", targets: ["KeynoteKitSyntax"]),
+    // #56 showcase presentation (library) + writer CLI (executable).
+    .library(name: "KeynoteKitDemo", targets: ["KeynoteKitDemo"]),
+    .executable(name: "KeynoteKitDemoTool", targets: ["KeynoteKitDemoTool"])
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-protobuf", from: "1.38.1"),
@@ -116,6 +119,27 @@ let package = Package(
     // across a ladder of slide counts to separate quadratic growth from
     // "slow but linear" (issue #44's `SlideCatalog.locate` cost).
     .executableTarget(name: "ScaleSpike", dependencies: ["KeynoteKit"]),
+
+    // #56 sample presentation — public showcase deck. Depends on
+    // `KeynoteKitSyntax` for upcoming code slides; never a dependency of
+    // `KeynoteKit` itself.
+    .target(
+      name: "KeynoteKitDemo",
+      dependencies: ["KeynoteKit", "KeynoteKitSyntax"],
+      exclude: ["README.md"]
+    ),
+
+    // `swift run KeynoteKitDemoTool [dir]` writes `demo.key` from
+    // `DemoPresentation.deck` and structurally self-checks before exit.
+    .executableTarget(
+      name: "KeynoteKitDemoTool",
+      dependencies: [
+        "KeynoteKitDemo",
+        "KeynoteKit",
+        "IWAFraming",
+        "KeynoteKitProtobuf",
+      ]
+    ),
 
     .testTarget(name: "SnappyTests", dependencies: ["Snappy"]),
     // Internal archive navigation (#18): package-ACL only, deliberately not a

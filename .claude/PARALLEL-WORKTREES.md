@@ -66,7 +66,7 @@ flowchart LR
 | **L — Layout** | #65 → #67 | new `LayoutNode` + resolve pass in `KeynoteKit`; compile-time only | No (#67 verify: yes) |
 | **C — Code color** | #66 | **new** `KeynoteKitSyntax` target + `swift-syntax` dep | No |
 | **F — Fill** | #78 | `KeynoteArchiveSurgeon+ShapeStyle.swift`, `TextBox` | **Yes** (render pass) |
-| **D — Demo** | #56 → render pass → manual movie | `Sources/` demo target, `Package.swift` | **Yes** (2 cycles) |
+| **D — Demo** | #56 → render pass → manual movie | `KeynoteKitDemo` + `KeynoteKitDemoTool` products (scaffold landed; authoring remains) | **Yes** (2 cycles) |
 | **X — Docs** | #68, #69, #70 | `.docc`, `README.md`, `docs/` | No |
 | **T — Tag gate** | #24 | acceptance checklist | **Yes** |
 
@@ -160,8 +160,11 @@ gate goes green.
 
 ### Phase 2 — the deck
 
-Lane D (#56) starts once #65, #66, and #78 are on `v0.1.x`. Budget **two**
-human render cycles. Movie + screenshots are captured manually here.
+Lane D (#56): products `KeynoteKitDemo` (library) + `KeynoteKitDemoTool`
+(executable) are scaffolded with a one-slide stub (`DemoPresentation`). Full
+15–20 slide authoring + render pass still starts once #65, #66, and #78 are on
+`v0.1.x`. Budget **two** human render cycles. Movie + screenshots are captured
+manually here.
 
 ### Phase 3 — tag
 
@@ -262,10 +265,11 @@ Run at most **one** Keynote-bound lane at a time on a given Mac.
 
 | Area | Who touches it | Rule |
 |---|---|---|
-| `Package.swift` | #66 (new target + dep), #56 (demo target) | Land #66's target before #56 adds the demo product |
+| `Package.swift` | #66 (done), #56 demo products (scaffold landed) | `KeynoteKitDemo` + `KeynoteKitDemoTool` products exist; further #56 work is deck content |
 | `KeynoteArchiveSurgeon+ShapeStyle.swift` | #78 only | Sole owner — no other demo lane edits the shape fork |
 | `TextBox.swift` | #78 (fill), #65 (padding modifiers) | Both add modifiers; land #78 first or rebase L on it |
-| `Sources/AcceptanceDeckCatalog/` | #56, #78 verification decks | Additive files only — never rewrite an existing deck |
+| `Sources/KeynoteKitDemo/` | #56 authoring | Additive slides in `DemoPresentation` / sibling files |
+| `Sources/AcceptanceDeckCatalog/` | #78 verification decks | Additive files only — never rewrite an existing deck |
 | `.claude/PLAN.md` / handoff | any lane recording a decision | Tiny additive edits; rebase carefully |
 | GitHub issues + milestones | claim / close / re-milestone | Source of truth; `gh issue list --milestone v0.1.0` |
 

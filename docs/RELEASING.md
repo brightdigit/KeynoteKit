@@ -34,14 +34,15 @@ A release that changes none of those can ship with the existing artifacts.
 
 ## 1. Regenerate the demo `.key`
 
-> The demo target ships with
-> [#56](https://github.com/brightdigit/KeynoteKit/issues/56). Until it lands,
-> substitute `swift run AcceptanceDecks <dir>` — the same structural
-> self-check runs over the acceptance catalog.
+The showcase deck is
+[#56](https://github.com/brightdigit/KeynoteKit/issues/56): library product
+`KeynoteKitDemo` (`DemoPresentation.deck`) and executable product
+`KeynoteKitDemoTool`. The tutorial body may still be a stub — the tool
+always structurally self-checks what is authored.
 
 ```bash
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
-xcrun swift run KeynoteKitDemo ~/Desktop/keynotekit-demo
+xcrun swift run KeynoteKitDemoTool ~/Desktop/keynotekit-demo
 ```
 
 The write path self-checks as it goes: every record must decode, and the
