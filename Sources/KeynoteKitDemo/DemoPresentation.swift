@@ -47,6 +47,14 @@ public enum DemoPresentation {
   /// Expected `KN.BuildArchive` count for the structural self-check.
   public static let buildCount = 1
 
+  /// Sample image loaded from the demo target's bundle resources.
+  package static var sampleImage: Image? {
+    guard let url = Bundle.module.url(forResource: "sample", withExtension: "jpg") else {
+      return nil
+    }
+    return try? Image(contentsOf: url)
+  }
+
   /// The showcase deck.
   public static var deck: Deck {
     Deck {
@@ -75,9 +83,7 @@ public enum DemoPresentation {
           .fontSize(36)
         }.padding(80)
       }
-      if let imageURL = Bundle.module.url(forResource: "sample", withExtension: "jpg"),
-        let sampleImage = try? Image(contentsOf: imageURL)
-      {
+      if let sampleImage {
         Slide {
           HStack(spacing: 60) {
             sampleImage
