@@ -187,6 +187,16 @@ internal struct LayoutPrimitivesTests {
     #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 0)])
   }
 
+  @Test("top-level padding insets a top-level stack or element from top-left")
+  internal func topLevelPaddingInsets() {
+    let slide = Slide {
+      VStack {
+        TextBox("padded").frame(width: 100, height: 100)
+      }.padding(EdgeInsets(top: 80, leading: 80))
+    }
+    #expect(positions(of: slide) == [LayoutPoint(x: 80, y: 80)])
+  }
+
   /// The resolved positions of a slide's drawables, in declaration order.
   ///
   /// `LayoutPoint` is `Equatable`, so these assertions compare directly —

@@ -62,13 +62,16 @@ public enum DemoPresentation {
           .frame(width: 1_680, height: 80)
           .fontSize(36)
       }
-      Slide{
-        VStack{
-          TextBox("Supports a variety of styles").fontSize(72)
-          TextBox(){
+      Slide {
+        VStack(spacing: 20) {
+          TextBox("Supports a variety of styles")
+            .frame(width: 1_680, height: 180)
+            .fontSize(72)
+          TextBox {
             Text("Bold").bold().foregroundColor(.init(green: 1.0))
             Text("Italics").italic().foregroundColor(.init(red: 1.0))
           }
+          .frame(width: 1_680, height: 80)
           .fontSize(36)
         }.padding(80)
       }

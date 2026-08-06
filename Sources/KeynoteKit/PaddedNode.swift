@@ -58,7 +58,8 @@ public struct PaddedNode: LayoutNode {
         height: $0.height - insets.top - insets.bottom
       )
     }
-    let moved = origin?.offset(deltaX: insets.leading, deltaY: insets.top)
+    let baseOrigin = origin ?? LayoutPoint(x: 0, y: 0)
+    let moved = baseOrigin.offset(deltaX: insets.leading, deltaY: insets.top)
     return child.resolve(in: inner, origin: moved)
   }
 }
