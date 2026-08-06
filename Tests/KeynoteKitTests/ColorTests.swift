@@ -26,6 +26,33 @@ internal struct ColorTests {
     #expect(grey.opacity == 1)
   }
 
+  @Test("default argument initializers default components to 0 and opacity to 1")
+  internal func defaultArguments() {
+    let defaultRed = Color(red: 0.5)
+    #expect(defaultRed.red == 0.5)
+    #expect(defaultRed.green == 0)
+    #expect(defaultRed.blue == 0)
+    #expect(defaultRed.opacity == 1)
+
+    let defaultGreen = Color(green: 0.5)
+    #expect(defaultGreen.red == 0)
+    #expect(defaultGreen.green == 0.5)
+    #expect(defaultGreen.blue == 0)
+    #expect(defaultGreen.opacity == 1)
+
+    let defaultBlue = Color(blue: 0.5)
+    #expect(defaultBlue.red == 0)
+    #expect(defaultBlue.green == 0)
+    #expect(defaultBlue.blue == 0.5)
+    #expect(defaultBlue.opacity == 1)
+
+    let defaultWhite = Color(white: 0)
+    #expect(defaultWhite.red == 0)
+    #expect(defaultWhite.green == 0)
+    #expect(defaultWhite.blue == 0)
+    #expect(defaultWhite.opacity == 1)
+  }
+
   @Test("opacity(_:) returns a copy, leaving the receiver alone")
   internal func opacityModifier() {
     let opaque = Color(red: 0.2, green: 0.4, blue: 0.6)

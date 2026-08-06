@@ -62,6 +62,16 @@ public enum DemoPresentation {
           .frame(width: 1_680, height: 80)
           .fontSize(36)
       }
+      Slide{
+        VStack{
+          TextBox("Supports a variety of styles").fontSize(72)
+          TextBox(){
+            Text("Bold").bold().foregroundColor(.init(green: 1.0))
+            Text("Italics").italic().foregroundColor(.init(red: 1.0))
+          }
+          .fontSize(36)
+        }.padding(80)
+      }
       // Next (#56): grow to the 15–20 slide tutorial body — feature tour,
       // syntax-highlighted code panels (`KeynoteKitSyntax` + #78 fills),
       // layout stacks, transitions, and builds.

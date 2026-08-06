@@ -75,7 +75,7 @@ public struct Color: Equatable, Sendable {
   public var opacity: Double
 
   /// Creates an sRGB color. Components are clamped to `0...1`.
-  public init(red: Double, green: Double, blue: Double, opacity: Double = 1) {
+  public init(red: Double = 0, green: Double = 0, blue: Double = 0, opacity: Double = 1) {
     self.red = Self.clamped(red)
     self.green = Self.clamped(green)
     self.blue = Self.clamped(blue)
@@ -83,7 +83,7 @@ public struct Color: Equatable, Sendable {
   }
 
   /// Creates a grey. Components are clamped to `0...1`.
-  public init(white: Double, opacity: Double = 1) {
+  public init(white: Double = 0, opacity: Double = 1) {
     self.init(red: white, green: white, blue: white, opacity: opacity)
   }
 
