@@ -40,6 +40,9 @@ public struct HStack: SlideLayout {
   /// Cross-axis alignment of the children.
   internal var alignment: LayoutAlignment
 
+  /// Main-axis alignment of the children.
+  internal var horizontalAlignment: LayoutAlignment
+
   /// Fixed gap between adjacent children, in points.
   internal var spacing: Double
 
@@ -58,6 +61,7 @@ public struct HStack: SlideLayout {
     StackNode(
       axis: .horizontal,
       alignment: alignment,
+      mainAlignment: horizontalAlignment,
       spacing: spacing,
       children: children.map(\.layoutNode),
       frame: frameSize
@@ -66,11 +70,13 @@ public struct HStack: SlideLayout {
 
   /// Creates a stack.
   public init(
-    alignment: HorizontalAlignment = .leading,
+    alignment: VerticalAlignment = .top,
+    horizontalAlignment: HorizontalAlignment = .leading,
     spacing: Double = 0,
     @SlideItemsBuilder content: () -> [any SlideLayout]
   ) {
     self.alignment = alignment.node
+    self.horizontalAlignment = horizontalAlignment.node
     self.spacing = spacing
     self.children = content()
     self.frameSize = nil

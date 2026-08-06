@@ -68,6 +68,45 @@ internal struct LayoutPrimitivesTests {
     #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 300, y: 50)])
   }
 
+  @Test("vertical center alignment centers content vertically inside the frame")
+  internal func verticalCenterAlignment() {
+    let slide = Slide {
+      VStack(verticalAlignment: .center) {
+        TextBox("a").frame(width: 200, height: 50)
+        TextBox("b").frame(width: 200, height: 50)
+      }
+      .frame(width: 400, height: 200)
+    }
+    // 200 frame - 100 content = 100 slack -> initial y offset 50.
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 50), LayoutPoint(x: 0, y: 100)])
+  }
+
+  @Test("vertical bottom alignment aligns content to the bottom of the frame")
+  internal func verticalBottomAlignment() {
+    let slide = Slide {
+      VStack(verticalAlignment: .bottom) {
+        TextBox("a").frame(width: 200, height: 50)
+        TextBox("b").frame(width: 200, height: 50)
+      }
+      .frame(width: 400, height: 200)
+    }
+    // 200 frame - 100 content = 100 slack -> initial y offset 100.
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 100), LayoutPoint(x: 0, y: 150)])
+  }
+
+  @Test("vertical center alignment overflows symmetrically up and down when overflowing")
+  internal func verticalCenterOverflow() {
+    let slide = Slide {
+      VStack(verticalAlignment: .center) {
+        TextBox("a").frame(width: 200, height: 200)
+        TextBox("b").frame(width: 200, height: 200)
+      }
+      .frame(width: 400, height: 200)
+    }
+    // 200 frame - 400 content = -200 -> initial y offset -100.
+    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: -100), LayoutPoint(x: 0, y: 100)])
+  }
+
   @Test("nested stacks compose their offsets")
   internal func nestedStacks() {
     let slide = Slide {

@@ -35,6 +35,9 @@ public struct StackNode: LayoutNode {
   /// Cross-axis alignment.
   internal var alignment: LayoutAlignment
 
+  /// Main-axis alignment.
+  internal var mainAlignment: LayoutAlignment
+
   /// Fixed gap between adjacent children, in points.
   internal var spacing: Double
 
@@ -79,12 +82,14 @@ public struct StackNode: LayoutNode {
   public init(
     axis: LayoutAxis,
     alignment: LayoutAlignment,
+    mainAlignment: LayoutAlignment = .leading,
     spacing: Double,
     children: [any LayoutNode],
     frame: LayoutSize?
   ) {
     self.axis = axis
     self.alignment = alignment
+    self.mainAlignment = mainAlignment
     self.spacing = spacing
     self.children = children
     self.frame = frame
@@ -112,7 +117,7 @@ public struct StackNode: LayoutNode {
     let share = spacerShare(sizes: sizes, bounds: bounds)
     let crossExtent = self.crossExtent(sizes: sizes, bounds: bounds)
     var resolved: [any SlideDrawable] = []
-    var offset: Double = 0
+    var offset: Double = initialMainOffset(in: bounds, sizes: sizes)
     for (index, child) in children.enumerated() {
       if index > 0 {
         offset += spacing
@@ -155,6 +160,29 @@ public struct StackNode: LayoutNode {
       resolved += child.resolve(in: childSize, origin: base.offset(deltaX: deltaX, deltaY: deltaY))
     }
     return resolved
+  }
+
+  /// The initial offset along the main axis for alignment when no spacers exist.
+  private func initialMainOffset(in bounds: LayoutSize?, sizes: [LayoutSize]) -> Double {
+    let spacerCount = children.count { $0 is SpacerNode }
+    guard spacerCount == 0, let bounds else {
+      return 0
+    }
+    let gaps = Double(max(0, children.count - 1)) * spacing
+    let used =
+      axis == .vertical
+      ? sizes.map(\.height).reduce(0, +)
+      : sizes.map(\.width).reduce(0, +)
+    let available = axis == .vertical ? bounds.height : bounds.width
+    let totalContentExtent = used + gaps
+    switch mainAlignment {
+    case .leading:
+      return 0
+    case .center:
+      return (available - totalContentExtent) / 2
+    case .trailing:
+      return available - totalContentExtent
+    }
   }
 
   /// Each spacer's share of the leftover space.
