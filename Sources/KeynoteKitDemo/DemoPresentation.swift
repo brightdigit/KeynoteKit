@@ -27,6 +27,7 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
+import Foundation
 import KeynoteKit
 
 /// The #56 showcase presentation: a living sample authored through the
@@ -44,8 +45,7 @@ import KeynoteKit
 /// ```
 public enum DemoPresentation {
   /// Expected `KN.BuildArchive` count for the structural self-check.
-  /// Remains `0` until the stub gains builds.
-  public static let buildCount = 0
+  public static let buildCount = 1
 
   /// The showcase deck.
   public static var deck: Deck {
@@ -74,6 +74,32 @@ public enum DemoPresentation {
           .frame(width: 1_680, height: 80)
           .fontSize(36)
         }.padding(80)
+      }
+      if let imageURL = Bundle.module.url(forResource: "sample", withExtension: "jpg"),
+        let sampleImage = try? Image(contentsOf: imageURL)
+      {
+        Slide {
+          HStack(spacing: 60) {
+            sampleImage
+              .frame(width: 700, height: 450)
+              .build(.in) { Dissolve().duration(1.0) }
+
+            VStack(spacing: 20) {
+              TextBox("Embedded Images")
+                .frame(width: 900, height: 80)
+                .fontSize(48)
+                .bold()
+              TextBox(
+                "KeynoteKit embeds JPEGs & PNGs natively with "
+                  + "exact pixel dimensions and optional build effects."
+              )
+              .frame(width: 900, height: 160)
+              .fontSize(28)
+            }
+            .frame(width: 900, height: 450)
+          }
+          .padding(80)
+        }
       }
       // Next (#56): grow to the 15–20 slide tutorial body — feature tour,
       // syntax-highlighted code panels (`KeynoteKitSyntax` + #78 fills),

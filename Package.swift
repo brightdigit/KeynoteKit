@@ -126,7 +126,8 @@ let package = Package(
     .target(
       name: "KeynoteKitDemo",
       dependencies: ["KeynoteKit", "KeynoteKitSyntax"],
-      exclude: ["README.md"]
+      exclude: ["README.md"],
+      resources: [.copy("Resources/sample.jpg")]
     ),
 
     // `swift run KeynoteKitDemoTool [dir]` writes `demo.key` from
