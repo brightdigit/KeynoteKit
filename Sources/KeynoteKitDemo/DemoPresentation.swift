@@ -45,7 +45,7 @@ import KeynoteKit
 /// ```
 public enum DemoPresentation {
   /// Expected `KN.BuildArchive` count for the structural self-check.
-  public static let buildCount = 1
+  public static let buildCount = 0
 
   /// Sample image loaded from the demo target's bundle resources.
   package static var sampleImage: Image? {
@@ -88,7 +88,6 @@ public enum DemoPresentation {
           HStack(spacing: 60) {
             sampleImage
               .frame(width: 700, height: 450)
-              .build(.in) { Dissolve().duration(1.0) }
 
             VStack(spacing: 20) {
               TextBox("Embedded Images")
