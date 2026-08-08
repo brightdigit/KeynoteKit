@@ -50,6 +50,9 @@ public struct StackNode: LayoutNode {
   /// `nil` means the stack sizes to its children.
   internal var frame: LayoutSize?
 
+  /// Which axes expand into the bounds the parent proposes.
+  internal var flexible: FlexibleAxes = .none
+
   /// The stack's extent: its frame when declared, else the sum along its
   /// axis plus spacing, by the widest child across it. A depth stack takes
   /// the maximum on both axes, since its children share one origin.
@@ -78,6 +81,9 @@ public struct StackNode: LayoutNode {
     }
   }
 
+  /// Which axes expand into the bounds the parent proposes.
+  public var flexibleAxes: FlexibleAxes { flexible }
+
   /// Creates a stack node.
   public init(
     axis: LayoutAxis,
@@ -85,7 +91,8 @@ public struct StackNode: LayoutNode {
     mainAlignment: LayoutAlignment = .leading,
     spacing: Double,
     children: [any LayoutNode],
-    frame: LayoutSize?
+    frame: LayoutSize?,
+    flexible: FlexibleAxes = .none
   ) {
     self.axis = axis
     self.alignment = alignment
@@ -93,14 +100,17 @@ public struct StackNode: LayoutNode {
     self.spacing = spacing
     self.children = children
     self.frame = frame
+    self.flexible = flexible
   }
 
   /// Positions the children and recurses into each.
   ///
   /// A declared frame wins over inherited bounds — that is what gives a
-  /// nested spacer slack to divide.
+  /// nested spacer slack to divide. A flexible axis inverts that: it takes
+  /// the proposed bounds instead, which is what `.frame(maxWidth:
+  /// .infinity)` means.
   public func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable] {
-    let container = frame ?? bounds
+    let container = containerSize(proposedBy: bounds)
     guard axis != .depth else {
       return resolveOverlaid(in: container, origin: origin)
     }
@@ -116,6 +126,7 @@ public struct StackNode: LayoutNode {
     let sizes = children.map(\.size)
     let share = spacerShare(sizes: sizes, bounds: bounds)
     let crossExtent = self.crossExtent(sizes: sizes, bounds: bounds)
+    let mainShare = fillingMainShare(sizes: sizes, bounds: bounds, spacerShare: share)
     var resolved: [any SlideDrawable] = []
     var offset: Double = initialMainOffset(in: bounds, sizes: sizes)
     for (index, child) in children.enumerated() {
@@ -126,7 +137,13 @@ public struct StackNode: LayoutNode {
         offset += share
         continue
       }
-      let childSize = sizes[index]
+      let childSize = proposal(
+        for: child,
+        intrinsic: sizes[index],
+        crossExtent: crossExtent,
+        mainShare: mainShare,
+        bounds: bounds
+      )
       let cross = crossOffset(
         childExtent: axis == .vertical ? childSize.width : childSize.height,
         containerExtent: crossExtent
@@ -154,70 +171,18 @@ public struct StackNode: LayoutNode {
     let container = bounds ?? size
     var resolved: [any SlideDrawable] = []
     for child in children where !(child is SpacerNode) {
-      let childSize = child.size
+      // A depth stack has no main axis, so a flexible child can take the
+      // container on both axes without competing with a spacer for slack.
+      let axes = child.flexibleAxes
+      let intrinsic = child.size
+      let childSize = LayoutSize(
+        width: axes.width ? container.width : intrinsic.width,
+        height: axes.height ? container.height : intrinsic.height
+      )
       let deltaX = crossOffset(childExtent: childSize.width, containerExtent: container.width)
       let deltaY = crossOffset(childExtent: childSize.height, containerExtent: container.height)
       resolved += child.resolve(in: childSize, origin: base.offset(deltaX: deltaX, deltaY: deltaY))
     }
     return resolved
-  }
-
-  /// The initial offset along the main axis for alignment when no spacers exist.
-  private func initialMainOffset(in bounds: LayoutSize?, sizes: [LayoutSize]) -> Double {
-    let spacerCount = children.count { $0 is SpacerNode }
-    guard spacerCount == 0, let bounds else {
-      return 0
-    }
-    let gaps = Double(max(0, children.count - 1)) * spacing
-    let used =
-      axis == .vertical
-      ? sizes.map(\.height).reduce(0, +)
-      : sizes.map(\.width).reduce(0, +)
-    let available = axis == .vertical ? bounds.height : bounds.width
-    let totalContentExtent = used + gaps
-    switch mainAlignment {
-    case .leading:
-      return 0
-    case .center:
-      return (available - totalContentExtent) / 2
-    case .trailing:
-      return available - totalContentExtent
-    }
-  }
-
-  /// Each spacer's share of the leftover space.
-  ///
-  /// Zero without bounds: there is no slack to divide, so a spacer is a
-  /// documented no-op rather than an error.
-  private func spacerShare(sizes: [LayoutSize], bounds: LayoutSize?) -> Double {
-    let spacerCount = children.count { $0 is SpacerNode }
-    guard spacerCount > 0, let bounds else {
-      return 0
-    }
-    let gaps = Double(max(0, children.count - 1)) * spacing
-    let used =
-      axis == .vertical
-      ? sizes.map(\.height).reduce(0, +)
-      : sizes.map(\.width).reduce(0, +)
-    let available = axis == .vertical ? bounds.height : bounds.width
-    return max(0, available - used - gaps) / Double(spacerCount)
-  }
-
-  /// The container extent on the cross axis, used for alignment.
-  private func crossExtent(sizes: [LayoutSize], bounds: LayoutSize?) -> Double {
-    if let bounds {
-      return axis == .vertical ? bounds.width : bounds.height
-    }
-    let extents = axis == .vertical ? sizes.map(\.width) : sizes.map(\.height)
-    return extents.max() ?? 0
-  }
-
-  /// A child's offset on the cross axis for this stack's alignment.
-  private func crossOffset(childExtent: Double, containerExtent: Double) -> Double {
-    switch alignment {
-    case .leading: 0
-    case .center: (containerExtent - childExtent) / 2
-    case .trailing: containerExtent - childExtent
-    }
   }
 }

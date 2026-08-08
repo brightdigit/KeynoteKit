@@ -60,6 +60,13 @@ public protocol SlideDrawable: Sendable {
   /// The authored size, where either axis may be unset.
   var authoredSize: DrawableSize { get }
 
+  /// Which axes expand into the bounds the parent proposes.
+  ///
+  /// Defaulted to ``FlexibleAxes/none`` so an existing conformer outside
+  /// this module keeps compiling — a drawable that never opts in behaves
+  /// exactly as it did before flexible frames existed.
+  var flexibleAxes: FlexibleAxes { get }
+
   /// The drawable's current position in slide coordinates.
   var authoredPosition: LayoutPoint { get }
 
@@ -74,4 +81,17 @@ public protocol SlideDrawable: Sendable {
 
   /// Returns a copy positioned at `x`, `y` in slide coordinates.
   func positioned(x: Double, y: Double) -> any SlideDrawable
+
+  /// Returns a copy sized to `width` by `height`, in points.
+  ///
+  /// The counterpart to ``positioned(x:y:)`` for the fill path: it is the
+  /// one place a drawable's extent originates from inherited bounds rather
+  /// than an authored value. A `nil` axis leaves that axis untouched, so
+  /// filling one axis never disturbs the other.
+  func resized(width: Double?, height: Double?) -> any SlideDrawable
+}
+
+extension SlideDrawable {
+  /// Drawables opt into filling; the default is to keep authored extents.
+  public var flexibleAxes: FlexibleAxes { .none }
 }

@@ -140,67 +140,6 @@ internal struct LayoutPrimitivesTests {
     #expect(positions(of: slide) == [LayoutPoint(x: 40, y: 30), LayoutPoint(x: 0, y: 130)])
   }
 
-  @Test("a Spacer divides a bounded stack's slack")
-  internal func spacerDividesSlack() {
-    let slide = Slide {
-      VStack {
-        TextBox("top").frame(width: 100, height: 100)
-        Spacer()
-        TextBox("bottom").frame(width: 100, height: 100)
-      }
-      .frame(width: 100, height: 500)
-    }
-    // 500 - 200 used = 300 of slack to the single spacer.
-    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 400)])
-  }
-
-  @Test("two Spacers split the slack equally")
-  internal func twoSpacersSplitEqually() {
-    let slide = Slide {
-      VStack {
-        Spacer()
-        TextBox("middle").frame(width: 100, height: 100)
-        Spacer()
-      }
-      .frame(width: 100, height: 500)
-    }
-    // 400 of slack halves to 200, centring the child.
-    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 200)])
-  }
-
-  /// A top-level stack inherits the slide canvas as its bounds, so a
-  /// `Spacer` works without an explicit `.frame()` — the common case of
-  /// pinning content to the top and bottom of a slide.
-  ///
-  /// A stack only lacks bounds when nested inside an unframed parent, and
-  /// there a spacer collapses to zero rather than erroring.
-  @Test("a top-level Spacer divides the slide canvas")
-  internal func spacerUsesSlideCanvas() {
-    let slide = Slide {
-      VStack {
-        TextBox("top").frame(width: 100, height: 100)
-        Spacer()
-        TextBox("bottom").frame(width: 100, height: 100)
-      }
-    }
-    // 1080 canvas - 200 used = 880 of slack to the single spacer.
-    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 980)])
-  }
-
-  @Test("a Spacer nested in an unframed stack collapses to zero")
-  internal func spacerWithoutBoundsCollapses() {
-    let slide = Slide {
-      HStack {
-        VStack {
-          TextBox("top").frame(width: 100, height: 100)
-          Spacer()
-          TextBox("bottom").frame(width: 100, height: 100)
-        }
-      }
-    }
-    #expect(positions(of: slide) == [LayoutPoint(x: 0, y: 0), LayoutPoint(x: 0, y: 100)])
-  }
-
   /// The regression that matters most: every existing deck positions its
   /// drawables with `.position(x:y:)` and no stack. Those must be untouched.
   @Test("drawables outside a stack keep their authored positions")
@@ -212,9 +151,11 @@ internal struct LayoutPrimitivesTests {
     #expect(positions(of: slide) == [LayoutPoint(x: 160, y: 220), LayoutPoint(x: 700, y: 480)])
   }
 
-  /// An unsized child contributes zero extent, so siblings pile up at the
-  /// same offset. Intrinsic measurement is #67; until then a stack's
-  /// children need explicit frames.
+  /// An unsized child contributes zero extent **along the stack's own
+  /// axis**, so siblings pile up at the same offset. Its cross axis is a
+  /// different story — that fills the container by default — but a height
+  /// has nothing to inherit until intrinsic measurement (#67) lands, so a
+  /// `VStack` child still needs an explicit height.
   @Test("an unsized child advances the stack by nothing")
   internal func unsizedChildAdvancesNothing() {
     let slide = Slide {

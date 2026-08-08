@@ -32,10 +32,12 @@
 /// Children declare their own sizes with `.frame(width:height:)`; the stack
 /// positions them and writes absolute coordinates at build time. Intrinsic
 /// text measurement is issue #67, so an unsized child contributes zero
-/// extent along the stack's axis.
+/// extent.
 ///
-/// Give the stack a `.frame(width:height:)` for Spacer to have anything
-/// to divide — an unbounded stack has no slack.
+/// Unlike `VStack` and `HStack`, a depth stack does not size its children by
+/// default — it has no cross axis, and SwiftUI's `ZStack` does not stretch
+/// either. A child fills only where it asks to with `.frame(maxWidth:)` or
+/// `.frame(maxHeight:)`.
 public struct ZStack: SlideLayout {
   /// Cross-axis alignment of the children.
   internal var alignment: LayoutAlignment
@@ -49,6 +51,9 @@ public struct ZStack: SlideLayout {
   /// The stack's own frame, when declared.
   internal var frameSize: LayoutSize?
 
+  /// Which axes expand into the bounds the parent proposes.
+  internal var flexible: FlexibleAxes = .none
+
   /// The layout node this stack contributes.
   ///
   /// A declared frame becomes the node's own bounds, which is what gives a
@@ -60,7 +65,8 @@ public struct ZStack: SlideLayout {
       alignment: alignment,
       spacing: spacing,
       children: children.map(\.layoutNode),
-      frame: frameSize
+      frame: frameSize,
+      flexible: flexible
     )
   }
 
@@ -74,6 +80,19 @@ public struct ZStack: SlideLayout {
     self.spacing = spacing
     self.children = content()
     self.frameSize = nil
+  }
+
+  /// Bounds the stack, letting either axis fill the proposed bounds.
+  ///
+  /// A filling axis gives nested `Spacer`s the parent's slack to divide.
+  public func frame(maxWidth: FlexibleExtent? = nil, maxHeight: FlexibleExtent? = nil) -> ZStack {
+    var stack = self
+    stack.flexible = FlexibleAxes(
+      width: maxWidth?.isFilling ?? stack.flexible.width,
+      height: maxHeight?.isFilling ?? stack.flexible.height
+    )
+    stack.frameSize = frameSize.combined(width: maxWidth, height: maxHeight)
+    return stack
   }
 
   /// Bounds the stack, which is what lets Spacer claim slack.

@@ -28,6 +28,49 @@
 //
 
 extension TextBox {
+  /// Sets the box's extent, letting either axis fill the proposed bounds.
+  ///
+  /// `.infinity` on an axis adopts whatever an enclosing stack proposes —
+  /// the slide canvas, less any `padding`, for a top-level stack. This is
+  /// how a box spans the slide without restating the canvas width.
+  ///
+  /// Note that Keynote lays placeholder *text* out at the layout master's
+  /// body width regardless of the authored frame (issue #52), so a filled
+  /// box positions and sizes correctly while long strings still wrap early.
+  public func frame(maxWidth: FlexibleExtent? = nil, maxHeight: FlexibleExtent? = nil) -> TextBox {
+    var text = self
+    text.width = maxWidth?.fixedValue ?? text.width
+    text.height = maxHeight?.fixedValue ?? text.height
+    text.flexible = FlexibleAxes(
+      width: maxWidth?.isFilling ?? text.flexible.width,
+      height: maxHeight?.isFilling ?? text.flexible.height
+    )
+    return text
+  }
+
+  /// Sets the box's extent, filling one axis and fixing the other.
+  public func frame(maxWidth: FlexibleExtent, height: Double) -> TextBox {
+    frame(maxWidth: maxWidth, maxHeight: .points(height))
+  }
+
+  /// Sets the box's extent, fixing one axis and filling the other.
+  public func frame(width: Double, maxHeight: FlexibleExtent) -> TextBox {
+    frame(maxWidth: .points(width), maxHeight: maxHeight)
+  }
+
+  /// Sets only the box's height, leaving the width to the enclosing stack.
+  ///
+  /// An unauthored width fills the stack's cross axis by default, so this is
+  /// the usual way to name a height inside a `VStack`.
+  public func frame(height: Double) -> TextBox {
+    frame(maxHeight: .points(height))
+  }
+
+  /// Sets only the box's width, leaving the height to the enclosing stack.
+  public func frame(width: Double) -> TextBox {
+    frame(maxWidth: .points(width))
+  }
+
   /// Sets how paragraphs are labeled (bullet, number, or nothing).
   /// Unset means plain — authored text boxes never inherit the theme bullet.
   public func listStyle(_ style: TextListStyle) -> TextBox {

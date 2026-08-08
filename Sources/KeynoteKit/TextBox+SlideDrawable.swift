@@ -48,6 +48,9 @@ extension TextBox: SlideDrawable {
     DrawableSize(width: width, height: height)
   }
 
+  /// Which axes expand into the proposed bounds.
+  public var flexibleAxes: FlexibleAxes { flexible }
+
   /// Text matches on its joined paragraphs — the string Keynote's matcher
   /// sees. Styling is excluded: restyling a box across a Magic Move pair
   /// still morphs.
@@ -58,6 +61,14 @@ extension TextBox: SlideDrawable {
   /// Returns a copy positioned at `x`, `y`.
   public func positioned(x: Double, y: Double) -> any SlideDrawable {
     position(x: x, y: y)
+  }
+
+  /// Returns a copy sized to `width` by `height`; a `nil` axis is untouched.
+  public func resized(width: Double?, height: Double?) -> any SlideDrawable {
+    var text = self
+    text.width = width ?? text.width
+    text.height = height ?? text.height
+    return text
   }
 }
 

@@ -44,6 +44,23 @@ public struct PaddedNode: LayoutNode {
     )
   }
 
+  /// Padding is transparent to flexibility: a filling child still fills,
+  /// inside the insets rather than instead of them.
+  public var flexibleAxes: FlexibleAxes { child.flexibleAxes }
+
+  /// The child's authored extent grown by the insets, `nil` preserved.
+  ///
+  /// Transparent for the same reason as ``flexibleAxes``: an axis the child
+  /// left unauthored stays unauthored, so wrapping something in `.padding()`
+  /// never silently disables the stack's default cross-axis fill.
+  public var authoredSize: DrawableSize {
+    let inner = child.authoredSize
+    return DrawableSize(
+      width: inner.width.map { $0 + insets.leading + insets.trailing },
+      height: inner.height.map { $0 + insets.top + insets.bottom }
+    )
+  }
+
   /// Creates a padded node.
   public init(insets: EdgeInsets, child: any LayoutNode) {
     self.insets = insets

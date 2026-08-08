@@ -41,20 +41,55 @@ public struct LeafNode: LayoutNode {
     return LayoutSize(width: authored.width ?? 0, height: authored.height ?? 0)
   }
 
+  /// Which axes expand into the bounds a parent proposes.
+  public var flexibleAxes: FlexibleAxes { drawable.flexibleAxes }
+
+  /// The drawable's authored extent, with `nil` preserved per axis.
+  public var authoredSize: DrawableSize { drawable.authoredSize }
+
   /// Creates a leaf.
   public init(drawable: any SlideDrawable) {
     self.drawable = drawable
   }
 
-  /// Positions the drawable, or leaves it alone when nothing is placing it.
+  /// Positions the drawable, sizing any axis the stack proposed an extent
+  /// for, or leaves it alone when nothing is placing it.
   ///
   /// A `nil` origin is what keeps existing decks working: every drawable
   /// placed with `.position(x:y:)` and no enclosing stack must survive this
-  /// pass untouched.
+  /// pass untouched — including its authored size, so a filling axis with
+  /// no stack around it stays as authored rather than snapping to zero.
   public func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable] {
     guard let origin else {
       return [drawable]
     }
-    return [drawable.positioned(x: origin.x, y: origin.y)]
+    let placed = drawable.positioned(x: origin.x, y: origin.y)
+    guard let bounds else {
+      return [placed]
+    }
+    let authored = drawable.authoredSize
+    return [
+      placed.resized(
+        width: adopted(bounds.width, authored: authored.width, fills: flexibleAxes.width),
+        height: adopted(bounds.height, authored: authored.height, fills: flexibleAxes.height)
+      )
+    ]
+  }
+
+  /// The extent to write on one axis, or `nil` to leave it as authored.
+  ///
+  /// The stack has already narrowed its proposal: on an axis it chose not to
+  /// fill, `proposed` is the child's own intrinsic extent, so writing it back
+  /// is a no-op. The one case to refuse is a zero proposal on an unauthored
+  /// axis — that means no fill happened, and `nil` must stay `nil` because
+  /// the writer reads it as "inherit the template placeholder".
+  private func adopted(_ proposed: Double, authored: Double?, fills: Bool) -> Double? {
+    guard fills || authored == nil else {
+      return nil
+    }
+    guard proposed > 0 else {
+      return nil
+    }
+    return proposed
   }
 }

@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  Optional+LayoutSize.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,23 +27,23 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
+extension Optional where Wrapped == LayoutSize {
+  /// Folds new per-axis extents into an existing frame.
   ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
-  }
-
-  /// The resolved size of each drawable, in declaration order.
-  ///
-  /// The sibling of ``resolvedPositions`` for flexible frames (`maxWidth:`
-  /// / `maxHeight:`): a filling axis only acquires its number during the
-  /// resolve pass, so reading the extent back is the only way to assert it
-  /// adopted the bounds it was proposed.
-  internal var resolvedSizes: [DrawableSize] {
-    items.map(\.authoredSize)
+  /// A filling axis contributes no number, so it leaves whatever was there
+  /// (usually nothing) — the resolve pass substitutes the proposed bounds
+  /// for that axis instead. The frame stays `nil` until some axis is
+  /// actually fixed, which is what keeps an unframed stack sizing to its
+  /// children.
+  internal func combined(
+    width: FlexibleExtent?,
+    height: FlexibleExtent?
+  ) -> LayoutSize? {
+    let resolvedWidth = width?.fixedValue ?? self?.width
+    let resolvedHeight = height?.fixedValue ?? self?.height
+    guard resolvedWidth != nil || resolvedHeight != nil else {
+      return nil
+    }
+    return LayoutSize(width: resolvedWidth ?? 0, height: resolvedHeight ?? 0)
   }
 }

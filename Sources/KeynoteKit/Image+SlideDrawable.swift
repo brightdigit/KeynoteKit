@@ -43,10 +43,22 @@ extension Image: SlideDrawable {
   /// The drawable's current position.
   public var authoredPosition: LayoutPoint { LayoutPoint(x: x, y: y) }
 
-  /// The authored size; either axis may be unset.
+  /// The authored size, falling back to the source image's pixel extent.
+  ///
+  /// An image is whatever size its source is: an axis left unframed reports
+  /// the natural extent read from the JPEG/PNG header rather than `nil`, so
+  /// an unframed image advances a stack by its real size instead of zero.
+  ///
+  /// This is also what keeps an image out of a stack's default cross-axis
+  /// fill — both axes read as authored, so nothing stretches it. Only an
+  /// image with no readable header reports `nil` and may fill, and there is
+  /// no natural size to preserve in that case.
   public var authoredSize: DrawableSize {
-    DrawableSize(width: width, height: height)
+    DrawableSize(width: width ?? naturalWidth, height: height ?? naturalHeight)
   }
+
+  /// Which axes expand into the proposed bounds.
+  public var flexibleAxes: FlexibleAxes { flexible }
 
   /// Images match byte-for-byte: Keynote's matcher pairs identical media.
   public var magicMoveIdentity: MagicMoveIdentity {
@@ -56,6 +68,14 @@ extension Image: SlideDrawable {
   /// Returns a copy positioned at `x`, `y`.
   public func positioned(x: Double, y: Double) -> any SlideDrawable {
     position(x: x, y: y)
+  }
+
+  /// Returns a copy sized to `width` by `height`; a `nil` axis is untouched.
+  public func resized(width: Double?, height: Double?) -> any SlideDrawable {
+    var image = self
+    image.width = width ?? image.width
+    image.height = height ?? image.height
+    return image
   }
 }
 

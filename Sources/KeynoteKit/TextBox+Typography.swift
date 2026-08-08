@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  TextBox+Typography.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,23 +27,42 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+extension TextBox {
+  /// Sets the font family and optional size.
+  public func font(_ name: String, size: Double? = nil) -> TextBox {
+    var text = self
+    text.fontName = name
+    if let size {
+      text.fontSize = size
+    }
+    return text
   }
 
-  /// The resolved size of each drawable, in declaration order.
-  ///
-  /// The sibling of ``resolvedPositions`` for flexible frames (`maxWidth:`
-  /// / `maxHeight:`): a filling axis only acquires its number during the
-  /// resolve pass, so reading the extent back is the only way to assert it
-  /// adopted the bounds it was proposed.
-  internal var resolvedSizes: [DrawableSize] {
-    items.map(\.authoredSize)
+  /// Sets the font size in points.
+  public func fontSize(_ size: Double) -> TextBox {
+    var text = self
+    text.fontSize = size
+    return text
+  }
+
+  /// Marks the text bold.
+  public func bold(_ isBold: Bool = true) -> TextBox {
+    var text = self
+    text.isBold = isBold
+    return text
+  }
+
+  /// Marks the text italic.
+  public func italic(_ isItalic: Bool = true) -> TextBox {
+    var text = self
+    text.isItalic = isItalic
+    return text
+  }
+
+  /// Sets the text color.
+  public func foregroundColor(_ color: Color) -> TextBox {
+    var text = self
+    text.color = color
+    return text
   }
 }

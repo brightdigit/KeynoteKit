@@ -1,5 +1,5 @@
 //
-//  Slide+Resolved.swift
+//  FlexibleAxes.swift
 //  KeynoteKit
 //
 //  Created by Leo Dion.
@@ -27,23 +27,30 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-extension Slide {
-  /// The resolved `(x, y)` of each drawable, in declaration order.
-  ///
-  /// Test support for the layout pass (#65): stacks resolve at build time,
-  /// so the only way to assert a stack laid out correctly is to read the
-  /// positions it produced.
-  internal var resolvedPositions: [LayoutPoint] {
-    items.map { LayoutPoint(x: $0.authoredPosition.x, y: $0.authoredPosition.y) }
+/// Which axes of a drawable expand into the proposed bounds.
+///
+/// Carried alongside the authored `width`/`height` rather than replacing
+/// them: an unset axis still means "inherit the template placeholder", and
+/// a fixed axis still reports its constant to the bottom-up size fold. Only
+/// a filling axis defers to the bounds handed down at resolve time.
+public struct FlexibleAxes: Equatable, Sendable {
+  /// Neither axis fills — the default for every authored drawable.
+  public static let none = FlexibleAxes(width: false, height: false)
+
+  /// Whether the width adopts the proposed bounds.
+  public var width: Bool
+
+  /// Whether the height adopts the proposed bounds.
+  public var height: Bool
+
+  /// Whether either axis fills.
+  internal var isEmpty: Bool {
+    !width && !height
   }
 
-  /// The resolved size of each drawable, in declaration order.
-  ///
-  /// The sibling of ``resolvedPositions`` for flexible frames (`maxWidth:`
-  /// / `maxHeight:`): a filling axis only acquires its number during the
-  /// resolve pass, so reading the extent back is the only way to assert it
-  /// adopted the bounds it was proposed.
-  internal var resolvedSizes: [DrawableSize] {
-    items.map(\.authoredSize)
+  /// Creates a flexibility pair.
+  public init(width: Bool, height: Bool) {
+    self.width = width
+    self.height = height
   }
 }

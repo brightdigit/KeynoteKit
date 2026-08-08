@@ -55,6 +55,9 @@ public struct Image: Sendable {
   /// Authored height in points; `nil` uses natural height or 200.
   internal var height: Double?
 
+  /// Which axes expand into the bounds an enclosing stack proposes.
+  internal var flexible: FlexibleAxes = .none
+
   /// Layer order; higher values draw above lower ones. `nil` means 0.
   internal var zIndex: Int?
 
@@ -100,6 +103,41 @@ public struct Image: Sendable {
     image.x = x
     image.y = y
     return image
+  }
+
+  /// Sets the image's extent, letting either axis fill the proposed bounds.
+  ///
+  /// `.infinity` on an axis adopts whatever an enclosing stack proposes.
+  /// The image's natural pixel size still applies to any axis left unset.
+  public func frame(maxWidth: FlexibleExtent? = nil, maxHeight: FlexibleExtent? = nil) -> Image {
+    var image = self
+    image.width = maxWidth?.fixedValue ?? image.width
+    image.height = maxHeight?.fixedValue ?? image.height
+    image.flexible = FlexibleAxes(
+      width: maxWidth?.isFilling ?? image.flexible.width,
+      height: maxHeight?.isFilling ?? image.flexible.height
+    )
+    return image
+  }
+
+  /// Sets the image's extent, filling one axis and fixing the other.
+  public func frame(maxWidth: FlexibleExtent, height: Double) -> Image {
+    frame(maxWidth: maxWidth, maxHeight: .points(height))
+  }
+
+  /// Sets the image's extent, fixing one axis and filling the other.
+  public func frame(width: Double, maxHeight: FlexibleExtent) -> Image {
+    frame(maxWidth: .points(width), maxHeight: maxHeight)
+  }
+
+  /// Sets only the image's height, leaving the width to the natural size.
+  public func frame(height: Double) -> Image {
+    frame(maxHeight: .points(height))
+  }
+
+  /// Sets only the image's width, leaving the height to the natural size.
+  public func frame(width: Double) -> Image {
+    frame(maxWidth: .points(width))
   }
 
   /// Sets the item's size on the slide.

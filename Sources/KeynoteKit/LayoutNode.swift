@@ -40,7 +40,25 @@
 /// type instead of in one dispatcher.
 public protocol LayoutNode: Sendable {
   /// The node's laid-out extent.
+  ///
+  /// A bounds-free property, so sizing is a bottom-up fold over authored
+  /// values. An axis that fills reports its intrinsic extent here and picks
+  /// up the real number in ``resolve(in:origin:)``, where bounds exist.
   var size: LayoutSize { get }
+
+  /// Which axes expand into the bounds a parent proposes.
+  ///
+  /// Defaulted to ``FlexibleAxes/none``, so a node that never opts in keeps
+  /// its pre-existing sizing behavior.
+  var flexibleAxes: FlexibleAxes { get }
+
+  /// The extent the author actually named, where either axis may be unset.
+  ///
+  /// Distinct from ``size``, which flattens an unset axis to zero and so
+  /// cannot tell "authored zero" from "never authored". A stack needs that
+  /// distinction to fill the cross axis by default: an axis left `nil` here
+  /// takes the container's extent, while an authored one is left alone.
+  var authoredSize: DrawableSize { get }
 
   /// Resolves this node into absolutely-positioned drawables.
   ///
@@ -53,4 +71,12 @@ public protocol LayoutNode: Sendable {
   /// - Returns: One drawable per leaf, in declaration order, which the
   ///   lowering pass relies on to break `zIndex` ties.
   func resolve(in bounds: LayoutSize?, origin: LayoutPoint?) -> [any SlideDrawable]
+}
+
+extension LayoutNode {
+  /// Nodes opt into filling; the default keeps intrinsic sizing.
+  public var flexibleAxes: FlexibleAxes { .none }
+
+  /// Nodes author nothing by default, so both axes are free to fill.
+  public var authoredSize: DrawableSize { DrawableSize(width: nil, height: nil) }
 }

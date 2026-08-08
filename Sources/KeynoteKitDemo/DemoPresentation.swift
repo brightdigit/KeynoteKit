@@ -55,60 +55,97 @@ public enum DemoPresentation {
     return try? Image(contentsOf: url)
   }
 
-  /// The showcase deck.
-  public static var deck: Deck {
-    Deck {
-      // Title — keep as slide 1 when the tutorial body is authored.
-      Slide {
+  /// The margin every slide insets its content by, in points.
+  ///
+  /// The only geometry constant the demo needs. A stack child fills the
+  /// cross axis by default, so a box spans the padded canvas without naming
+  /// a width, and the 1920x1080 size is never restated here. The heights
+  /// that remain are real author intent — text cannot measure itself yet.
+  private static let margin = 80.0
+
+  /// Title — keep as slide 1 when the tutorial body is authored.
+  ///
+  /// Spacers above and below centre the pair without naming a y offset.
+  private static var titleSlide: Slide {
+    Slide {
+      VStack(spacing: 40) {
+        Spacer()
         TextBox("KeynoteKit")
-          .position(x: 120, y: 320)
-          .frame(width: 1_680, height: 120)
+          .frame(height: 120)
           .fontSize(72)
           .bold()
         TextBox("Authored from Swift — no Keynote required to write")
-          .position(x: 120, y: 480)
-          .frame(width: 1_680, height: 80)
+          .frame(height: 80)
           .fontSize(36)
+        Spacer()
       }
-      Slide {
-        VStack(spacing: 20) {
-          TextBox("Supports a variety of styles")
-            .frame(width: 1_680, height: 180)
-            .fontSize(72)
-          TextBox {
-            Text("Bold").bold().foregroundColor(.init(green: 1.0))
-            Text("Italics").italic().foregroundColor(.init(red: 1.0))
-          }
-          .frame(width: 1_680, height: 80)
-          .fontSize(36)
-        }.padding(80)
-      }
-      if let sampleImage {
-        Slide {
-          HStack(spacing: 60) {
-            sampleImage
-              .frame(width: 700, height: 450)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(margin)
+    }
+  }
 
-            VStack(spacing: 20) {
-              TextBox("Embedded Images")
-                .frame(width: 900, height: 80)
-                .fontSize(48)
-                .bold()
-              TextBox(
-                "KeynoteKit embeds JPEGs & PNGs natively with "
-                  + "exact pixel dimensions and optional build effects."
-              )
-              .frame(width: 900, height: 160)
-              .fontSize(28)
-            }
-            .frame(width: 900, height: 450)
-          }
-          .padding(80)
+  /// Mixed character styling within one box.
+  private static var stylesSlide: Slide {
+    Slide {
+      VStack(spacing: 20) {
+        TextBox("Supports a variety of styles")
+          .frame(height: 180)
+          .fontSize(72)
+        TextBox {
+          Text("Bold").bold().foregroundColor(.init(green: 1.0))
+          Text("Italics").italic().foregroundColor(.init(red: 1.0))
         }
+        .frame(height: 80)
+        .fontSize(36)
+        Spacer()
       }
-      // Next (#56): grow to the 15–20 slide tutorial body — feature tour,
-      // syntax-highlighted code panels (`KeynoteKitSyntax` + #78 fills),
-      // layout stacks, transitions, and builds.
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(margin)
+    }
+  }
+
+  /// The showcase deck.
+  ///
+  /// Next (#56): grow to the 15–20 slide tutorial body — feature tour,
+  /// syntax-highlighted code panels (`KeynoteKitSyntax` + #78 fills),
+  /// layout stacks, transitions, and builds.
+  public static var deck: Deck {
+    Deck {
+      titleSlide
+      stylesSlide
+      if let sampleImage {
+        imageSlide(with: sampleImage)
+      }
+    }
+  }
+
+  /// Embedded image beside a text column.
+  ///
+  /// The image keeps a fixed frame so its aspect ratio holds; the text
+  /// column fills whatever is left of the padded canvas. That column's
+  /// `maxWidth` is the `HStack`'s *main* axis, so it stays explicit — only
+  /// the cross axis fills by default.
+  private static func imageSlide(with image: Image) -> Slide {
+    Slide {
+      HStack(spacing: 60) {
+        image.frame(width: 700, height: 450)
+        VStack(spacing: 20) {
+          TextBox("Embedded Images")
+            .frame(height: 80)
+            .fontSize(48)
+            .bold()
+          TextBox(
+            "KeynoteKit embeds JPEGs & PNGs natively with "
+              + "exact pixel dimensions and optional build effects."
+          )
+          .frame(height: 160)
+          .fontSize(28)
+          Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: 450)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(margin)
     }
   }
 }

@@ -49,6 +49,9 @@ public struct TextBox: Sendable {
   /// Authored height in points; `nil` leaves the template placeholder size.
   internal var height: Double?
 
+  /// Which axes expand into the bounds an enclosing stack proposes.
+  internal var flexible: FlexibleAxes = .none
+
   /// Layer order; higher values draw above lower ones. `nil` means 0.
   /// Declaration order breaks ties. Final order becomes `drawablesZOrder`.
   internal var zIndex: Int?
@@ -140,44 +143,6 @@ public struct TextBox: Sendable {
   public func zIndex(_ index: Int) -> TextBox {
     var text = self
     text.zIndex = index
-    return text
-  }
-
-  /// Sets the font family and optional size.
-  public func font(_ name: String, size: Double? = nil) -> TextBox {
-    var text = self
-    text.fontName = name
-    if let size {
-      text.fontSize = size
-    }
-    return text
-  }
-
-  /// Sets the font size in points.
-  public func fontSize(_ size: Double) -> TextBox {
-    var text = self
-    text.fontSize = size
-    return text
-  }
-
-  /// Marks the text bold.
-  public func bold(_ isBold: Bool = true) -> TextBox {
-    var text = self
-    text.isBold = isBold
-    return text
-  }
-
-  /// Marks the text italic.
-  public func italic(_ isItalic: Bool = true) -> TextBox {
-    var text = self
-    text.isItalic = isItalic
-    return text
-  }
-
-  /// Sets the text color.
-  public func foregroundColor(_ color: Color) -> TextBox {
-    var text = self
-    text.color = color
     return text
   }
 
