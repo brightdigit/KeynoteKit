@@ -9,13 +9,33 @@ need `KeynoteKit`.
 
 | Product | Kind | Role |
 |---|---|---|
-| `KeynoteKitDemo` | library | Public `DemoPresentation.deck` |
+| `KeynoteKitDemo` | library | Public `DemoDeck.deck` |
 | `KeynoteKitDemoTool` | executable | Writes `demo.key` and structurally self-checks |
 
 ```bash
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 xcrun swift run KeynoteKitDemoTool ~/Desktop/keynotekit-demo
 ```
+
+## Layout
+
+| Path | Role |
+|---|---|
+| `DemoDeck.swift` | The **slide order** — one line per slide, and the target's only public API |
+| `Slides/` | One file per slide, each a `SlideContent` type |
+| `Support/` | `DemoStyle` (margin, type scale) and `DemoResources` (`Bundle.module` media) |
+
+To add a slide: create `Slides/YourSlide.swift` conforming to `SlideContent`,
+then add `YourSlide()` to `DemoDeck.deck` where it belongs in the running
+order. Take shared values from `DemoStyle` rather than restating them.
+
+A slide may resolve to nothing — `ImageSlide` does when its resource is
+missing — so entries in `DemoDeck` stay unconditional and each slide owns
+the question of whether it can be built.
+
+Slides carry explicit heights because text cannot measure itself yet
+([#67](https://github.com/brightdigit/KeynoteKit/issues/67)). Widths are
+never named: a stack child fills the cross axis by default.
 
 ## Status
 

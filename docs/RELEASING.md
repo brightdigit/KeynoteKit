@@ -36,7 +36,7 @@ A release that changes none of those can ship with the existing artifacts.
 
 The showcase deck is
 [#56](https://github.com/brightdigit/KeynoteKit/issues/56): library product
-`KeynoteKitDemo` (`DemoPresentation.deck`) and executable product
+`KeynoteKitDemo` (`DemoDeck.deck`) and executable product
 `KeynoteKitDemoTool`. The tutorial body may still be a stub — the tool
 always structurally self-checks what is authored.
 

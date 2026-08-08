@@ -161,7 +161,7 @@ gate goes green.
 ### Phase 2 — the deck
 
 Lane D (#56): products `KeynoteKitDemo` (library) + `KeynoteKitDemoTool`
-(executable) are scaffolded with a one-slide stub (`DemoPresentation`). Full
+(executable) are scaffolded with a three-slide stub (`DemoDeck`). Full
 15–20 slide authoring + render pass still starts once #65, #66, and #78 are on
 `v0.1.x`. Budget **two** human render cycles. Movie + screenshots are captured
 manually here.
@@ -268,7 +268,7 @@ Run at most **one** Keynote-bound lane at a time on a given Mac.
 | `Package.swift` | #66 (done), #56 demo products (scaffold landed) | `KeynoteKitDemo` + `KeynoteKitDemoTool` products exist; further #56 work is deck content |
 | `KeynoteArchiveSurgeon+ShapeStyle.swift` | #78 only | Sole owner — no other demo lane edits the shape fork |
 | `TextBox.swift` | #78 (fill), #65 (padding modifiers) | Both add modifiers; land #78 first or rebase L on it |
-| `Sources/KeynoteKitDemo/` | #56 authoring | Additive slides in `DemoPresentation` / sibling files |
+| `Sources/KeynoteKitDemo/` | #56 authoring | One new file per slide in `Slides/`, listed in `DemoDeck.swift` |
 | `Sources/AcceptanceDeckCatalog/` | #78 verification decks | Additive files only — never rewrite an existing deck |
 | `.claude/PLAN.md` / handoff | any lane recording a decision | Tiny additive edits; rebase carefully |
 | GitHub issues + milestones | claim / close / re-milestone | Source of truth; `gh issue list --milestone v0.1.0` |

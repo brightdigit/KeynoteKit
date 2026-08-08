@@ -35,13 +35,21 @@ import KeynoteKitDemo
 /// Writes the #56 showcase deck:
 /// `swift run KeynoteKitDemoTool [output-directory]` (default `keynotekit-demo`).
 ///
-/// Authored through the public DSL (`DemoPresentation.deck`) from the
-/// bundled template, then structurally self-checked: every record must
-/// decode and the UUID-map invariants must hold. A structural pass does
-/// not imply Keynote will open or render the file — that remains a human
-/// gate (`docs/RELEASING.md`).
+/// Authored through the public DSL (`DemoDeck.deck`) from the bundled
+/// template, then structurally self-checked: every record must decode and
+/// the UUID-map invariants must hold. A structural pass does not imply
+/// Keynote will open or render the file — that remains a human gate
+/// (`docs/RELEASING.md`).
 @main
 internal enum KeynoteKitDemoToolCommand {
+  /// The `KN.BuildArchive` count ``DemoDeck/deck`` is expected to produce.
+  ///
+  /// An assertion about the deck rather than a property of it, so it lives
+  /// beside the ``verify(url:buildCount:)`` that consumes it. Bump it in
+  /// the same commit that gives a demo slide its first `.build(...)`, or
+  /// the self-check fails.
+  private static let expectedBuildCount = 0
+
   /// Writes `demo.key`, self-checks, and prints next steps.
   internal static func main() throws {
     let directory = outputDirectory()
@@ -50,8 +58,8 @@ internal enum KeynoteKitDemoToolCommand {
       withIntermediateDirectories: true
     )
     let url = directory.appending(path: "demo.key")
-    try DemoPresentation.deck.write(to: url)
-    try verify(url: url, buildCount: DemoPresentation.buildCount)
+    try DemoDeck.deck.write(to: url)
+    try verify(url: url, buildCount: Self.expectedBuildCount)
     print("wrote \(url.path)")
     print(
       """
