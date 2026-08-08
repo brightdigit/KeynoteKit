@@ -9,7 +9,7 @@ need `KeynoteKit`.
 
 | Product | Kind | Role |
 |---|---|---|
-| `KeynoteKitDemo` | library | Public `DemoDeck.deck` |
+| `KeynoteKitDemo` | library | Public `DemoDeck`, a `Presentation` |
 | `KeynoteKitDemoTool` | executable | Writes `demo.key` and structurally self-checks |
 
 ```bash
@@ -21,7 +21,7 @@ xcrun swift run KeynoteKitDemoTool ~/Desktop/keynotekit-demo
 
 | Path | Role |
 |---|---|
-| `DemoDeck.swift` | The **slide order** — one line per slide, and the target's only public API |
+| `DemoDeck.swift` | A `Presentation`: its `body` is the **slide order**, and the target's only public API |
 | `Slides/` | One file per slide, each a `SlideContent` type |
 | `Support/` | `DemoStyle` (margin, type scale) and `DemoResources` (`Bundle.module` media) |
 

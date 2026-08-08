@@ -131,7 +131,7 @@ let package = Package(
     ),
 
     // `swift run KeynoteKitDemoTool [dir]` writes `demo.key` from
-    // `DemoDeck.deck` and structurally self-checks before exit.
+    // `DemoDeck` (a `Presentation`) and structurally self-checks before exit.
     .executableTarget(
       name: "KeynoteKitDemoTool",
       dependencies: [

@@ -42,7 +42,7 @@ import KeynoteKit
 /// ```bash
 /// swift run KeynoteKitDemoTool ~/Desktop/keynotekit-demo
 /// ```
-public enum DemoDeck {
+public struct DemoDeck: Presentation {
   /// The showcase deck, in presentation order.
   ///
   /// **This body is the slide order.** Each slide is a type in `Slides/`,
@@ -53,11 +53,12 @@ public enum DemoDeck {
   /// A slide may resolve to nothing — ``ImageSlide`` does when its resource
   /// is missing — so entries stay unconditional and each slide owns the
   /// question of whether it can be built.
-  public static var deck: Deck {
-    Deck {
-      TitleSlide()
-      StylesSlide()
-      ImageSlide()
-    }
+  public var body: some SlideContent {
+    TitleSlide()
+    StylesSlide()
+    ImageSlide()
   }
+
+  /// Creates the presentation.
+  public init() {}
 }
